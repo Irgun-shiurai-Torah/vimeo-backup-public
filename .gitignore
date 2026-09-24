@@ -1,0 +1,10 @@
+.env
+*.pickle
+token.json
+token.pickle
+credentials.json
+service-account.json
+Vimeo Backup/
+hls-results/
+__pycache__/
+*.pyc
