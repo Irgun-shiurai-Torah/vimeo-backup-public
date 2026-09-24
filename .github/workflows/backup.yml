@@ -1,0 +1,61 @@
+name: Vimeo Backup
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 */3 * * *'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: vimeo-regular-backup
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+          pip install requests tqdm google-api-python-client google-auth
+
+      - name: Prepare Google Drive OAuth token
+        env:
+          GOOGLE_TOKEN_JSON: ${{ secrets.GOOGLE_TOKEN_JSON }}
+        run: |
+          python - <<'PY'
+          import json, os, pickle
+          from google.auth.transport.requests import Request
+          from google.oauth2.credentials import Credentials
+
+          raw = os.environ.get('GOOGLE_TOKEN_JSON', '').strip()
+          if not raw:
+              raise SystemExit('GOOGLE_TOKEN_JSON secret is missing')
+          info = json.loads(raw)
+          scopes = info.get('scopes') or ['https://www.googleapis.com/auth/drive']
+          creds = Credentials.from_authorized_user_info(info, scopes=scopes)
+          if creds.expired and creds.refresh_token:
+              creds.refresh(Request())
+          if not creds.valid:
+              raise SystemExit('Google OAuth credentials are not valid')
+          with open('token.pickle', 'wb') as handle:
+              pickle.dump(creds, handle)
+          PY
+
+      - name: Run Vimeo Backup
+        env:
+          VIMEO_TOKEN: ${{ secrets.VIMEO_TOKEN }}
+        run: python -u vimeo_backup.py
