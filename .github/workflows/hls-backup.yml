@@ -6,7 +6,7 @@ on:
       max_items:
         description: "Maximum lectures to HLS-encode in this run"
         required: false
-        default: "1"
+        default: "15"
       video_id:
         description: "Optional Vimeo ID to process only one lecture"
         required: false
@@ -17,7 +17,7 @@ on:
         type: boolean
         default: false
   schedule:
-    - cron: '47 */2 * * *'
+    - cron: '47 */3 * * *'
 
 permissions:
   contents: read
@@ -75,7 +75,7 @@ jobs:
           INPUT_VIDEO_ID: ${{ github.event.inputs.video_id }}
           INPUT_FORCE_REBUILD: ${{ github.event.inputs.force_rebuild }}
         run: |
-          MAX_ITEMS="${INPUT_MAX_ITEMS:-1}"
+          MAX_ITEMS="${INPUT_MAX_ITEMS:-15}"
           VIDEO_ID="${INPUT_VIDEO_ID:-}"
           FORCE_REBUILD="0"
           if [ "${INPUT_FORCE_REBUILD:-false}" = "true" ]; then
