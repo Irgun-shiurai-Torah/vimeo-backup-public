@@ -1,10 +1,14 @@
-import json, os, pickle, re, shutil, subprocess, tempfile, time
+import hashlib, json, os, pickle, re, shutil, subprocess, tempfile, time
 from datetime import datetime, timezone
 from google.auth.transport.requests import Request
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload, MediaIoBaseDownload
 
 ROOT='Vimeo Backup'; MAPS='Maps'; HLS='HLS'; VIDEO_MAP='video-map.json'; HLS_MAP='hls-map.json'
+DRIVE_VIDEO_ROOT_ID=os.getenv('IRGUN_DRIVE_VIDEO_ROOT_ID','').strip()
+SOURCE_MODE=os.getenv('HLS_SOURCE_MODE','vimeo').strip().lower()
+if SOURCE_MODE not in ('vimeo','drive'): raise ValueError('HLS_SOURCE_MODE must be vimeo or drive')
+if SOURCE_MODE=='drive' and not DRIVE_VIDEO_ROOT_ID: raise ValueError('IRGUN_DRIVE_VIDEO_ROOT_ID is required in drive mode')
 MAX=max(1,int(os.getenv('HLS_MAX_ITEMS_PER_RUN','1') or '1'))
 ONLY=str(os.getenv('HLS_ONLY_VIDEO_ID','') or '').strip()
 FORCE=str(os.getenv('HLS_FORCE_REBUILD','0'))=='1'
@@ -75,6 +79,41 @@ def upload(path,parent,mime):
     log(f'  {filename}: 100%')
     return out['id']
 
+def drive_children(parent):
+    files=[]; token=None
+    while True:
+        result=execute(drive.files().list(
+            q=f"'{parent}' in parents and trashed=false",
+            spaces='drive', pageSize=1000, pageToken=token,
+            supportsAllDrives=True, includeItemsFromAllDrives=True,
+            fields='nextPageToken,files(id,name,mimeType,size,createdTime,modifiedTime)'
+        ))
+        files.extend(result.get('files',[]))
+        token=result.get('nextPageToken')
+        if not token: return files
+
+def drive_video_entries(root_id):
+    folder_mime='application/vnd.google-apps.folder'
+    entries=[]
+    for city in drive_children(root_id):
+        if city.get('mimeType')!=folder_mime or city.get('name','').startswith('_'): continue
+        for year in drive_children(city['id']):
+            if year.get('mimeType')!=folder_mime or year.get('name','').startswith('_'): continue
+            for file in drive_children(year['id']):
+                if file.get('mimeType')!=folder_mime and (
+                    file.get('mimeType')=='video/mp4' or str(file.get('name','')).lower().endswith('.mp4')
+                ):
+                    fid=str(file['id'])
+                    public_id='drivev-'+hashlib.sha256(('ist-drive-video:'+fid).encode()).hexdigest()[:24]
+                    entries.append({
+                        'vimeoId':public_id, 'videoDriveId':fid,
+                        'title':os.path.splitext(str(file.get('name') or 'Untitled shiur'))[0].replace('_',' ').strip(),
+                        'city':str(city['name']).strip(), 'year':str(year['name']).strip(),
+                        'sourceModified':str(file.get('modifiedTime') or file.get('createdTime') or ''),
+                        'created':str(file.get('createdTime') or ''),
+                    })
+    return sorted(entries,key=lambda item:item['sourceModified'],reverse=True)
+
 def download(fid,path):
     log('Downloading source MP4 from Drive...')
     with open(path,'wb') as h:
@@ -93,6 +132,20 @@ def download(fid,path):
 def probe(path):
     p=subprocess.run(['ffprobe','-v','error','-select_streams','v:0','-show_entries','stream=width,height','-of','json',path],capture_output=True,text=True,check=True)
     s=json.loads(p.stdout)['streams'][0]; return int(s['width']),int(s['height'])
+
+def media_duration(path):
+    p=subprocess.run(['ffprobe','-v','error','-show_entries','format=duration','-of','default=noprint_wrappers=1:nokey=1',path],capture_output=True,text=True,check=True)
+    return max(0,float(p.stdout.strip() or 0))
+
+def make_audio_and_poster(src,out,duration):
+    audio=os.path.join(out,'audio.mp3'); poster=os.path.join(out,'poster.jpg')
+    subprocess.run(['ffmpeg','-hide_banner','-loglevel','error','-y','-i',src,
+                    '-vn','-c:a','libmp3lame','-q:a','4',audio],check=True)
+    subprocess.run(['ffmpeg','-hide_banner','-loglevel','error','-y','-ss',str(min(10,max(0,duration/2))),
+                    '-i',src,'-frames:v','1','-vf','scale=640:-2',poster],check=True)
+    if not os.path.getsize(audio) or not os.path.getsize(poster):
+        raise RuntimeError('Audio or poster output was empty')
+    return audio,poster
 
 def even(n):
     n=max(2,int(round(n))); return n if n%2==0 else n-1
@@ -153,17 +206,20 @@ if not isinstance(video_map,list):raise RuntimeError('Existing video-map.json mi
 hls_map=read_json(HLS_MAP,maps,[])
 if not isinstance(hls_map,list):hls_map=[]
 idx={str(x.get('vimeoId') or ''):x for x in hls_map}
+drive_videos=drive_video_entries(DRIVE_VIDEO_ROOT_ID) if SOURCE_MODE=='drive' else []
 pending=[]
-for x in reversed(video_map):
+for x in (drive_videos if SOURCE_MODE=='drive' else reversed(video_map)):
     vid=str(x.get('vimeoId') or '').strip(); drive_id=str(x.get('videoDriveId') or '').strip()
     if not vid or not drive_id or (ONLY and vid!=ONLY):continue
-    if not FORCE and idx.get(vid,{}).get('masterDriveId'):continue
+    if not FORCE and idx.get(vid,{}).get('masterDriveId') and (
+        SOURCE_MODE!='drive' or idx[vid].get('sourceModified')==x.get('sourceModified')
+    ):continue
     pending.append(x)
 if PARALLEL_SLOT is None:
     selected=pending[:MAX]
 else:
     selected=pending[PARALLEL_SLOT:PARALLEL_SLOT+1]
-log('MP4 entries:',len(video_map),'HLS complete:',len(idx),'pending:',len(pending),'this run:',len(selected),'parallel slot:',PARALLEL_SLOT if PARALLEL_SLOT is not None else 'off')
+log('Source:',SOURCE_MODE,'Vimeo MP4 entries:',len(video_map),'Drive city videos:',len(drive_videos),'HLS complete:',len(idx),'pending:',len(pending),'this run:',len(selected),'parallel slot:',PARALLEL_SLOT if PARALLEL_SLOT is not None else 'off')
 fail=[]; done=0
 for x in selected:
     vid=safe_id(x['vimeoId']); title=str(x.get('title') or vid); tmp=tempfile.mkdtemp(prefix=f'irgun-hls-{vid}-')
@@ -171,12 +227,21 @@ for x in selected:
         src=os.path.join(tmp,'source.mp4'); out=os.path.join(tmp,'hls'); log('\nHLS:',vid,title)
         download(str(x['videoDriveId']),src)
         w,h=probe(src); log(f'Source resolution: {w}x{h}')
+        duration=media_duration(src) if SOURCE_MODE=='drive' else None
         rs=renditions(w,h); master=make_hls(src,out,rs)
         dest=folder(vid,hls_root); uploaded=[]
         for r in rs:
             hh=r['height']; pl=f'{hh}p.m3u8'; media=f'{hh}p.ts'
             uploaded.append({'height':hh,'width':r['width'],'bitrateKbps':r['bitrate'],'maxrateKbps':r['maxrate'],'playlist':pl,'playlistDriveId':upload(os.path.join(out,pl),dest,'application/vnd.apple.mpegurl'),'media':media,'mediaDriveId':upload(os.path.join(out,media),dest,'video/mp2t')})
         entry={'vimeoId':vid,'title':title,'videoDriveId':str(x['videoDriveId']),'hlsVersion':1,'storage':'google-drive','format':'hls-single-file-byterange-mpegts','hlsFolderId':dest,'master':'master.m3u8','masterDriveId':upload(master,dest,'application/vnd.apple.mpegurl'),'sourceWidth':w,'sourceHeight':h,'renditions':uploaded,'generatedAt':now()}
+        if SOURCE_MODE=='drive':
+            audio,poster=make_audio_and_poster(src,out,duration)
+            entry.update({
+                'city':x['city'],'year':x['year'],'created':x['created'],
+                'sourceModified':x['sourceModified'],'duration':duration,
+                'audioDriveId':upload(audio,dest,'audio/mpeg'),
+                'posterDriveId':upload(poster,dest,'image/jpeg')
+            })
         if PARALLEL_SLOT is not None:
             if not PARALLEL_RESULT_DIR: raise RuntimeError('HLS_PARALLEL_RESULT_DIR is required in parallel mode')
             os.makedirs(PARALLEL_RESULT_DIR,exist_ok=True)
