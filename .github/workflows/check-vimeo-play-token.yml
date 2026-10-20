@@ -105,3 +105,129 @@ jobs:
           print("RESULT=RECORDED_HLS_LINK_NOT_VERIFIED_FOR_THIS_GITHUB_SECRET")
           sys.exit(1)
           PY
+
+  check-newest-vimeo-recording:
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    env:
+      VIMEO_TOKEN: ${{ secrets.VIMEO_TOKEN }}
+    steps:
+      - name: Probe newest upload, HLS playlist, and live Irgun catalog (read only)
+        shell: bash
+        run: |
+          python - <<'PY'
+          import datetime, json, os, re, urllib.request, urllib.error, urllib.parse
+          from urllib.parse import urlencode
+
+          token=os.environ.get("VIMEO_TOKEN","").strip()
+          def get_json(url, authorization=False, maxbytes=12000000):
+              headers={"Accept":"application/json","Cache-Control":"no-cache"}
+              if authorization:
+                  headers["Authorization"]="Bearer "+token
+                  headers["Accept"]="application/vnd.vimeo.*+json;version=3.4"
+              try:
+                  req=urllib.request.Request(url,headers=headers)
+                  with urllib.request.urlopen(req, timeout=25) as response:
+                      return response.status,json.loads(response.read(maxbytes))
+              except urllib.error.HTTPError as exc:
+                  return exc.code,{}
+              except Exception:
+                  return 0,{}
+
+          def vimeo(path,query):
+              return get_json("https://api.vimeo.com"+path+"?"+urlencode(query),True)
+
+          if not token:
+              print("LATEST_CHECK=NO_GITHUB_TOKEN")
+              raise SystemExit(2)
+
+          status,listing=vimeo("/me/videos",{
+              "sort":"date","direction":"desc","per_page":12,
+              "fields":"uri,created_time,modified_time"
+          })
+          print("VIMEO_NEWEST_LIST_HTTP="+str(status))
+          videos=listing.get("data",[]) if isinstance(listing,dict) else []
+          print("NEWEST_VIDEOS_RETURNED="+str(len(videos)))
+          if status!=200 or not videos:
+              print("LATEST_CHECK=VIMEO_LIST_UNAVAILABLE")
+              raise SystemExit(3)
+
+          # Deliberately do not print video IDs, names, token, or signed media URLs.
+          uploads=[]
+          for v in videos:
+              match=re.fullmatch(r"/videos/(\d+)",str(v.get("uri","")))
+              if match: uploads.append((match.group(1),v))
+          if not uploads:
+              print("LATEST_CHECK=NO_VIDEO_IDS")
+              raise SystemExit(4)
+          video_id,latest=uploads[0]
+          now=datetime.datetime.now(datetime.timezone.utc)
+          created=str(latest.get("created_time") or "")
+          try: dt=datetime.datetime.fromisoformat(created.replace("Z","+00:00"))
+          except:dt=None
+          print("LATEST_VIDEO_CREATED_UTC="+(dt.strftime("%Y-%m-%d %H:%M") if dt else "UNKNOWN"))
+          print("LATEST_VIDEO_UPLOADED_LAST_24H="+str(bool(dt and 0 <= (now-dt).total_seconds() <= 86400)).upper())
+
+          status,video=vimeo("/videos/"+video_id,{"fields":"uri,play,status,is_playable"})
+          print("LATEST_VIDEO_API_HTTP="+str(status))
+          play=video.get("play") or {}
+          hls=play.get("hls") or {}
+          hls_url=hls.get("link") if isinstance(hls,dict) else None
+          mp4=play.get("progressive") or []
+          hls_ready=isinstance(hls_url,str) and hls_url.startswith("https://")
+          mp4_ready=any(isinstance(v,dict) and str(v.get("link") or "").startswith("https://") for v in mp4)
+          print("LATEST_VIDEO_HLS_LINK="+str(hls_ready).upper())
+          print("LATEST_VIDEO_MP4_LINK="+str(mp4_ready).upper())
+          print("LATEST_VIDEO_PLAYABLE="+str(video.get("is_playable","NOT_RETURNED")).upper())
+
+          if hls_ready:
+              try:
+                  # Fetch only the first bytes of the actual HLS manifest (not video).
+                  req=urllib.request.Request(hls_url,headers={
+                      "User-Agent":"IrgunVimeoHlsLinkCheck/1.0",
+                      "Range":"bytes=0-255"
+                  })
+                  with urllib.request.urlopen(req,timeout=20) as response:
+                      chunk=response.read(256)
+                      code=response.status
+                  print("LATEST_HLS_MANIFEST_HTTP="+str(code))
+                  print("LATEST_HLS_MANIFEST_VALID="+str(chunk.lstrip().startswith(b"#EXTM3U")).upper())
+              except urllib.error.HTTPError as err:
+                  print("LATEST_HLS_MANIFEST_HTTP="+str(err.code))
+                  print("LATEST_HLS_MANIFEST_VALID=FALSE")
+              except Exception:
+                  print("LATEST_HLS_MANIFEST_HTTP=NETWORK_ERROR")
+                  print("LATEST_HLS_MANIFEST_VALID=FALSE")
+          else:
+              print("LATEST_HLS_MANIFEST_HTTP=NOT_TESTED")
+
+          api="https://api.irgunshiuraitorah.com"
+          routing_code,routing=get_json(api+"/playback-routing")
+          print("WORKER_ROUTING_HTTP="+str(routing_code))
+          print("WORKER_HAS_THREE_MODES="+str(
+              isinstance(routing,dict) and "vimeoOnlyWebsiteMode" in routing and "vimeoOnlyAppMode" in routing
+          ).upper())
+          if routing_code==200:
+              website_mode=str(routing.get("vimeoOnlyWebsiteMode","NOT_PRESENT"))
+              app_mode=str(routing.get("vimeoOnlyAppMode","NOT_PRESENT"))
+              print("WORKER_WEBSITE_MODE="+website_mode if website_mode in ["off","vimeo","our-player","NOT_PRESENT"] else "UNKNOWN")
+              print("WORKER_ANDROID_MODE="+app_mode if app_mode in ["off","vimeo","our-player","NOT_PRESENT"] else "UNKNOWN")
+
+          catalog_code,catalog=get_json(api+"/video-map",maxbytes=20000000)
+          print("WORKER_VIDEO_MAP_HTTP="+str(catalog_code))
+          if isinstance(catalog,dict):
+              catalog=catalog.get("videos") or catalog.get("items") or catalog.get("data") or []
+          if not isinstance(catalog,list):catalog=[]
+          print("WORKER_CATALOG_COUNT="+str(len(catalog)))
+          found=next((v for v in catalog if isinstance(v,dict) and str(v.get("vimeoId") or v.get("id") or "")==video_id),None)
+          print("NEWEST_VIDEO_IN_WORKER_CATALOG="+str(found is not None).upper())
+          if found is not None:
+              print("NEWEST_VIDEO_HAS_DRIVE_COPY="+str(found.get("hasDriveVideo","UNKNOWN")).upper())
+          if found and routing.get("vimeoOnlyWebsiteMode")=="our-player":
+              source_code,source=get_json(api+"/media/"+urllib.parse.quote(video_id)+"/source.json")
+              print("WORKER_OUR_PLAYER_SOURCE_HTTP="+str(source_code))
+              vid=source.get("video") if isinstance(source,dict) else None
+              print("WORKER_OUR_PLAYER_HLS_SOURCE="+str(bool(isinstance(vid,dict) and vid.get("hls"))).upper())
+
+          print("LATEST_CHECK=COMPLETE")
+          PY
