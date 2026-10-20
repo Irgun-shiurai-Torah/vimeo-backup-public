@@ -345,10 +345,12 @@ jobs:
           if albums_code==200:
               for alb in albums[:25]:
                   uri=str(alb.get("uri",""))
-                  match=re.fullmatch(r"/(?:me/)?albums/(\d+)",uri)
+                  match=re.search(r"/albums/(\d+)$",uri)
                   if not match:continue
                   response,items=api("/albums/"+match.group(1)+"/videos",{"sort":"date","direction":"desc","per_page":50,"fields":"uri"})
-                  if response!=200:continue
+                  if response!=200:
+                      print("SHOWCASE_SAMPLE_HTTP="+str(response))
+                      continue
                   sampled+=1
                   for video in items.get("data",[]) if isinstance(items,dict) else []:
                       m=re.fullmatch(r"/videos/(\d+)",str(video.get("uri","")))
