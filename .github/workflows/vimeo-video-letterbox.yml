@@ -16,6 +16,8 @@ jobs:
     env:
       VIMEO_TOKEN: ${{ secrets.VIMEO_TOKEN }}
     steps:
+      - name: Install frame inspection tools
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg >/dev/null
       - name: Check source aspect ratio and detect embedded black borders
         shell: bash
         run: |
