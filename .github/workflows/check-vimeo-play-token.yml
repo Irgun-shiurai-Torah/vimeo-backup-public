@@ -286,3 +286,75 @@ jobs:
               print("SHOWCASE_NAMES="+(" / ".join(safe_names[:6]) if safe_names else "NONE"))
           print("CHECK_FINISHED=YES")
           PY
+
+  inspect-recent-video-statuses:
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    env:
+      VIMEO_TOKEN: ${{ secrets.VIMEO_TOKEN }}
+    steps:
+      - name: Compare recent Vimeo videos rather than assuming newest is the test video
+        shell: bash
+        run: |
+          python - <<'PY'
+          import os, json, re, urllib.request, urllib.error
+          from urllib.parse import urlencode
+          token=os.environ.get("VIMEO_TOKEN","").strip()
+          if not token:
+              print("NO_VIMEO_TOKEN=YES")
+              raise SystemExit(2)
+          headers={"Authorization":"Bearer "+token,"Accept":"application/vnd.vimeo.*+json;version=3.4"}
+          def api(path,params={}):
+              link="https://api.vimeo.com"+path+("?"+urlencode(params) if params else "")
+              req=urllib.request.Request(link,headers=headers)
+              try:
+                  with urllib.request.urlopen(req, timeout=20) as response:
+                      return response.status,json.loads(response.read(5000000))
+              except urllib.error.HTTPError as e:
+                  return e.code,{}
+              except Exception:
+                  return 0,{}
+          stat,payload=api("/me/videos",{"sort":"date","direction":"desc","per_page":15,"fields":"uri,created_time"})
+          print("RECENT_ACCOUNT_VIDEOS_HTTP="+str(stat))
+          videos=payload.get("data",[]) if isinstance(payload,dict) else []
+          ids=[]
+          for item in videos:
+              m=re.fullmatch(r"/videos/(\d+)",str(item.get("uri","")))
+              if m:ids.append((m.group(1),str(item.get("created_time",""))))
+          print("RECENT_VIDEOS_COUNT="+str(len(ids)))
+          statuses={}
+          for number,(video_id,created) in enumerate(ids[:12],1):
+              code,data=api("/videos/"+video_id,{"fields":"uri,status,is_playable,play"})
+              p=data.get("play") or {}
+              if not isinstance(p,dict):p={}
+              h=p.get("hls") or {}
+              progressive=p.get("progressive") or []
+              hls=bool(isinstance(h,dict) and str(h.get("link","")).startswith("https://"))
+              mp4=bool(isinstance(progressive,list) and any(isinstance(q,dict) and str(q.get("link","")).startswith("https://") for q in progressive))
+              state=str(data.get("status","UNKNOWN"))[:32]
+              statuses[video_id]={"hls":hls,"mp4":mp4,"status":state}
+              print(f"RECENT_{number:02d}_DATE={created[:16]} API={code} STATE={state} PLAYABLE={data.get('is_playable','N/A')} HLS={hls} MP4={mp4}")
+          # Vimeo /videos/{id}/albums is forbidden for this token. This is only a
+          # non-destructive sample of the user's first page of each showcase.
+          albums_code,album_data=api("/me/albums",{"per_page":100,"fields":"uri,total_clips"})
+          albums=album_data.get("data",[]) if isinstance(album_data,dict) else []
+          print("OWN_SHOWCASES_HTTP="+str(albums_code))
+          print("OWN_SHOWCASES_COUNT="+str(len(albums)))
+          found=set()
+          sampled=0
+          if albums_code==200:
+              for alb in albums[:25]:
+                  uri=str(alb.get("uri",""))
+                  match=re.fullmatch(r"/(?:me/)?albums/(\d+)",uri)
+                  if not match:continue
+                  response,items=api("/albums/"+match.group(1)+"/videos",{"sort":"date","direction":"desc","per_page":50,"fields":"uri"})
+                  if response!=200:continue
+                  sampled+=1
+                  for video in items.get("data",[]) if isinstance(items,dict) else []:
+                      m=re.fullmatch(r"/videos/(\d+)",str(video.get("uri","")))
+                      if m:found.add(m.group(1))
+          print("SHOWCASES_SAMPLE_FETCHED="+str(sampled))
+          for number,(video_id,created) in enumerate(ids[:12],1):
+              print(f"RECENT_{number:02d}_IN_SAMPLED_SHOWCASE={video_id in found}")
+          print("RECENT_CHECK_COMPLETE=YES")
+          PY
