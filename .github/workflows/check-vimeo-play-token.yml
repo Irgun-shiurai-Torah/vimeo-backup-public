@@ -360,3 +360,72 @@ jobs:
               print(f"RECENT_{number:02d}_IN_SAMPLED_SHOWCASE={video_id in found}")
           print("RECENT_CHECK_COMPLETE=YES")
           PY
+
+  verify-browser-cors-for-vimeo-play:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    env:
+      VIMEO_TOKEN: ${{ secrets.VIMEO_TOKEN }}
+    steps:
+      - name: Test HTTPS manifests and CORS for third-party Vimeo playback
+        shell: bash
+        run: |
+          python - <<'PY'
+          import os,json,re,urllib.request,urllib.error
+          from urllib.parse import urlencode,urljoin
+          token=os.environ.get("VIMEO_TOKEN","").strip()
+          assert token,"Vimeo token missing"
+          origin="https://irgunshiuraitorah.com"
+          def retrieve(url,headers,read_bytes=512):
+              try:
+                  with urllib.request.urlopen(urllib.request.Request(url,headers=headers),timeout=20) as r:
+                      return r.status,r.headers,r.read(read_bytes)
+              except urllib.error.HTTPError as e:
+                  return e.code,e.headers,b''
+              except Exception:
+                  return 0,{},b''
+          apiheaders={"Authorization":"Bearer "+token,"Accept":"application/vnd.vimeo.*+json;version=3.4"}
+          def api(path,params):
+              u="https://api.vimeo.com"+path+"?"+urlencode(params)
+              try:
+                  with urllib.request.urlopen(urllib.request.Request(u,headers=apiheaders),timeout=20) as r:
+                      return r.status,json.loads(r.read(6000000))
+              except urllib.error.HTTPError as e:return e.code,{}
+              except Exception:return 0,{}
+          status,records=api("/me/videos",{"sort":"date","direction":"desc","per_page":12,"fields":"uri"})
+          found=False
+          for item in (records.get("data") or []) if isinstance(records,dict) else []:
+              match=re.fullmatch(r"/videos/(\d+)",str(item.get("uri","")))
+              if not match:continue
+              c,video=api("/videos/"+match.group(1),{"fields":"status,is_playable,play"})
+              if c!=200 or video.get("status")!="available" or video.get("is_playable") is not True:continue
+              play=video.get("play") or {}
+              hls=play.get("hls") or {}
+              link=hls.get("link") if isinstance(hls,dict) else None
+              progressive=play.get("progressive") or []
+              mp4=next((x.get("link") for x in progressive if isinstance(x,dict) and str(x.get("link","")).startswith("https://")),None)
+              if not (isinstance(link,str) and link.startswith("https://")):continue
+              found=True
+              h={"Origin":origin,"Referer":origin+"/watch.html","User-Agent":"Mozilla/5.0","Range":"bytes=0-511"}
+              for label,url in (("HLS_MASTER",link),("MP4",mp4)):
+                  if not url:continue
+                  http,heads,data=retrieve(url,h,512)
+                  cors=heads.get("Access-Control-Allow-Origin","")
+                  print(label+"_HTTP="+str(http))
+                  print(label+"_BROWSER_CORS="+str(cors in ("*",origin)).upper())
+                  print(label+"_CONTENT_TYPE="+str(heads.get("Content-Type","")).split(";")[0][:70])
+                  if label=="HLS_MASTER":
+                      print("HLS_MASTER_MANIFEST_VALID="+str(data.lstrip().startswith(b'#EXTM3U')).upper())
+                      # Parse only safe relative references; never print expiring URL.
+                      variant=next((x.strip() for x in data.decode("utf-8","replace").splitlines() if x.strip() and not x.startswith("#")),None)
+                      if variant:
+                          next_url=urljoin(url,variant)
+                          if next_url.startswith("https://"):
+                              sub,hs,bs=retrieve(next_url,h,200)
+                              c2=hs.get("Access-Control-Allow-Origin","")
+                              print("HLS_CHILD_HTTP="+str(sub))
+                              print("HLS_CHILD_BROWSER_CORS="+str(c2 in ("*",origin)).upper())
+              break
+          print("PLAYABLE_RECORDING_FOUND="+str(found).upper())
+          print("CORS_CHECK_COMPLETE=YES")
+          PY
