@@ -20,10 +20,12 @@ jobs:
         shell: bash
         run: |
           python - <<'PY'
-          import os, json, re, subprocess, urllib.request, urllib.parse, urllib.error
+          import os, json, re, subprocess, shutil, urllib.request, urllib.parse, urllib.error
           token=os.environ.get("VIMEO_TOKEN","").strip()
           if not token:
               raise SystemExit("VIMEO_TOKEN_MISSING")
+          print("FFMPEG_PRESENT="+str(bool(shutil.which("ffmpeg"))).upper())
+          print("FFPROBE_PRESENT="+str(bool(shutil.which("ffprobe"))).upper())
           video_id="1237352749"
           url="https://api.vimeo.com/videos/"+video_id+"?fields="+urllib.parse.quote("uri,status,play,width,height")
           req=urllib.request.Request(url,headers={"Authorization":"Bearer "+token,"Accept":"application/vnd.vimeo.*+json;version=3.4"})
@@ -46,6 +48,9 @@ jobs:
           try:
               p=subprocess.run(["ffprobe","-v","error","-select_streams","v:0","-show_entries","stream=width,height,sample_aspect_ratio,display_aspect_ratio","-of","json",stream_url],
                   capture_output=True,text=True,timeout=45)
+              print("MP4_FFPROBE_CODE="+str(p.returncode))
+              print("MP4_FFPROBE_STREAM_PRESENT="+str(bool(p.stdout.strip())).upper())
+              print("MP4_FFPROBE_ERROR_KIND="+("HTTP_ERROR" if re.search(r"HTTP error|Server returned|403|401|404",p.stderr,re.I) else "MOOV_ERROR" if "moov" in p.stderr.lower() else "SSL_ERROR" if "ssl" in p.stderr.lower() else "OTHER" if p.returncode else "NONE"))
               info=json.loads(p.stdout or "{}")
               source=(info.get("streams") or [{}])[0]
               width=int(source.get("width") or 0)
