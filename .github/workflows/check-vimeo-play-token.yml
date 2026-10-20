@@ -465,3 +465,54 @@ jobs:
           print('EXACT_VIDEO_MP4_AVAILABLE='+str(bool(isinstance(mp4,list) and any(isinstance(q,dict) and str(q.get('link','')).startswith('https://') for q in mp4))).upper())
           print('EXACT_VIDEO_CHECK_FINISHED=YES')
           PY
+
+  verify-1237352749-browser-cors:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    env:
+      VIMEO_TOKEN: ${{ secrets.VIMEO_TOKEN }}
+    steps:
+      - name: Verify frame-inspection-compatible CORS on the exact padded recording
+        shell: bash
+        run: |
+          python - <<'PY'
+          import os,json,urllib.request,urllib.error
+          token=os.environ.get("VIMEO_TOKEN","").strip()
+          assert token,"Configured Vimeo API token missing"
+          origin="https://irgunshiuraitorah.com"
+          r=urllib.request.Request(
+              "https://api.vimeo.com/videos/1237352749?fields=status,is_playable,play",
+              headers={"Authorization":"Bearer "+token,"Accept":"application/vnd.vimeo.*+json;version=3.4"}
+          )
+          with urllib.request.urlopen(r,timeout=22) as response:
+              body=json.loads(response.read(1000000))
+          p=body.get("play") or {}
+          h=(p.get("hls") or {}).get("link")
+          mp4=next((x.get("link") for x in (p.get("progressive") or []) if isinstance(x,dict) and str(x.get("link","")).startswith("https://")),None)
+          good=True
+          for label,link in (("HLS",h),("MP4",mp4)):
+              if not isinstance(link,str) or not link.startswith("https://"):
+                  print(label+"_PRESENT=NO")
+                  good=False
+                  continue
+              req=urllib.request.Request(link,headers={
+                  "Origin":origin,"Referer":origin+"/watch?v=1237352749",
+                  "User-Agent":"Mozilla/5.0","Range":"bytes=0-255"
+              })
+              try:
+                  with urllib.request.urlopen(req,timeout=22) as r:
+                      code=r.status
+                      allowed=r.headers.get("Access-Control-Allow-Origin","")
+                      r.read(255)
+              except urllib.error.HTTPError as e:
+                  code=e.code
+                  allowed=e.headers.get("Access-Control-Allow-Origin","")
+              except Exception:
+                  code=0;allowed=""
+              canread=(allowed=="*" or allowed==origin) and code in (200,206)
+              print(label+"_HTTP="+str(code))
+              print(label+"_CROSSORIGIN_ANONYMOUS_ALLOWED="+str(canread).upper())
+              good=good and canread
+          print("EXACT_RECORDING_FRAME_READ_CORS_READY="+str(good).upper())
+          assert good,"This exact recording needs CORS before canvas can inspect its frame"
+          PY
