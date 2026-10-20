@@ -429,3 +429,39 @@ jobs:
           print("PLAYABLE_RECORDING_FOUND="+str(found).upper())
           print("CORS_CHECK_COMPLETE=YES")
           PY
+
+  verify-exact-1237352749-vimeo-access:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      VIMEO_TOKEN: ${{ secrets.VIMEO_TOKEN }}
+    steps:
+      - name: Compare exact watch page lecture Vimeo play availability
+        shell: bash
+        run: |
+          python - <<'PY'
+          import os,json,urllib.request,urllib.error
+          from urllib.parse import urlencode
+          tok=os.environ.get('VIMEO_TOKEN','').strip()
+          if not tok: print('TOKEN_CONFIGURED=NO');raise SystemExit(2)
+          req=urllib.request.Request(
+            'https://api.vimeo.com/videos/1237352749?'+urlencode({'fields':'uri,status,is_playable,play'}),
+            headers={'Authorization':'Bearer '+tok,'Accept':'application/vnd.vimeo.*+json;version=3.4'}
+          )
+          try:
+            with urllib.request.urlopen(req,timeout=25) as r:
+              data=json.loads(r.read(2000000));code=r.status
+          except urllib.error.HTTPError as e:code=e.code;data={}
+          except Exception:code=0;data={}
+          print('EXACT_VIDEO_VIMEO_HTTP='+str(code))
+          print('EXACT_VIDEO_STATUS='+str(data.get('status','UNKNOWN'))[:35])
+          print('EXACT_VIDEO_PLAYABLE='+str(data.get('is_playable','UNKNOWN')).upper())
+          play=data.get('play') or {}
+          if not isinstance(play,dict):play={}
+          hls=play.get('hls') or {}
+          mp4=play.get('progressive') or []
+          print('EXACT_VIDEO_PLAY_FIELD='+str(bool(play)).upper())
+          print('EXACT_VIDEO_HLS_AVAILABLE='+str(bool(isinstance(hls,dict) and str(hls.get('link','')).startswith('https://'))).upper())
+          print('EXACT_VIDEO_MP4_AVAILABLE='+str(bool(isinstance(mp4,list) and any(isinstance(q,dict) and str(q.get('link','')).startswith('https://') for q in mp4))).upper())
+          print('EXACT_VIDEO_CHECK_FINISHED=YES')
+          PY
