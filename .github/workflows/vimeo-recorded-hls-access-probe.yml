@@ -1,0 +1,96 @@
+name: Read-only Vimeo Recorded HLS Access Probe
+
+on:
+  push:
+    branches:
+      - diagnostics/vimeo-playback-access-20261021
+
+permissions:
+  contents: read
+
+jobs:
+  check-vimeo-api:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - name: Verify stored Vimeo token scopes and recorded video HLS access (no URLs printed)
+        env:
+          VIMEO_TOKEN: ${{ secrets.VIMEO_TOKEN }}
+        run: |
+          python - <<'PY'
+          import json, os, re, sys, urllib.request, urllib.error
+          
+          token = os.environ.get("VIMEO_TOKEN", "").strip()
+          def output(**items):
+              print("VIMEO_HLS_PROBE " + json.dumps(items, sort_keys=True), flush=True)
+          
+          if not token:
+              output(result="NO_GITHUB_TOKEN", note="GitHub secret is absent; Cloudflare Worker token not tested")
+              sys.exit(1)
+          
+          headers = {
+              "Authorization": "Bearer " + token,
+              "Accept": "application/vnd.vimeo.*+json;version=3.4",
+              "User-Agent": "IrgunVimeoReadOnlyHlsProbe/1.0"
+          }
+          def api_read(path):
+              if not path.startswith("/") or "://" in path:
+                  return 0, {}
+              req = urllib.request.Request("https://api.vimeo.com" + path, headers=headers)
+              try:
+                  with urllib.request.urlopen(req, timeout=16) as response:
+                      return response.status, json.loads(response.read(1500000))
+              except urllib.error.HTTPError as exc:
+                  return exc.code, {}
+              except (OSError, ValueError, json.JSONDecodeError):
+                  return 0, {}
+          
+          code, auth = api_read("/oauth/verify")
+          scopes = set(str(auth.get("scope", "")).split()) if isinstance(auth, dict) else set()
+          output(stage="token_verification", api_status=code,
+                 public="public" in scopes, private="private" in scopes,
+                 video_files="video_files" in scopes)
+          if code != 200:
+              output(result="TOKEN_VERIFICATION_FAILED")
+              sys.exit(1)
+          
+          code, listing = api_read("/me/videos?per_page=12&fields=uri,status")
+          if code != 200 or not isinstance(listing.get("data"), list):
+              output(result="VIDEO_LIST_FAILED", api_status=code)
+              sys.exit(1)
+          
+          ids=[]
+          for item in listing["data"]:
+              uri = item.get("uri", "") if isinstance(item, dict) else ""
+              match = re.fullmatch(r"/videos/([0-9]+)", str(uri))
+              if match: ids.append(match.group(1))
+          ids=ids[:8]
+          if not ids:
+              output(result="NO_ELIGIBLE_VIDEO_IDS", video_list_status=code)
+              sys.exit(1)
+          
+          codes=[]
+          hls_count=0
+          mp4_count=0
+          for video_id in ids:
+              status, video = api_read("/videos/" + video_id + "?fields=uri,play")
+              codes.append(status)
+              if status != 200 or not isinstance(video,dict): continue
+              play=video.get("play")
+              if not isinstance(play, dict): continue
+              hls=play.get("hls")
+              if isinstance(hls, dict) and str(hls.get("link","")).startswith("https://"):
+                  hls_count+=1
+              progressive=play.get("progressive")
+              if isinstance(progressive,list) and any(
+                  isinstance(item,dict) and str(item.get("link","")).startswith("https://") for item in progressive):
+                  mp4_count+=1
+          
+          output(stage="recorded_video_play",
+                 videos_checked=len(ids),
+                 video_api_statuses=codes,
+                 returned_hls_links=hls_count,
+                 returned_mp4_links=mp4_count,
+                 result="HLS_AVAILABLE" if hls_count>0 else "HLS_NOT_CONFIRMED")
+          sys.exit(0 if hls_count>0 else 1)
+          PY
