@@ -546,6 +546,7 @@ jobs:
               parts=urllib.parse.urlsplit(url)
               hostname=parts.hostname or ""
               print(name+"_HOST="+hostname[:120])
+              print(name+"_PATH_FAMILY="+(parts.path.split("/")[1] if len(parts.path.split("/"))>1 else "NONE")[:50])
               print(name+"_HTTPS="+str(parts.scheme=="https").upper())
               if parts.scheme=="https":
                   try:
