@@ -72,6 +72,7 @@ jobs:
           codes=[]
           hls_count=0
           mp4_count=0
+          first_hls=None
           for video_id in ids:
               status, video = api_read("/videos/" + video_id + "?fields=uri,play")
               codes.append(status)
@@ -81,6 +82,7 @@ jobs:
               hls=play.get("hls")
               if isinstance(hls, dict) and str(hls.get("link","")).startswith("https://"):
                   hls_count+=1
+                  if not first_hls: first_hls=hls["link"]
               progressive=play.get("progressive")
               if isinstance(progressive,list) and any(
                   isinstance(item,dict) and str(item.get("link","")).startswith("https://") for item in progressive):
@@ -92,5 +94,30 @@ jobs:
                  returned_hls_links=hls_count,
                  returned_mp4_links=mp4_count,
                  result="HLS_AVAILABLE" if hls_count>0 else "HLS_NOT_CONFIRMED")
+          def check_manifest(origin):
+              if not first_hls: return {"status":0,"is_m3u8":False,"cors":False}
+              headers={"User-Agent":"IrgunVimeoReadOnlyHlsProbe/1.0","Range":"bytes=0-511"}
+              if origin: headers["Origin"]=origin
+              try:
+                  req=urllib.request.Request(first_hls,headers=headers)
+                  with urllib.request.urlopen(req,timeout=18) as response:
+                      prefix=response.read(256)
+                      allowed=response.headers.get("Access-Control-Allow-Origin","")
+                      return {"status":response.status,
+                              "is_m3u8":prefix.lstrip().startswith(b"#EXTM3U"),
+                              "cors":bool(origin and (allowed=="*" or allowed==origin))}
+              except urllib.error.HTTPError as exc:
+                  return {"status":exc.code,"is_m3u8":False,"cors":False}
+              except (OSError,ValueError):
+                  return {"status":0,"is_m3u8":False,"cors":False}
+
+          plain=check_manifest(None)
+          website=check_manifest("https://irgunshiuraitorah.com")
+          output(stage="manifest_delivery",
+                 anonymous_http_status=plain["status"],
+                 valid_hls_manifest=plain["is_m3u8"],
+                 website_http_status=website["status"],
+                 website_cors_allowed=website["cors"],
+                 website_valid_manifest=website["is_m3u8"])
           sys.exit(0 if hls_count>0 else 1)
           PY
