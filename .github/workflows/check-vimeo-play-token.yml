@@ -231,3 +231,58 @@ jobs:
 
           print("LATEST_CHECK=COMPLETE")
           PY
+
+  check-newest-showcase-membership:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      VIMEO_TOKEN: ${{ secrets.VIMEO_TOKEN }}
+    steps:
+      - name: Inspect newest recording Showcase membership and processing status
+        shell: bash
+        run: |
+          python - <<'PY'
+          import os,json,re,urllib.request,urllib.error
+          from urllib.parse import urlencode
+          tok=os.environ.get("VIMEO_TOKEN","").strip()
+          assert tok, "GitHub Vimeo token is unavailable"
+          h={"Authorization":"Bearer "+tok,"Accept":"application/vnd.vimeo.*+json;version=3.4"}
+          def get(p,params=None):
+              u="https://api.vimeo.com"+p+("?"+urlencode(params) if params else "")
+              try:
+                  with urllib.request.urlopen(urllib.request.Request(u,headers=h),timeout=20) as r:
+                      return r.status,json.loads(r.read(3000000))
+              except urllib.error.HTTPError as e:
+                  return e.code,{}
+              except Exception:
+                  return 0,{}
+          c,listing=get("/me/videos",{"sort":"date","direction":"desc","per_page":1,"fields":"uri,created_time"})
+          print("NEWEST_ACCOUNT_LIST_HTTP="+str(c))
+          videos=listing.get("data",[]) if isinstance(listing,dict) else []
+          m=re.fullmatch(r"/videos/(\d+)",str(videos[0].get("uri",""))) if videos else None
+          if not m:
+              print("RESULT=NEWEST_RECORDING_UNAVAILABLE")
+              raise SystemExit(2)
+          id=m.group(1)
+          c,v=get("/videos/"+id,{"fields":"uri,status,is_playable,play"})
+          play=v.get("play") or {}
+          if not isinstance(play,dict):play={}
+          hls=play.get("hls") or {}
+          print("VIDEO_INFO_HTTP="+str(c))
+          print("VIDEO_STATUS="+str(v.get("status","NOT_RETURNED"))[:45])
+          print("VIDEO_PLAYABLE="+str(v.get("is_playable","NOT_RETURNED")).upper())
+          print("VIDEO_HLS_AVAILABLE="+str(isinstance(hls,dict) and str(hls.get("link","")).startswith("https://")).upper())
+          c,albums=get("/videos/"+id+"/albums",{"per_page":100,"fields":"uri,name"})
+          print("SHOWCASE_LOOKUP_HTTP="+str(c))
+          arr=albums.get("data",[]) if isinstance(albums,dict) else []
+          print("SHOWCASE_MEMBERSHIP_COUNT="+str(len(arr)) if c==200 else "SHOWCASE_MEMBERSHIP_COUNT=UNKNOWN")
+          if c==200:
+              # No private video ID or token is printed.
+              safe_names=[]
+              for item in arr:
+                  name=str(item.get("name","")).strip()
+                  if name:
+                      safe_names.append(name[:75].replace("\n"," "))
+              print("SHOWCASE_NAMES="+(" / ".join(safe_names[:6]) if safe_names else "NONE"))
+          print("CHECK_FINISHED=YES")
+          PY
