@@ -1,0 +1,77 @@
+name: Inspect Vimeo letterboxing for website own player
+
+on:
+  push:
+    branches: [test/vimeo-play-token-check-20261021]
+    paths: [.github/workflows/vimeo-video-letterbox.yml]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  video-source-geometry:
+    runs-on: ubuntu-latest
+    timeout-minutes: 9
+    env:
+      VIMEO_TOKEN: ${{ secrets.VIMEO_TOKEN }}
+    steps:
+      - name: Check source aspect ratio and detect embedded black borders
+        shell: bash
+        run: |
+          python - <<'PY'
+          import os, json, re, subprocess, urllib.request, urllib.parse, urllib.error
+          token=os.environ.get("VIMEO_TOKEN","").strip()
+          if not token:
+              raise SystemExit("VIMEO_TOKEN_MISSING")
+          video_id="1237352749"
+          url="https://api.vimeo.com/videos/"+video_id+"?fields="+urllib.parse.quote("uri,status,play,width,height")
+          req=urllib.request.Request(url,headers={"Authorization":"Bearer "+token,"Accept":"application/vnd.vimeo.*+json;version=3.4"})
+          try:
+              with urllib.request.urlopen(req,timeout=20) as res:
+                  video=json.loads(res.read(1000000))
+                  print("VIMEO_API_HTTP="+str(res.status))
+          except urllib.error.HTTPError as e:
+              print("VIMEO_API_HTTP="+str(e.code))
+              raise SystemExit(1)
+          print("VIMEO_STATUS="+str(video.get("status","UNKNOWN")))
+          print("VIMEO_SOURCE_DIMENSIONS="+str(video.get("width","?"))+"x"+str(video.get("height","?")))
+          play=video.get("play") or {}
+          candidates=[v for v in (play.get("progressive") or []) if isinstance(v,dict) and str(v.get("link","")).startswith("https://")]
+          candidates.sort(key=lambda f:abs(int(f.get("height") or 0)-720))
+          if not candidates:
+              print("NO_PROGRESSIVE_VIDEO_FOR_SAMPLE=YES")
+              raise SystemExit(0)
+          stream_url=candidates[0]["link"]
+          try:
+              p=subprocess.run(["ffprobe","-v","error","-select_streams","v:0","-show_entries","stream=width,height,sample_aspect_ratio,display_aspect_ratio","-of","json",stream_url],
+                  capture_output=True,text=True,timeout=45)
+              info=json.loads(p.stdout or "{}")
+              source=(info.get("streams") or [{}])[0]
+              width=int(source.get("width") or 0)
+              height=int(source.get("height") or 0)
+              print("MP4_ENCODED_WIDTH="+str(width))
+              print("MP4_ENCODED_HEIGHT="+str(height))
+              print("MP4_DISPLAY_RATIO="+str(source.get("display_aspect_ratio","MISSING")))
+          except Exception:
+              print("MP4_PROBE_FAILED=YES")
+              raise SystemExit(0)
+          for second in (60,900):
+              cmd=["ffmpeg","-nostdin","-hide_banner","-loglevel","info",
+                   "-ss",str(second),"-i",stream_url,"-an",
+                   "-vf","fps=2,cropdetect=limit=0.08:round=2:reset=0",
+                   "-frames:v","14","-f","null","-"]
+              try:
+                  p=subprocess.run(cmd,capture_output=True,text=True,timeout=85)
+                  # Never print signed URLs, token, or raw ffmpeg log.
+                  crops=re.findall(r"crop=(\d+):(\d+):(\d+):(\d+)",p.stderr)
+                  last=crops[-1] if crops else None
+                  print("FRAME_SAMPLE_"+str(second)+"_DECODE_OK="+str(p.returncode==0).upper())
+                  print("FRAME_SAMPLE_"+str(second)+"_CROP_BOX="+("x".join(last) if last else "UNAVAILABLE"))
+                  if last and width and height:
+                      cw,ch,cx,cy=map(int,last)
+                      print("FRAME_SAMPLE_"+str(second)+"_PICTURE_FRACTION="+str(round(cw/width,3))+"x"+str(round(ch/height,3)))
+              except Exception:
+                  print("FRAME_SAMPLE_"+str(second)+"_STATUS=TIMEOUT_OR_ERROR")
+          print("BLACK_BORDER_INSPECTION_COMPLETE=YES")
+          PY
