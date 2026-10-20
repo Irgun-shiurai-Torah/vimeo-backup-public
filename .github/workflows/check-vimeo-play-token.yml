@@ -1,0 +1,107 @@
+name: Vimeo recorded play link permission check
+
+on:
+  push:
+    branches: [test/vimeo-play-token-check-20261021]
+    paths: [.github/workflows/check-vimeo-play-token.yml]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  read-only-vimeo-video-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      VIMEO_TOKEN: ${{ secrets.VIMEO_TOKEN }}
+    steps:
+      - name: Check token scopes and recorded video playback availability
+        shell: bash
+        run: |
+          python - <<'PY'
+          import os, json, re, sys, urllib.request, urllib.error
+          from urllib.parse import urlencode
+
+          token=os.environ.get("VIMEO_TOKEN","").strip()
+          if not token:
+              print("TOKEN_CONFIGURED=NO")
+              sys.exit(2)
+          print("TOKEN_CONFIGURED=YES")
+          headers={"Authorization":"Bearer "+token,"Accept":"application/vnd.vimeo.*+json;version=3.4"}
+
+          def request(path, params=None):
+              url="https://api.vimeo.com"+path
+              if params: url+="?"+urlencode(params)
+              try:
+                  with urllib.request.urlopen(urllib.request.Request(url,headers=headers),timeout=20) as resp:
+                      content=resp.read(2_000_000)
+                      return resp.status,json.loads(content)
+              except urllib.error.HTTPError as err:
+                  return err.code,{}
+              except Exception:
+                  return 0,{}
+
+          verify_status,verify=request("/oauth/verify")
+          print("TOKEN_VERIFY_HTTP="+str(verify_status))
+          raw_scopes=verify.get("scope",verify.get("scopes",[]))
+          if isinstance(raw_scopes,str): scopes=set(raw_scopes.replace(","," ").split())
+          elif isinstance(raw_scopes,list): scopes=set(raw_scopes)
+          else: scopes=set()
+          if scopes:
+              print("HAS_PUBLIC_SCOPE="+str("public" in scopes).upper())
+              print("HAS_PRIVATE_SCOPE="+str("private" in scopes).upper())
+              print("HAS_VIDEO_FILES_SCOPE="+str("video_files" in scopes).upper())
+          else:
+              print("SCOPES_NOT_RETURNED_BY_VERIFY=YES")
+
+          # Only inspect recordings already owned by the account.
+          ids=[]
+          code,data=request("/me/videos",{"fields":"uri","per_page":5})
+          print("OWN_VIDEOS_HTTP="+str(code))
+          for row in data.get("data",[]) if isinstance(data,dict) else []:
+              uri=str(row.get("uri",""))
+              m=re.fullmatch(r"/videos/(\d+)",uri)
+              if m: ids.append(m.group(1))
+          if not ids:
+              code,albums=request("/me/albums",{"fields":"uri","per_page":5})
+              print("OWN_ALBUMS_HTTP="+str(code))
+              for album in albums.get("data",[]) if isinstance(albums,dict) else []:
+                  uri=str(album.get("uri",""))
+                  m=re.fullmatch(r"/(?:me/)?albums/(\d+)",uri)
+                  if not m: continue
+                  c,v=request("/albums/"+m.group(1)+"/videos",{"fields":"uri","per_page":5})
+                  if c!=200:continue
+                  for row in v.get("data",[]):
+                      vm=re.fullmatch(r"/videos/(\d+)",str(row.get("uri","")))
+                      if vm:ids.append(vm.group(1))
+                  if ids:break
+          print("OWN_RECORDED_VIDEOS_FOUND="+str(bool(ids)).upper())
+
+          seen=0
+          hls=False
+          mp4=False
+          video_http=[]
+          for video_id in dict.fromkeys(ids):
+              if seen>=3:break
+              status,item=request("/videos/"+video_id,{"fields":"uri,play"})
+              seen+=1
+              video_http.append(status)
+              play=item.get("play") or {}
+              hls_item=play.get("hls") or {}
+              if isinstance(hls_item,dict) and isinstance(hls_item.get("link"),str) and hls_item["link"].startswith("https://"):
+                  hls=True
+              if any(isinstance(x,dict) and str(x.get("link","")).startswith("https://") for x in (play.get("progressive") or [])):
+                  mp4=True
+              # Never log the token, IDs, titles, expiring links or Vimeo's raw JSON.
+              if hls: break
+          print("RECORDINGS_CHECKED="+str(seen))
+          print("VIDEO_API_HTTP_CODES="+",".join(map(str,video_http)))
+          print("RECORDED_HLS_PLAY_LINK="+("YES" if hls else "NO"))
+          print("RECORDED_MP4_PLAY_LINK="+("YES" if mp4 else "NO"))
+          if hls:
+              print("RESULT=RECORDED_HLS_LINK_AVAILABLE_FOR_THIS_GITHUB_SECRET")
+              sys.exit(0)
+          print("RESULT=RECORDED_HLS_LINK_NOT_VERIFIED_FOR_THIS_GITHUB_SECRET")
+          sys.exit(1)
+          PY
