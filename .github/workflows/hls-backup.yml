@@ -74,6 +74,7 @@ jobs:
           INPUT_MAX_ITEMS: ${{ github.event.inputs.max_items }}
           INPUT_VIDEO_ID: ${{ github.event.inputs.video_id }}
           INPUT_FORCE_REBUILD: ${{ github.event.inputs.force_rebuild }}
+          VIMEO_ONLY_TEST_IDS: "1237352749"
         run: |
           MAX_ITEMS="${INPUT_MAX_ITEMS:-15}"
           VIDEO_ID="${INPUT_VIDEO_ID:-}"
@@ -135,4 +136,5 @@ jobs:
           HLS_SOURCE_MODE: drive
           IRGUN_DRIVE_VIDEO_ROOT_ID: 1U3Ol_y5tKP7AY_1imhfiORz6-ZuAMPIJ
           HLS_MAX_ITEMS_PER_RUN: "1"
+          VIMEO_ONLY_TEST_IDS: "1237352749"
         run: python -u hls_backup.py
