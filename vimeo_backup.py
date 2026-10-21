@@ -93,6 +93,13 @@ VIDEO_MAP_FILE = os.path.join(BASE_FOLDER, "video-map.json")
 AUDIO_MAP_FILE = os.path.join(BASE_FOLDER, "audio-map.json")
 DOWNLOAD_MAP_FILE = os.path.join(BASE_FOLDER, "download-map.json")
 
+# Temporary exception for a deliberately Vimeo-only website/app playback test.
+VIMEO_ONLY_TEST_IDS = {
+    item.strip()
+    for item in os.environ.get("VIMEO_ONLY_TEST_IDS", "").split(",")
+    if item.strip()
+}
+
 
 # ==============================
 # GOOGLE DRIVE HELPERS
@@ -257,6 +264,17 @@ elif drive_audio_map:
     audio_map = drive_audio_map
     print("Drive audios loaded:", len(audio_map))
     print("Total audios mapped after sync:", len(audio_map))
+
+# Clear stale Drive mappings before rebuilding download-map.json. Do not
+# recreate backups for test IDs until the exception is explicitly removed.
+if VIMEO_ONLY_TEST_IDS:
+    for label, entries in (("video", video_map), ("audio", audio_map)):
+        before = len(entries)
+        entries[:] = [
+            entry for entry in entries
+            if str(entry.get("vimeoId", "")).strip() not in VIMEO_ONLY_TEST_IDS
+        ]
+        print(f"Vimeo-only test: excluded {before - len(entries)} {label} map entries")
 
 # O(1) map lookups. With thousands of shiurim, repeatedly scanning the full
 # video/audio arrays for every Vimeo item adds unnecessary runtime.
@@ -477,6 +495,10 @@ def download_video(video, folder, showcase_id=None):
 
     if not video_id:
         raise RuntimeError("Vimeo video is missing an ID")
+
+    if video_id in VIMEO_ONLY_TEST_IDS:
+        print(f"Vimeo-only test: not downloading {video_id} to Drive")
+        return
 
     # Original special-case behavior retained.
     if showcase_id == "11777050" and title.startswith("IST-SF7"):

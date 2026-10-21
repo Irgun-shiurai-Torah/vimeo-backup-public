@@ -11,6 +11,8 @@ if SOURCE_MODE not in ('vimeo','drive'): raise ValueError('HLS_SOURCE_MODE must 
 if SOURCE_MODE=='drive' and not DRIVE_VIDEO_ROOT_ID: raise ValueError('IRGUN_DRIVE_VIDEO_ROOT_ID is required in drive mode')
 MAX=max(1,int(os.getenv('HLS_MAX_ITEMS_PER_RUN','1') or '1'))
 ONLY=str(os.getenv('HLS_ONLY_VIDEO_ID','') or '').strip()
+# A temporary Vimeo-only test must not get re-HLS-encoded after map cleanup.
+VIMEO_ONLY_TEST_IDS={v.strip() for v in os.getenv('VIMEO_ONLY_TEST_IDS','').split(',') if v.strip()}
 FORCE=str(os.getenv('HLS_FORCE_REBUILD','0'))=='1'
 SEG=6; ABR=96; DRIVE_RETRIES=10; DRIVE_CHUNK=16*1024*1024
 ENCODER_PRESET=str(os.getenv('HLS_ENCODER_PRESET','superfast') or 'superfast').strip()
@@ -205,12 +207,18 @@ video_map=read_json(VIDEO_MAP,maps,None)
 if not isinstance(video_map,list):raise RuntimeError('Existing video-map.json missing/invalid')
 hls_map=read_json(HLS_MAP,maps,[])
 if not isinstance(hls_map,list):hls_map=[]
+if VIMEO_ONLY_TEST_IDS:
+    retained=[x for x in hls_map if str(x.get('vimeoId') or '').strip() not in VIMEO_ONLY_TEST_IDS]
+    if len(retained)!=len(hls_map):
+        log('Vimeo-only test: removing',len(hls_map)-len(retained),'stale HLS map entries')
+        hls_map=retained
+        save_map(hls_map,maps)
 idx={str(x.get('vimeoId') or ''):x for x in hls_map}
 drive_videos=drive_video_entries(DRIVE_VIDEO_ROOT_ID) if SOURCE_MODE=='drive' else []
 pending=[]
 for x in (drive_videos if SOURCE_MODE=='drive' else reversed(video_map)):
     vid=str(x.get('vimeoId') or '').strip(); drive_id=str(x.get('videoDriveId') or '').strip()
-    if not vid or not drive_id or (ONLY and vid!=ONLY):continue
+    if not vid or vid in VIMEO_ONLY_TEST_IDS or not drive_id or (ONLY and vid!=ONLY):continue
     if not FORCE and idx.get(vid,{}).get('masterDriveId') and (
         SOURCE_MODE!='drive' or idx[vid].get('sourceModified')==x.get('sourceModified')
     ):continue
