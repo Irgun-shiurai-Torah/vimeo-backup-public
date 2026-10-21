@@ -58,4 +58,5 @@ jobs:
       - name: Run Vimeo Backup
         env:
           VIMEO_TOKEN: ${{ secrets.VIMEO_TOKEN }}
+          VIMEO_ONLY_TEST_IDS: "1237352749"
         run: python -u vimeo_backup.py
