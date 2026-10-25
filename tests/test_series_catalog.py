@@ -10,6 +10,21 @@ def source(name, file_id, year="5787", speaker="Rabbi Meilech Biderman", modifie
 
 
 class SeriesCatalogTests(unittest.TestCase):
+    def test_speaker_folders_include_empty_and_exclude_system(self):
+        from series_drive import SeriesDrive, FOLDER_MIME, SERIES_ROOT_ID
+        drive=SeriesDrive.__new__(SeriesDrive)
+        def children(parent):
+            self.assertEqual(parent,SERIES_ROOT_ID)
+            return [
+                {"name":"Rabbi B","mimeType":FOLDER_MIME,"id":"folder-b"},
+                {"name":"Rabbi A","mimeType":FOLDER_MIME,"id":"folder-a"},
+                {"name":"_System","mimeType":FOLDER_MIME,"id":"folder-private"},
+                {"name":"_Pending","mimeType":FOLDER_MIME,"id":"folder-upload"},
+                {"name":"test.mp3","mimeType":"audio/mpeg","id":"not-a-folder"}
+            ]
+        drive.children=children
+        self.assertEqual(drive.list_speaker_folders(),["Rabbi A","Rabbi B"])
+
     def test_actual_hebrew_mp3_test_file(self):
         pub, private = build_maps(
             [source("\u202aר' מיילך בידרמן ליל שישי לך לך תשפ-ז.mp3", "internal-drive-id")],
