@@ -26,6 +26,7 @@ from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 
 from series_media import make_hls, make_mp3, make_poster, probe, quality_ladder
+from dropbox_media_policy import is_excluded_nonlecture
 
 VIDEO_EXT = {".mp4", ".mov", ".m4v", ".mts", ".m2ts", ".mkv", ".avi",
              ".webm", ".wmv", ".mpg", ".mpeg", ".ts"}
@@ -379,6 +380,11 @@ def run(mode="scan", max_files=1, only_id="", source_label="", min_video_bytes=0
     for source in sources:
         count, items = api.list_tree(source)
         folders += count
+        excluded = [item for item in items if is_excluded_nonlecture(source, item)]
+        items = [item for item in items if not is_excluded_nonlecture(source, item)]
+        if excluded:
+            print(f"Excluded {len(excluded)} non-lecture file(s) in the "
+                  f"Shinyev Yurtziet collection", flush=True)
         scanned.extend((source, item) for item in items)
         print(f"Dropbox source '{source['label']}': {count} folder(s), "
               f"{sum(item['kind'] == 'video' for item in items)} video(s), "

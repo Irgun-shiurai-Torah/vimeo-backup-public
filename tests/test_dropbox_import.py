@@ -3,7 +3,7 @@ import os
 import unittest
 from unittest.mock import patch
 
-from dropbox_import import sources_from_env, source_id, file_id, check_drive_headroom
+from dropbox_import import sources_from_env, source_id, file_id, check_drive_headroom, is_excluded_nonlecture
 
 
 class SharedLinksTest(unittest.TestCase):
@@ -124,6 +124,34 @@ class SharedLinksTest(unittest.TestCase):
         self.assertIn("--reserve-gib 50", workflow)
         self.assertIn("--max-source-bytes 750000000", workflow)
         self.assertNotIn("secrets.DROPBOX_SHARED_LINK", workflow)
+
+    def test_goldhirsch_shinyev_occasion_is_not_ingested(self):
+        goldhirsch = {"label": "Reb Yitzchok Ahron Goldhirsch"}
+        self.assertTrue(is_excluded_nonlecture(goldhirsch,
+            {"path": "/Shinyev Yurtziet/MovaviClips_Video_20250114.mp4"}))
+        self.assertFalse(is_excluded_nonlecture(goldhirsch,
+            {"path": "/Parshas Bereishis/Lecture.mp4"}))
+        self.assertFalse(is_excluded_nonlecture(
+            {"label": "Reb Mielech - Leil Shishi"},
+            {"path": "/Shinyev Yurtziet/Other Lecture.mp4"}))
+
+    def test_scan_filters_excluded_occasion_without_download(self):
+        from dropbox_import import run
+        source = {"id": "dbx-test", "label": "Reb Yitzchok Ahron Goldhirsch",
+                  "url": self.URL, "password": ""}
+        entries = [
+            {"id": "id:occasion", "path": "/Shinyev Yurtziet/Clip.mp4",
+             "name": "Clip.mp4", "size": 90000000, "rev": "r1", "kind": "video"},
+            {"id": "id:lecture", "path": "/Parsha/Lecture.mp4",
+             "name": "Lecture.mp4", "size": 120000000, "rev": "r2", "kind": "video"}
+        ]
+        with patch("dropbox_import.sources_from_env", return_value=[source]), \
+             patch("dropbox_import.DropboxLinks") as dbx, \
+             patch("dropbox_import.DriveStore") as drive:
+            dbx.return_value.list_tree.return_value = (2, entries)
+            run(mode="scan", source_label=source["label"])
+            dbx.return_value.download.assert_not_called()
+            drive.assert_not_called()
 
     def test_deterministic_media_id(self):
         item = {"id": "id:example", "path": "/Year/Lecture.mov"}
