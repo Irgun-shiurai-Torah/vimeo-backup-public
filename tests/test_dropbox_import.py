@@ -46,7 +46,7 @@ class SharedLinksTest(unittest.TestCase):
         import json
         with self.assertRaises(ValueError):
             sources_from_env({"DROPBOX_SOURCES_JSON": json.dumps([
-                {"url": self.URL, "label": "Bad\\nLabel"}])})
+                {"url": self.URL, "label": "Bad" + chr(10) + "Label"}])})
 
     def test_reject_non_dropbox(self):
         with self.assertRaises(ValueError):
