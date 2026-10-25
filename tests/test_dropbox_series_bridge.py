@@ -69,8 +69,40 @@ class ApprovedDropboxBridgeTest(unittest.TestCase):
         self.assertEqual(m["year"], 5782)
         self.assertEqual(m["speaker"], "Rabbi Meilech Biderman")
         self.assertIn("Clip 4", m["title"])
+        self.assertIn("סוכות", m["title"])
         self.assertIn("בית שמש", m["title"])
         self.assertEqual(m["series"], "Short Word for Shabbos")
+
+    def test_biderman_sukkot_folder_typo_is_corrected_and_indexed(self):
+        video = {
+            **self.video(),
+            "sourceLabel": "Reb Mielech - Short Word for Shabbos",
+            "sourcePath": "/סיכות תשפ-ב/בית שמש/00004.MTS",
+        }
+        reviewed = automatic_metadata(video)
+        self.assertEqual(reviewed["title"], "סוכות תשפ-ב — בית שמש (Clip 4)")
+        self.assertEqual(reviewed["year"], 5782)
+        public, private = merge_approved_dropbox(
+            *self.catalog(), {"version": 1, "items": {self.MEDIA_ID: video}})
+        self.assertEqual(len(public["items"]), 1)
+        self.assertEqual(public["items"][0]["holiday"], "Sukkot")
+        self.assertEqual(private["items"][0]["holiday"], "Sukkot")
+        self.assertEqual(public["items"][0]["id"], private["items"][0]["id"])
+        self.assertEqual(public["items"][0]["speaker"], "Rabbi Meilech Biderman")
+        self.assertNotIn("sourcePath", public["items"][0])
+        self.assertNotIn("originalDriveId", public["items"][0])
+
+    def test_similar_sukkot_typo_elsewhere_is_not_silently_reclassified(self):
+        video = {
+            **self.video(),
+            "sourceLabel": "Reb Nachum Cohen",
+            "sourcePath": "/סיכות תשפ-ב/בית שמש/00004.MTS",
+        }
+        reviewed = automatic_metadata(video)
+        self.assertTrue(reviewed["title"].startswith("סיכות"))
+        public, _ = merge_approved_dropbox(
+            *self.catalog(), {"version": 1, "items": {self.MEDIA_ID: video}})
+        self.assertIsNone(public["items"][0]["holiday"])
 
     def test_hebrew_years_are_parsed_not_guessed(self):
         self.assertEqual(hebrew_year_from_path("/פרשת ויחי תשפ״ו/file.mp4"), 5786)
