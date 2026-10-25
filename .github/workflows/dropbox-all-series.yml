@@ -1,0 +1,80 @@
+name: Dropbox shiurim import for test Series
+
+on:
+  schedule:
+    # Process completed new files in small, renewable batches.
+    - cron: "17 */4 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: irgun-dropbox-shared-link-import
+  cancel-in-progress: false
+
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install FFmpeg and Google Drive dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+          python -m pip install google-api-python-client google-auth google-auth-httplib2
+      - name: Confirm approved source list and import safety
+        env:
+          DROPBOX_SOURCES_JSON: ${{ secrets.DROPBOX_SOURCES_JSON }}
+        run: |
+          test -n "$DROPBOX_SOURCES_JSON" || {
+            echo "::error::DROPBOX_SOURCES_JSON is missing; no fallback to the trial link."
+            exit 1
+          }
+          python -m py_compile dropbox_import.py dropbox_series_bridge.py
+          python -m unittest discover -s tests -p 'test_dropbox_import.py' -v
+          python -m unittest discover -s tests -p 'test_dropbox_series_bridge.py' -v
+      - name: Import one pending file per speaker collection
+        env:
+          DROPBOX_APP_KEY: ${{ secrets.DROPBOX_APP_KEY }}
+          DROPBOX_APP_SECRET: ${{ secrets.DROPBOX_APP_SECRET }}
+          DROPBOX_SOURCES_JSON: ${{ secrets.DROPBOX_SOURCES_JSON }}
+          GOOGLE_TOKEN_JSON: ${{ secrets.GOOGLE_TOKEN_JSON }}
+        shell: bash
+        run: |
+          set -uo pipefail
+          # Order rotates to give every collection a chance if a very long
+          # conversion approaches the GitHub runner execution limit.
+          sources=(
+            'Reb Gamliel Rabinowitz'
+            'Reb Nachum Cohen'
+            'Reb Yitzchok Ahron Goldhirsch'
+            'Reb Mielech - Leil Shishi'
+            'Reb Mielech - Short Word for Shabbos'
+          )
+          slot=$(( (10#$(date -u +%H) / 4) % ${#sources[@]} ))
+          failed=0
+          for ((i=0;i<${#sources[@]};i++)); do
+            index=$(( (slot + i) % ${#sources[@]} ))
+            label="${sources[index]}"
+            echo "::group::Dropbox import: $label"
+            if python -u dropbox_import.py --mode import \
+              --source-label "$label" --max-files 1 \
+              --max-source-bytes 2200000000 --reserve-gib 50; then
+              echo "::notice::Completed a safe Dropbox batch for $label."
+            else
+              echo "::error::Dropbox import paused or failed for $label. Other sources continue."
+              failed=$((failed + 1))
+            fi
+            echo "::endgroup::"
+          done
+          if [ "$failed" -ne 0 ]; then
+            echo "$failed collection(s) require follow-up."
+            exit 1
+          fi
+          echo "Finished private Drive imports. The hourly TEST Series scanner will"
+          echo "automatically publish complete eligible shiurim; admins can hide any item."
