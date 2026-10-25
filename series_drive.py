@@ -121,6 +121,36 @@ class SeriesDrive:
         return self.api.files().create(body={"name": name,"parents":[folder_id]},
                                        media_body=media,fields="id").execute(num_retries=5)["id"]
 
+    def read_dropbox_import_map(self):
+        """Find the private Dropbox staging map; never expose it as GitHub JSON.
+
+        Absence means no Dropbox integration has been configured. Duplicate
+        staging folders are ambiguous and must not be guessed or merged.
+        """
+        name = "IST Dropbox Imports (Private)"
+        query = "name = '" + name.replace("'", "\\'") + "' and mimeType = '" + FOLDER_MIME + "' and trashed = false"
+        rows = self.api.files().list(
+            q=query, fields="nextPageToken,files(id,name,mimeType)", pageSize=100,
+            supportsAllDrives=True, includeItemsFromAllDrives=True
+        ).execute(num_retries=5).get("files", [])
+        if len(rows) > 1:
+            raise RuntimeError("Ambiguous private Dropbox staging folders")
+        if not rows:
+            return None
+        maps = self.find(rows[0]["id"], "Maps")
+        if not maps or maps.get("mimeType") != FOLDER_MIME:
+            return None
+        file = self.find(maps["id"], "dropbox-private-map.json")
+        if not file:
+            return None
+        if file.get("mimeType") != "application/json":
+            raise RuntimeError("Private Dropbox staging map is not JSON")
+        raw = self.api.files().get_media(fileId=file["id"]).execute(num_retries=5)
+        parsed = json.loads(raw.decode("utf-8") if isinstance(raw, bytes) else raw)
+        if not isinstance(parsed, dict):
+            raise RuntimeError("Private Dropbox staging map is invalid")
+        return parsed
+
     def download(self, file_id, path):
         req = self.api.files().get_media(fileId=file_id)
         with open(path, "wb") as out:
