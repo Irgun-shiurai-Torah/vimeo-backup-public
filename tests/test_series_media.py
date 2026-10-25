@@ -28,6 +28,35 @@ class SeriesMediaTests(unittest.TestCase):
         changed,_=build_maps([source(modified="2026-10-26T00:00:00Z")],private)
         self.assertFalse(changed["items"][0]["audioReady"])
 
+    def test_audio_published_before_hls_encoding(self):
+        from unittest.mock import patch
+        from series_media import encode_video
+        sequence=[]
+        class FakeDrive:
+            def folder(self,parent,name):return "staging-output"
+            def download(self,fid,path):
+                pathlib.Path(path).write_bytes(b"fake-video")
+            def upload(self,path,parent,name,mime):
+                sequence.append("upload:"+name)
+                return "id-"+name
+        item={"id":"series-"+"a"*24,"videoDriveId":"source-video","videoFilename":"lesson.MTS",
+              "audioDriveId":None,"generated":{}}
+        def audio_created(info):
+            self.assertIn("audioDriveId",info)
+            sequence.append("audio-published")
+        def encode_hls(_source,_destination,_quality):
+            self.assertIn("audio-published",sequence)
+            sequence.append("hls-encoded")
+            return "/tmp/master.m3u8"
+        with patch("series_media.probe",return_value=({"width":640,"height":360},True,3)), \
+             patch("series_media.make_mp3",return_value="/tmp/audio.mp3"), \
+             patch("series_media.make_poster",return_value="/tmp/poster.jpg"), \
+             patch("series_media.make_hls",side_effect=encode_hls):
+            result=encode_video(FakeDrive(),item,"output-root",audio_created)
+        self.assertLess(sequence.index("audio-published"),sequence.index("hls-encoded"))
+        self.assertEqual(result["audioDriveId"],"id-audio.mp3")
+        self.assertIn("masterDriveId",result["hls"])
+
     def test_ladder_never_upscales(self):
         self.assertEqual([r["height"] for r in quality_ladder(1920,1080)],[360,480,720,1080])
         self.assertEqual([r["height"] for r in quality_ladder(1280,720)],[360,480,720])
