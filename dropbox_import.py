@@ -365,6 +365,15 @@ def check_drive_headroom(store, media_size, reserve_gib):
                            "automatic import paused without deleting anything")
 
 
+def is_excluded_nonlecture(source, item):
+    """Don't ingest the Goldhirsch Shinyev Yurtziet occasion as a lecture."""
+    if source.get("label") != "Reb Yitzchok Ahron Goldhirsch":
+        return False
+    path = str(item.get("path") or "").replace("\\", "/").casefold()
+    first_folder = path.strip("/").split("/", 1)[0].strip()
+    return first_folder in {"shinyev yurtziet", "shinyev yahrzeit"}
+
+
 def run(mode="scan", max_files=1, only_id="", source_label="", min_video_bytes=0,
         max_source_bytes=0, reserve_gib=0):
     sources = sources_from_env()
@@ -379,6 +388,11 @@ def run(mode="scan", max_files=1, only_id="", source_label="", min_video_bytes=0
     for source in sources:
         count, items = api.list_tree(source)
         folders += count
+        excluded = [item for item in items if is_excluded_nonlecture(source, item)]
+        items = [item for item in items if not is_excluded_nonlecture(source, item)]
+        if excluded:
+            print(f"Excluded {len(excluded)} non-lecture file(s) in the "
+                  f"Shinyev Yurtziet collection", flush=True)
         scanned.extend((source, item) for item in items)
         print(f"Dropbox source '{source['label']}': {count} folder(s), "
               f"{sum(item['kind'] == 'video' for item in items)} video(s), "
