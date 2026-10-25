@@ -1,0 +1,31 @@
+name: Test Series audio and HLS conversion
+
+on:
+  pull_request:
+    paths:
+      - 'series_media.py'
+      - 'series_catalog.py'
+      - 'tests/test_series_media.py'
+      - '.github/workflows/series-media.yml'
+      - '.github/workflows/test-series-media.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install FFmpeg and Google client dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+          pip install google-api-python-client google-auth google-auth-httplib2
+      - run: python -m py_compile series_catalog.py series_drive.py series_ingest.py series_media.py
+      - run: python -m unittest discover -s tests -p 'test_series_catalog.py' -v
+      - run: python -m unittest discover -s tests -p 'test_series_media.py' -v
