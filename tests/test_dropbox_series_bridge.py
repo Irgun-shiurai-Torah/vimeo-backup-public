@@ -2,7 +2,7 @@
 import json
 import unittest
 
-from dropbox_series_bridge import merge_approved_dropbox, series_id
+from dropbox_series_bridge import merge_approved_dropbox, parshas_from_title, series_id
 
 
 class ApprovedDropboxBridgeTest(unittest.TestCase):
@@ -126,6 +126,35 @@ class ApprovedDropboxBridgeTest(unittest.TestCase):
         self.assertTrue(pub["items"][0]["audioReady"])
         self.assertIsNone(priv["items"][0]["videoDriveId"])
         self.assertEqual(priv["items"][0]["audioDriveId"], "o" * 24)
+
+    def test_explicit_two_parshas_are_one_shiur_in_both_categories(self):
+        title = "נשא (חול) - בהעלותך תשפ-ג"
+        self.assertEqual(parshas_from_title(title), ["Nasso", "Beha'alotcha"])
+        source = {
+            **self.video(), "approved": True,
+            "sourcePath": "/נשא (חול) - בהעלותך תשפ-ג/with subtitles.mp4",
+            "approvedMetadata": {
+                "speaker": "Reb Gamliel Rabinowitz", "title": title,
+                "year": 5783, "parsha": "Beha'alotcha",
+            }
+        }
+        public, private = merge_approved_dropbox(
+            *self.catalog(), {"version": 1, "items": {self.MEDIA_ID: source}})
+        self.assertEqual(len(public["items"]), 1)
+        self.assertEqual(len(private["items"]), 1)
+        item = public["items"][0]
+        self.assertEqual(item["parsha"], "Nasso")
+        self.assertEqual(item["parshas"], ["Nasso", "Beha'alotcha"])
+        self.assertEqual(private["items"][0]["parshas"], item["parshas"])
+        self.assertEqual(
+            sum("Nasso" in entry["parshas"] for entry in public["items"]), 1)
+        self.assertEqual(
+            sum("Beha'alotcha" in entry["parshas"] for entry in public["items"]), 1)
+
+    def test_single_parsha_and_non_parsha_titles_do_not_create_extra_tags(self):
+        self.assertEqual(parshas_from_title("נשא תשפ-ג"), ["Nasso"])
+        self.assertEqual(parshas_from_title("Ordinary Thursday lecture"), [])
+        self.assertEqual(parshas_from_title("נשא - נשא"), ["Nasso"])
 
     def test_stable_series_ids(self):
         self.assertEqual(series_id(self.MEDIA_ID), series_id(self.MEDIA_ID))
