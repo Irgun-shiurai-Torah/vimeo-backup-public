@@ -56,7 +56,6 @@ class SeriesMediaTests(unittest.TestCase):
             result=encode_video(FakeDrive(),item,"output-root",audio_created)
         self.assertNotIn("upload:preview.mp4",sequence)
         self.assertLess(sequence.index("audio-published"),sequence.index("hls-encoded"))
-        self.assertLess(sequence.index("upload:preview.mp4"),sequence.index("hls-encoded"))
         self.assertEqual(result["audioDriveId"],"id-audio.mp3")
         self.assertIn("masterDriveId",result["hls"])
 
