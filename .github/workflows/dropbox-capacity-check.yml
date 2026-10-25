@@ -1,0 +1,32 @@
+name: Confirm Drive capacity for Biderman private imports
+
+on:
+  push:
+    branches: [feature/dropbox-samples-biderman-priority]
+    paths: [.github/workflows/dropbox-capacity-check.yml]
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    if: ${{ github.event.head_commit.message == 'CHECK_DRIVE_CAPACITY' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install google-api-python-client google-auth google-auth-httplib2
+      - name: Check storage reserve without downloading Dropbox files
+        env:
+          GOOGLE_TOKEN_JSON: ${{ secrets.GOOGLE_TOKEN_JSON }}
+        run: |
+          python - <<'PY'
+          import os
+          from dropbox_import import DriveStore, check_drive_headroom
+          store=DriveStore(os.environ["GOOGLE_TOKEN_JSON"])
+          check_drive_headroom(store, 750_000_000, 50)
+          print("PASS: Drive has the configured quota reserve for cautious Biderman imports.")
+          PY
