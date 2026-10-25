@@ -2,7 +2,7 @@
   "version": 1,
   "library": "series",
   "mode": "staging",
-  "generatedAt": "2026-10-25T08:26:38.212638Z",
+  "generatedAt": "2026-10-25T08:30:22.822398Z",
   "items": [
     {
       "id": "series-cf5cca1156bd9f672f89f3a7",
@@ -17,6 +17,8 @@
       "audioReady": true,
       "videoReady": true,
       "hlsReady": true,
+      "previewReady": true,
+      "posterReady": true,
       "audioFormat": "mp3",
       "mediaType": "video",
       "status": "ready",
@@ -32,7 +34,6 @@
     }
   ],
   "speakers": [
-    "Rabbi Meilech Biderman",
-    "Test"
+    "Rabbi Meilech Biderman"
   ]
 }
