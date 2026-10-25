@@ -119,6 +119,11 @@ def match_topic(title, aliases):
     for alias, key in options:
         if alias and (" " + alias + " ") in normalized:
             return key
+        # Hebrew titles commonly attach one/two prepositions directly to the
+        # holiday name, e.g. לפורים or בחנוכה; require a full-token match.
+        if alias and " " not in alias and re.fullmatch(r"[\u0590-\u05ff]+", alias):
+            if re.search(r"(?<!\\S)[בלמהוכש]{1,2}" + re.escape(alias) + r"(?!\\S)", normalized):
+                return key
     return None
 
 def lecture_id(speaker, year, key):
