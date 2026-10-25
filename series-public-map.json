@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "library": "series",
+  "mode": "staging",
+  "generatedAt": "2026-10-25T00:46:43.269223Z",
+  "items": [
+    {
+      "id": "series-cf5cca1156bd9f672f89f3a7",
+      "library": "series",
+      "speaker": "Rabbi Meilech Biderman",
+      "year": 5787,
+      "title": "ר' מיילך בידרמן ליל שישי לך לך תשפ-ז",
+      "parsha": "Lech-Lecha",
+      "holiday": null,
+      "hasAudio": true,
+      "hasVideo": false,
+      "audioReady": true,
+      "videoReady": false,
+      "mediaType": "audio",
+      "status": "ready",
+      "created": "2026-10-25T00:16:52.514Z",
+      "sourceModified": "2026-10-24T23:40:52.474Z",
+      "originalFilename": "ר' מיילך בידרמן ליל שישי לך לך תשפ-ז.mp3",
+      "originalFormat": "mp3",
+      "audioPlaybackUrl": "/api/series/media/series-cf5cca1156bd9f672f89f3a7/audio",
+      "videoPlaybackUrl": null,
+      "originalDownloadUrl": "/api/series/media/series-cf5cca1156bd9f672f89f3a7/original",
+      "audioDownloadUrl": "/api/series/media/series-cf5cca1156bd9f672f89f3a7/audio?download=1",
+      "public": true
+    }
+  ]
+}
