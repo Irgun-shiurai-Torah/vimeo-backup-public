@@ -336,7 +336,37 @@ def check_disk(size):
                            "use a larger runner or process fewer renditions")
 
 
-def run(mode="scan", max_files=1, only_id="", source_label=""):
+def check_drive_headroom(store, media_size, reserve_gib):
+    """Fail closed before an automatic import could exhaust Drive storage.
+
+    Google Drive accounts with no defined storage limit are treated as
+    unlimited; for bounded accounts reserve the configured buffer *plus*
+    an allowance for the original recording and its HLS renditions.
+    """
+    if not reserve_gib:
+        return
+    try:
+        data = store.api.about().get(fields="storageQuota(limit,usage)").execute(num_retries=5)
+    except Exception as exc:
+        raise RuntimeError("Cannot verify Google Drive storage quota; automatic import stopped") from exc
+    quota = data.get("storageQuota") or {}
+    if not quota.get("limit"):
+        print("Drive account has no advertised storage quota limit", flush=True)
+        return
+    try:
+        remaining = int(quota["limit"]) - int(quota.get("usage") or 0)
+    except (ValueError, TypeError, OverflowError):
+        raise RuntimeError("Cannot interpret Drive quota response; automatic import stopped") from None
+    required = reserve_gib * 1024**3 + media_size * 4
+    print(f"Drive quota check: {remaining // (1024**3)} GiB remaining; "
+          f"{required // (1024**3)} GiB minimum including import allowance.", flush=True)
+    if remaining < required:
+        raise RuntimeError("Drive storage is below the configured safety reserve; "
+                           "automatic import paused without deleting anything")
+
+
+def run(mode="scan", max_files=1, only_id="", source_label="", min_video_bytes=0,
+        max_source_bytes=0, reserve_gib=0):
     sources = sources_from_env()
     if source_label:
         matches = [source for source in sources if source["label"] == source_label]
@@ -392,6 +422,21 @@ def run(mode="scan", max_files=1, only_id="", source_label=""):
         pending.append((source, item, mid))
     # Start with a small video for the first test; large recordings can follow.
     pending.sort(key=lambda pair: (pair[1]["kind"] != "video", pair[1]["size"], pair[2]))
+    if max_source_bytes:
+        before_size_limit = len(pending)
+        pending = [entry for entry in pending if entry[1]["size"] <= max_source_bytes]
+        deferred = before_size_limit - len(pending)
+        if deferred:
+            print(f"Deferred {deferred} oversized recordings for a separate "
+                  f"high-capacity import (limit {max_source_bytes} bytes).", flush=True)
+    if min_video_bytes:
+        # A first test should be a real recording, not a tiny/empty clip.
+        # Only explicit preview runs use this limit. Production remains
+        # capable of importing audio-only and short recordings.
+        pending = [entry for entry in pending if
+                   entry[1]["kind"] == "video" and entry[1]["size"] >= min_video_bytes]
+        if not pending:
+            raise RuntimeError("No unimported video meets the sample size minimum")
     if only_id:
         if only_id not in {file_id(s["id"], item) for s, item in scanned}:
             raise ValueError("Requested test file ID is not among the approved Dropbox sources")
@@ -400,11 +445,13 @@ def run(mode="scan", max_files=1, only_id="", source_label=""):
           f"processing up to {max_files}.")
     converted = 0
     for source, item, mid in pending[:max_files]:
+        check_drive_headroom(store, item["size"], reserve_gib)
         check_disk(item["size"])
         with tempfile.TemporaryDirectory(prefix="irgun-dropbox-") as tmp:
             source_name = "source" + (Path(item["name"]).suffix.lower() or ".mp4")
             media = os.path.join(tmp, source_name)
-            print(f"Importing {mid} ({item['size']} bytes; {item['kind']}).")
+            print(f"Importing {mid} ({item['size']} bytes; {item['kind']}); source: "
+                  f"{source['label']}; path: {item['path']}", flush=True)
             api.download(source, item["path"], media)
             if item["size"] and os.path.getsize(media) != item["size"]:
                 raise RuntimeError("Dropbox download size did not match folder metadata")
@@ -435,7 +482,21 @@ if __name__ == "__main__":
     parser.add_argument("--max-files", type=int, default=1)
     parser.add_argument("--only-id", default="", help="Import only this stable media ID")
     parser.add_argument("--source-label", default="", help="Restrict scan and import to one approved source label")
+    parser.add_argument("--min-video-bytes", type=int, default=0,
+                        help="For sample imports, skip tiny videos and audio-only files")
+    parser.add_argument("--max-source-bytes", type=int, default=0,
+                        help="For automatic imports, defer oversized recordings for manual review")
+    parser.add_argument("--reserve-gib", type=int, default=0,
+                        help="Minimum free Drive GiB plus a 4x recording allowance")
     args = parser.parse_args()
     if not 1 <= args.max_files <= 4:
         parser.error("--max-files must be between 1 and 4")
-    run(mode=args.mode, max_files=args.max_files, only_id=args.only_id, source_label=args.source_label)
+    if not 0 <= args.min_video_bytes <= 1000 * 1024**2:
+        parser.error("--min-video-bytes must be between 0 and 1 GiB")
+    if not 0 <= args.max_source_bytes <= 200 * 1024**3:
+        parser.error("--max-source-bytes must be between 0 and 200 GiB")
+    if not 0 <= args.reserve_gib <= 1000:
+        parser.error("--reserve-gib must be between 0 and 1000")
+    run(mode=args.mode, max_files=args.max_files, only_id=args.only_id,
+        source_label=args.source_label, min_video_bytes=args.min_video_bytes,
+        max_source_bytes=args.max_source_bytes, reserve_gib=args.reserve_gib)

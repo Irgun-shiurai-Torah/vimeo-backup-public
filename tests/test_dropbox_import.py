@@ -3,7 +3,7 @@ import os
 import unittest
 from unittest.mock import patch
 
-from dropbox_import import sources_from_env, source_id, file_id
+from dropbox_import import sources_from_env, source_id, file_id, check_drive_headroom
 
 
 class SharedLinksTest(unittest.TestCase):
@@ -88,6 +88,42 @@ class SharedLinksTest(unittest.TestCase):
             run(mode="scan", source_label="Reb Gamliel Rabinowitz")
             dropbox.return_value.list_tree.assert_called_once_with(two[0])
             drive.assert_not_called()
+
+    def test_automatic_drive_quota_reserve_is_enforced(self):
+        from unittest.mock import MagicMock
+        store = MagicMock()
+        store.api.about.return_value.get.return_value.execute.return_value = {
+            "storageQuota": {"limit": str(100 * 1024**3), "usage": str(70 * 1024**3)}}
+        with self.assertRaisesRegex(RuntimeError, "safety reserve"):
+            check_drive_headroom(store, 200_000_000, reserve_gib=50)
+        check_drive_headroom(store, 200_000_000, reserve_gib=20)
+
+    def test_unlimited_drive_quota_accepted(self):
+        from unittest.mock import MagicMock
+        store = MagicMock()
+        store.api.about.return_value.get.return_value.execute.return_value = {
+            "storageQuota": {"usage": str(70 * 1024**3)}}
+        check_drive_headroom(store, 200_000_000, reserve_gib=50)
+
+    def test_default_quota_checks_do_not_call_drive(self):
+        from unittest.mock import MagicMock
+        store = MagicMock()
+        check_drive_headroom(store, 200_000_000, reserve_gib=0)
+        store.api.about.assert_not_called()
+
+    def test_recurring_imports_are_restricted_to_biderman_only(self):
+        from pathlib import Path
+        workflow = Path(".github/workflows/dropbox-biderman-private.yml").read_text()
+        for label in ("Reb Mielech - Leil Shishi",
+                      "Reb Mielech - Short Word for Shabbos"):
+            self.assertIn(label, workflow)
+        for excluded in ("Reb Gamliel Rabinowitz", "Reb Nachum Cohen",
+                         "Reb Yitzchok Ahron Goldhirsch"):
+            self.assertNotIn("--source-label '" + excluded + "'", workflow)
+        self.assertIn("--max-files 1", workflow)
+        self.assertIn("--reserve-gib 50", workflow)
+        self.assertIn("--max-source-bytes 750000000", workflow)
+        self.assertNotIn("secrets.DROPBOX_SHARED_LINK", workflow)
 
     def test_deterministic_media_id(self):
         item = {"id": "id:example", "path": "/Year/Lecture.mov"}

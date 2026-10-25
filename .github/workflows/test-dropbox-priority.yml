@@ -1,0 +1,36 @@
+name: Check Dropbox preview and Biderman import safety
+
+on:
+  push:
+    branches: [feature/dropbox-samples-biderman-priority]
+    paths:
+      - dropbox_import.py
+      - tests/test_dropbox_import.py
+      - .github/workflows/dropbox-biderman-private.yml
+      - .github/workflows/test-dropbox-priority.yml
+  pull_request:
+    paths:
+      - dropbox_import.py
+      - tests/test_dropbox_import.py
+      - .github/workflows/dropbox-biderman-private.yml
+      - .github/workflows/test-dropbox-priority.yml
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install read-only Google Drive Python dependencies
+        run: python -m pip install google-api-python-client google-auth google-auth-httplib2
+      - name: Verify importer, source filtering and storage quota safeguards
+        run: |
+          python -m py_compile dropbox_import.py
+          python -m unittest discover -s tests -p 'test_dropbox_import.py' -v
+          python -m unittest discover -s tests -p 'test_dropbox_series_bridge.py' -v
