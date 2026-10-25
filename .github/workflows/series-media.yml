@@ -22,7 +22,9 @@ permissions:
 
 concurrency:
   group: irgun-series-test-drive-map
-  cancel-in-progress: false
+  # Only replace obsolete long-running conversions when a new converter
+  # version is published. Hourly/scheduled runs never preempt each other.
+  cancel-in-progress: ${{ github.event_name == 'push' }}
 
 jobs:
   convert:
