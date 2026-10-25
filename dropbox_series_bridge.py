@@ -12,7 +12,7 @@ import mimetypes
 import os
 import re
 
-from series_catalog import HOLIDAY_ALIASES, PARSHA_ALIASES, match_topic
+from series_catalog import HOLIDAY_ALIASES, PARSHA_ALIASES, clean_key, match_topic
 
 
 DRIVE_ID = re.compile(r"^[A-Za-z0-9_-]{10,200}$")
@@ -54,6 +54,26 @@ def reviewed_optional(meta, key, limit):
     if not isinstance(value, str) or len(value) > limit or any(ord(c) < 32 for c in value):
         raise ValueError("Invalid approved Dropbox " + key)
     return value.strip()
+
+
+def parshas_from_title(title):
+    """Find all explicitly named Parshas, in title order, without duplicates.
+
+    Unlike a combined *weekly* reading, these titles can refer to two separate
+    Parshas (e.g. 'נשא (חול) - בהעלותך'). Each should be browseable, while the
+    recording itself stays a single entry in the Series catalog.
+    """
+    normalized = clean_key(title)
+    matches = {}
+    for canonical, aliases in PARSHA_ALIASES.items():
+        for name in aliases:
+            alias = clean_key(name)
+            if not alias:
+                continue
+            found = re.search(r"(?<!\\S)" + re.escape(alias) + r"(?!\\S)", normalized)
+            if found and (canonical not in matches or found.start() < matches[canonical]):
+                matches[canonical] = found.start()
+    return [name for name, _ in sorted(matches.items(), key=lambda pair: pair[1])][:4]
 
 
 def merge_approved_dropbox(public, private, dropbox_map):
@@ -121,7 +141,17 @@ def merge_approved_dropbox(public, private, dropbox_map):
         fields = {k: reviewed_optional(reviewed, k, limit)
                   for k, limit in REVIEW_TEXT_FIELDS.items()
                   if reviewed.get(k) not in (None, "")}
-        parsha = reviewed_optional(reviewed, "parsha", 80) or match_topic(title, PARSHA_ALIASES)
+        reviewed_parsha = reviewed_optional(reviewed, "parsha", 80)
+        identified_parshas = parshas_from_title(title)
+        # If the title names multiple Parshas, index every one, even if the
+        # original review form selected only one primary Parsha.
+        if len(identified_parshas) > 1:
+            parshas = identified_parshas
+        elif reviewed_parsha:
+            parshas = [reviewed_parsha]
+        else:
+            parshas = identified_parshas
+        parsha = parshas[0] if parshas else None
         holiday = reviewed_optional(reviewed, "holiday", 80) or match_topic(title, HOLIDAY_ALIASES)
         original_id = source["originalDriveId"]
         generated = {"audioDriveId": audio_id}
@@ -132,7 +162,7 @@ def merge_approved_dropbox(public, private, dropbox_map):
 
         public_item = {
             "id": sid, "library": "series", "speaker": speaker,
-            "title": title, "year": year, "parsha": parsha, "holiday": holiday,
+            "title": title, "year": year, "parsha": parsha, "parshas": parshas, "holiday": holiday,
             "hidden": False, "hasAudio": True, "hasVideo": kind == "video",
             "audioReady": True, "videoReady": has_hls, "hlsReady": has_hls,
             "previewReady": False, "posterReady": poster_ready,
@@ -143,7 +173,7 @@ def merge_approved_dropbox(public, private, dropbox_map):
         }
         private_item = {
             "id": sid, "library": "series", "speaker": speaker,
-            "title": title, "year": year, "parsha": parsha, "holiday": holiday,
+            "title": title, "year": year, "parsha": parsha, "parshas": parshas, "holiday": holiday,
             "hidden": False, "sourceModified": source.get("sourceModified"),
             "created": source.get("generatedAt"), "originalDriveId": original_id,
             "originalFilename": filename,
