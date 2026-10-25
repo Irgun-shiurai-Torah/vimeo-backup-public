@@ -52,6 +52,22 @@ class SharedLinksTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             sources_from_env({"DROPBOX_SHARED_LINK": "https://evil.example/scl/fo/a/b"})
 
+    def test_scan_mode_does_not_touch_drive_or_downloads(self):
+        from dropbox_import import run
+        fake_source = {"id": "dbx-test", "url": self.URL,
+                       "label": "Test collection", "password": ""}
+        fake_video = {"id": "id:lecture", "path": "/inner/lecture.mov",
+                      "name": "lecture.mov", "size": 1024, "rev": "rev1",
+                      "kind": "video"}
+        with patch("dropbox_import.sources_from_env", return_value=[fake_source]), \
+             patch("dropbox_import.DropboxLinks") as dropbox, \
+             patch("dropbox_import.DriveStore") as drive:
+            dropbox.return_value.list_tree.return_value = (1, [fake_video])
+            run(mode="scan")
+            dropbox.return_value.list_tree.assert_called_once_with(fake_source)
+            dropbox.return_value.download.assert_not_called()
+            drive.assert_not_called()
+
     def test_deterministic_media_id(self):
         item = {"id": "id:example", "path": "/Year/Lecture.mov"}
         self.assertEqual(file_id("dbx-folder", item), file_id("dbx-folder", item))
