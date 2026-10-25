@@ -206,7 +206,8 @@ def build_maps(source_files, previous_private=None, generated_at=None):
         generated = (old.get("generated", {}) if old and (old_video or (not video and old_audio)) else {})
         has_audio = bool(audio or generated.get("audioDriveId"))
         hls = generated.get("hls", {}) if isinstance(generated.get("hls", {}), dict) else {}
-        is_video_playable = bool(video and (extension(video["name"]) in {".mp4", ".webm"} or generated.get("previewMp4DriveId") or hls.get("masterDriveId")))
+        # Video is available only when HLS is ready. Preserve source originals for download.
+        is_video_playable = bool(video and hls.get("masterDriveId"))
         is_audio_playable = bool(audio and extension(audio["name"]) in {".mp3", ".m4a", ".aac", ".ogg", ".opus"} or generated.get("audioDriveId"))
         private = {
             "id": uid, "library": "series", "speaker": g["speaker"], "year": g["year"],
