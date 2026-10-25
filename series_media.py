@@ -229,22 +229,40 @@ def encode_audio_only(drive,item,outputs_parent):
         return {"generatedAt":datetime.now(timezone.utc).isoformat().replace("+00:00","Z"),
                 "audioDriveId":drive.upload(dest,folder,"audio.mp3","audio/mpeg")}
 
-def refresh_public_catalog():
-    """Preserve an audio-ready map even while HLS transcoding continues."""
-    import sys
-    subprocess.run([sys.executable, "-u", "series_ingest.py"], check=True)
+def publish_series_map_safely(description):
+    """Commit only the safe map on the current main, retrying concurrent pushes."""
     if os.getenv("GITHUB_ACTIONS","").lower()!="true":
         return
-    run("git","config","user.name","Irgun Series Converter")
-    run("git","config","user.email","actions@users.noreply.github.com")
-    run("git","add","series-public-map.json")
-    changed=subprocess.run(["git","diff","--cached","--quiet"])
-    if changed.returncode==1:
-        run("git","commit","-m","Publish Series audio while HLS encoding continues [skip ci]")
-        run("git","push","origin","HEAD:main")
-        print("Published audio-ready Series catalog before HLS",flush=True)
-    elif changed.returncode:
-        raise RuntimeError("Unable to inspect pending Series map changes")
+    with tempfile.TemporaryDirectory(prefix="irgun-series-public-map-") as temp:
+        snapshot=os.path.join(temp,"series-public-map.json")
+        shutil.copyfile("series-public-map.json",snapshot)
+        run("git","config","user.name","Irgun Series Converter")
+        run("git","config","user.email","actions@users.noreply.github.com")
+        for attempt in range(1,5):
+            run("git","fetch","origin","main")
+            run("git","reset","--hard","FETCH_HEAD")
+            shutil.copyfile(snapshot,"series-public-map.json")
+            run("git","add","series-public-map.json")
+            result=subprocess.run(["git","diff","--cached","--quiet"])
+            if result.returncode==0:
+                print("Series catalog unchanged after rebasing onto main",flush=True)
+                return
+            if result.returncode!=1:
+                raise RuntimeError("Unable to compare Series catalog changes")
+            run("git","commit","-m",description+" [skip ci]")
+            pushed=subprocess.run(["git","push","origin","HEAD:main"])
+            if pushed.returncode==0:
+                print("Published safe Series map, attempt",attempt,flush=True)
+                return
+            print("Catalog changed concurrently; retrying on newest main",flush=True)
+        raise RuntimeError("Series public map push conflicted after four attempts")
+
+
+def refresh_public_catalog():
+    """Preserve audio-ready map while HLS runs, without losing new git commits."""
+    import sys
+    subprocess.run([sys.executable,"-u","series_ingest.py"],check=True)
+    publish_series_map_safely("Publish Series audio independently of HLS")
 
 
 def needs_series_work(item):
