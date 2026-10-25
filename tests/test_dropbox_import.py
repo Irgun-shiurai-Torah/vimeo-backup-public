@@ -121,6 +121,8 @@ class SharedLinksTest(unittest.TestCase):
             self.assertIn("'" + label + "'", workflow)
         self.assertEqual(workflow.count("    runs-on:"), 1,
                          "Keep import writes serial to protect the private Drive map")
+        self.assertIn('cron: "17 * * * *"', workflow)
+        self.assertIn('slot=$(( 10#$(date -u +%H) % ${#sources[@]} ))', workflow)
         self.assertIn("--max-files 1", workflow)
         self.assertIn("--reserve-gib 50", workflow)
         self.assertIn("--max-source-bytes 2200000000", workflow)
