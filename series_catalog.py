@@ -115,7 +115,7 @@ PARSHA_ALIASES = {
 HOLIDAY_ALIASES = {
     "Rosh Hashanah": ["ראש השנה", "rosh hashanah", "rosh hashana"],
     "Yom Kippur": ["יום כיפור", "יום הכיפורים", "yom kippur"],
-    "Sukkot": ["סוכות", "sukkot", "succos", "sukkos"],
+    "Sukkot": ["סוכות", "סיכות", "sukkot", "succos", "sukkos"],
     "Shmini Atzeret": ["שמיני עצרת", "shmini atzeret"],
     "Simchat Torah": ["שמחת תורה", "simchat torah", "simchas torah"],
     "Chanukah": ["חנוכה", "חנכה", "chanukah", "chanuka", "hanukkah"],

@@ -92,7 +92,7 @@ class ApprovedDropboxBridgeTest(unittest.TestCase):
         self.assertNotIn("sourcePath", public["items"][0])
         self.assertNotIn("originalDriveId", public["items"][0])
 
-    def test_similar_sukkot_typo_elsewhere_is_not_silently_reclassified(self):
+    def test_sukkot_alias_tags_other_speakers_without_renaming_titles(self):
         video = {
             **self.video(),
             "sourceLabel": "Reb Nachum Cohen",
@@ -102,7 +102,8 @@ class ApprovedDropboxBridgeTest(unittest.TestCase):
         self.assertTrue(reviewed["title"].startswith("סיכות"))
         public, _ = merge_approved_dropbox(
             *self.catalog(), {"version": 1, "items": {self.MEDIA_ID: video}})
-        self.assertIsNone(public["items"][0]["holiday"])
+        self.assertEqual(public["items"][0]["holiday"], "Sukkot")
+        self.assertTrue(public["items"][0]["title"].startswith("סיכות"))
 
     def test_hebrew_years_are_parsed_not_guessed(self):
         self.assertEqual(hebrew_year_from_path("/פרשת ויחי תשפ״ו/file.mp4"), 5786)
