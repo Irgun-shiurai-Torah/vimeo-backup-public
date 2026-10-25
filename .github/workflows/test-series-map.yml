@@ -7,6 +7,7 @@ on:
       - 'series_drive.py'
       - 'series_ingest.py'
       - 'dropbox_series_bridge.py'
+      - 'dropbox_media_policy.py'
       - 'tests/test_dropbox_series_bridge.py'
       - 'tests/test_series_catalog.py'
       - '.github/workflows/series-map-hourly.yml'
