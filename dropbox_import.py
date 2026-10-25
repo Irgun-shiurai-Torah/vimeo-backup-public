@@ -336,7 +336,7 @@ def check_disk(size):
                            "use a larger runner or process fewer renditions")
 
 
-def run(mode="scan", max_files=1, only_id="", source_label=""):
+def run(mode="scan", max_files=1, only_id="", source_label="", min_video_bytes=0):
     sources = sources_from_env()
     if source_label:
         matches = [source for source in sources if source["label"] == source_label]
@@ -392,6 +392,12 @@ def run(mode="scan", max_files=1, only_id="", source_label=""):
         pending.append((source, item, mid))
     # Start with a small video for the first test; large recordings can follow.
     pending.sort(key=lambda pair: (pair[1]["kind"] != "video", pair[1]["size"], pair[2]))
+    if min_video_bytes:
+        # A first test should be a real recording, not a tiny/empty clip.
+        # Only explicit preview runs use this limit. Production remains
+        # capable of importing audio-only and short recordings.
+        pending = [entry for entry in pending if
+                   entry[1]["kind"] == "video" and entry[1]["size"] >= min_video_bytes]
     if only_id:
         if only_id not in {file_id(s["id"], item) for s, item in scanned}:
             raise ValueError("Requested test file ID is not among the approved Dropbox sources")
@@ -435,7 +441,12 @@ if __name__ == "__main__":
     parser.add_argument("--max-files", type=int, default=1)
     parser.add_argument("--only-id", default="", help="Import only this stable media ID")
     parser.add_argument("--source-label", default="", help="Restrict scan and import to one approved source label")
+    parser.add_argument("--min-video-bytes", type=int, default=0,
+                        help="For sample imports, skip tiny videos and audio-only files")
     args = parser.parse_args()
     if not 1 <= args.max_files <= 4:
         parser.error("--max-files must be between 1 and 4")
-    run(mode=args.mode, max_files=args.max_files, only_id=args.only_id, source_label=args.source_label)
+    if not 0 <= args.min_video_bytes <= 1000 * 1024**2:
+        parser.error("--min-video-bytes must be between 0 and 1 GiB")
+    run(mode=args.mode, max_files=args.max_files, only_id=args.only_id,
+        source_label=args.source_label, min_video_bytes=args.min_video_bytes)
