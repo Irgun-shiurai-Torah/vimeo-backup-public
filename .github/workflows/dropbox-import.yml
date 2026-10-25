@@ -58,7 +58,10 @@ jobs:
           DROPBOX_SOURCES_JSON: ${{ secrets.DROPBOX_SOURCES_JSON }}
           DROPBOX_LINK_PASSWORD: ${{ secrets.DROPBOX_LINK_PASSWORD }}
           GOOGLE_TOKEN_JSON: ${{ secrets.GOOGLE_TOKEN_JSON }}
-          MODE: ${{ github.event_name == 'push' && 'scan' || inputs.mode }}
+          # Only this exact branch commit can import the one stable test file.
+          # Normal pushes always remain read-only scans.
+          MODE: ${{ github.event_name == 'push' && github.event.head_commit.message == 'TEST_ONE_DROPBOX_VIDEO' && 'import' || (github.event_name == 'push' && 'scan') || inputs.mode || 'scan' }}
+          TEST_ID: ${{ github.event_name == 'push' && github.event.head_commit.message == 'TEST_ONE_DROPBOX_VIDEO' && 'dbx-media-74352f9b84dabbd7942a5537' || '' }}
           MAX_FILES: ${{ inputs.max_files }}
         run: |
-          python -u dropbox_import.py --mode "${MODE:-scan}" --max-files "${MAX_FILES:-1}"
+          python -u dropbox_import.py --mode "${MODE:-scan}" --max-files "${MAX_FILES:-1}" --only-id "${TEST_ID:-}"
