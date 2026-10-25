@@ -25,8 +25,9 @@ def main():
     portraits = drive.list_speaker_photos()
     private["speakerPhotos"] = portraits
     pub["speakerPhotos"] = sorted(portraits.keys(),key=str.casefold)
-    # Dropbox is an additional, approval-gated Series source. A successful
-    # Dropbox scan/import alone cannot make any recording publicly visible.
+    # Known Dropbox Series collections are automatically catalogued once
+    # conversion finishes. Test website visibility overrides are applied by
+    # the Worker (not lost when this hourly catalog is regenerated).
     dropbox_map = drive.read_dropbox_import_map()
     pub, private = merge_approved_dropbox(pub, private, dropbox_map)
     prior_count = len((previous or {}).get("items", []))
