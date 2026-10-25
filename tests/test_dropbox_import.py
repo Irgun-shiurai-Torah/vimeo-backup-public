@@ -3,7 +3,7 @@ import os
 import unittest
 from unittest.mock import patch
 
-from dropbox_import import sources_from_env, source_id, file_id
+from dropbox_import import sources_from_env, source_id, file_id, check_drive_headroom
 
 
 class SharedLinksTest(unittest.TestCase):
@@ -88,6 +88,28 @@ class SharedLinksTest(unittest.TestCase):
             run(mode="scan", source_label="Reb Gamliel Rabinowitz")
             dropbox.return_value.list_tree.assert_called_once_with(two[0])
             drive.assert_not_called()
+
+    def test_automatic_drive_quota_reserve_is_enforced(self):
+        from unittest.mock import MagicMock
+        store = MagicMock()
+        store.api.about.return_value.get.return_value.execute.return_value = {
+            "storageQuota": {"limit": str(100 * 1024**3), "usage": str(70 * 1024**3)}}
+        with self.assertRaisesRegex(RuntimeError, "safety reserve"):
+            check_drive_headroom(store, 200_000_000, reserve_gib=50)
+        check_drive_headroom(store, 200_000_000, reserve_gib=20)
+
+    def test_unlimited_drive_quota_accepted(self):
+        from unittest.mock import MagicMock
+        store = MagicMock()
+        store.api.about.return_value.get.return_value.execute.return_value = {
+            "storageQuota": {"usage": str(70 * 1024**3)}}
+        check_drive_headroom(store, 200_000_000, reserve_gib=50)
+
+    def test_default_quota_checks_do_not_call_drive(self):
+        from unittest.mock import MagicMock
+        store = MagicMock()
+        check_drive_headroom(store, 200_000_000, reserve_gib=0)
+        store.api.about.assert_not_called()
 
     def test_deterministic_media_id(self):
         item = {"id": "id:example", "path": "/Year/Lecture.mov"}
