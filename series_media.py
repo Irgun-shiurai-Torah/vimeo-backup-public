@@ -24,6 +24,10 @@ PRESET=os.getenv("SERIES_HLS_PRESET","superfast")
 KNOWN_AUDIO_EXTENSIONS={".mp3",".m4a",".aac",".ogg",".opus",".flac",".wav",".wma",".aif",".aiff"}
 
 def run(*args):
+    # Report encoder progress every 30 seconds instead of appearing frozen
+    # during long camera-origin MTS conversions.
+    if args and args[0]=="ffmpeg":
+        args=(args[0],"-stats_period","30","-progress","pipe:1",*args[1:])
     subprocess.run(args,check=True)
 
 def probe(path):
@@ -63,6 +67,23 @@ def make_poster(input_file,out_dir,duration):
     if os.path.getsize(destination)<128:
         raise RuntimeError("Poster output was empty")
     return destination
+
+def make_preview_mp4(src, output_dir, width, height, has_audio=True):
+    """Fast, full-length 480p MP4 for MTS/MOV uploads before expensive HLS."""
+    os.makedirs(output_dir, exist_ok=True)
+    preview=os.path.join(output_dir,"preview.mp4")
+    target_height=even(min(480, int(height)))
+    print(f"Encoding Series early-playback MP4 at {target_height}p",flush=True)
+    args=["ffmpeg","-hide_banner","-loglevel","error","-y","-i",src,
+          "-map","0:v:0","-map","0:a:0?","-vf",f"scale=-2:{target_height}",
+          "-c:v","libx264","-preset","ultrafast","-crf","29",
+          "-pix_fmt","yuv420p","-c:a","aac","-b:a","96k",
+          "-movflags","+faststart",preview]
+    run(*args)
+    if os.path.getsize(preview)<1024:
+        raise RuntimeError("Playable MP4 conversion produced an empty file")
+    return preview
+
 
 def make_hls(src,destination,qualities):
     """Same H.264/AAC byterange HLS approach as hls_backup.py."""
@@ -126,10 +147,20 @@ def encode_video(drive,item,outputs_parent,on_audio_ready=None):
             )
             if on_audio_ready:
                 on_audio_ready(dict(interim))
+        # Browsers can stream MP4/WebM directly; MTS and MOV require a
+        # browser-compatible preview before the full HLS ladder is generated.
+        if suffix.lower() not in {".mp4",".webm"} and not interim.get("previewMp4DriveId"):
+            interim["previewMp4DriveId"]=drive.upload(
+                make_preview_mp4(original,out,int(video["width"]),int(video["height"]),has_audio),
+                destination,"preview.mp4","video/mp4"
+            )
+            if on_audio_ready:
+                on_audio_ready(dict(interim))
         poster_id=interim.get("posterDriveId") or drive.upload(
             make_poster(original,out,duration),destination,"poster.jpg","image/jpeg"
         )
         qualities=quality_ladder(int(video["width"]),int(video["height"]))
+        print(f"Encoding Series HLS ladder: {len(qualities)} qualities; duration={duration:.1f}s",flush=True)
         master=make_hls(original,out,qualities)
         renditions=[]
         for q in qualities:
