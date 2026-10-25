@@ -21,6 +21,9 @@ def main():
     previous = drive.read_json(maps_folder, PRIVATE_MAP_NAME)
     pub, private = build_maps(files, previous_private=previous)
     pub["speakers"] = drive.list_speaker_folders()
+    portraits = drive.list_speaker_photos()
+    private["speakerPhotos"] = portraits
+    pub["speakerPhotos"] = sorted(portraits.keys(),key=str.casefold)
     prior_count = len((previous or {}).get("items", []))
     if prior_count and not len(pub["items"]) and not ALLOW_EMPTY:
         raise RuntimeError("Scan unexpectedly empty after previous catalog; refusing to erase it")

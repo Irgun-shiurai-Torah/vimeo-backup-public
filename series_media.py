@@ -172,15 +172,10 @@ def encode_video(drive,item,outputs_parent,on_audio_ready=None):
             interim["audioNoTrack"]=True
             if on_audio_ready:
                 on_audio_ready(dict(interim))
-        # Browsers can stream MP4/WebM directly; MTS and MOV require a
-        # browser-compatible preview before the full HLS ladder is generated.
-        if not is_native_web_video(item.get("videoFilename"),video,has_audio) and not interim.get("previewMp4DriveId"):
-            interim["previewMp4DriveId"]=drive.upload(
-                make_preview_mp4(original,out,int(video["width"]),int(video["height"]),has_audio),
-                destination,"preview.mp4","video/mp4"
-            )
-            if on_audio_ready:
-                on_audio_ready(dict(interim))
+        # No extra fallback MP4. The original uploaded video is preserved,
+        # MP3 is published independently, and video starts once HLS is ready.
+        # Existing previews (from old runs) are not deleted, but new uploads
+        # never allocate another full-length MP4 duplicate.
         poster_id=interim.get("posterDriveId") or drive.upload(
             make_poster(original,out,duration),destination,"poster.jpg","image/jpeg"
         )

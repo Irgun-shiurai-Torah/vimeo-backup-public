@@ -1,6 +1,6 @@
 import unittest
 
-from series_catalog import build_maps, clean_key, match_topic, PARSHA_ALIASES, HOLIDAY_ALIASES, speaker_names_from_folder_entries
+from series_catalog import build_maps, clean_key, match_topic, PARSHA_ALIASES, HOLIDAY_ALIASES, speaker_names_from_folder_entries, choose_speaker_photo
 
 
 def source(name, file_id, year="5787", speaker="Rabbi Meilech Biderman", modified="2026-10-25T00:10:00Z"):
@@ -10,6 +10,16 @@ def source(name, file_id, year="5787", speaker="Rabbi Meilech Biderman", modifie
 
 
 class SeriesCatalogTests(unittest.TestCase):
+    def test_speaker_photo_selects_safe_named_portrait_and_ignores_svg(self):
+        candidates=[
+            {"id":"generic","name":"random.png","mimeType":"image/png","size":"3200"},
+            {"id":"unsafe","name":"speaker.svg","mimeType":"image/svg+xml","size":"1200"},
+            {"id":"large","name":"speaker.jpg","mimeType":"image/jpeg","size":str(26*1024*1024)},
+            {"id":"good","name":"portrait.webp","mimeType":"image/webp","size":"30000"},
+        ]
+        self.assertEqual(choose_speaker_photo(candidates),{"id":"good","mimeType":"image/webp"})
+        self.assertIsNone(choose_speaker_photo([candidates[1]]))
+
     def test_speaker_folders_include_empty_and_exclude_system(self):
         folder = "application/vnd.google-apps.folder"
         records = [

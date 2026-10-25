@@ -134,6 +134,27 @@ def pick_media(files, priority):
     return min(files, key=lambda x: (priority.get(extension(x.get("name")), 999),
                                     str(x.get("createdTime") or ""), str(x.get("id") or ""))) if files else None
 
+def choose_speaker_photo(records):
+    """Choose a safe portrait image by filename preference, never an SVG."""
+    allowed={"image/jpeg","image/png","image/webp"}
+    priority={"speaker":0,"portrait":1,"profile":2,"photo":3,"headshot":4}
+    photos=[]
+    for file in records:
+        name=str(file.get("name") or "")
+        mime=str(file.get("mimeType") or "")
+        if not name or name.startswith("_") or mime not in allowed or not file.get("id"):
+            continue
+        try:
+            if file.get("size") and int(file["size"])>25*1024*1024:continue
+        except (ValueError,TypeError):
+            continue
+        stem=name.rsplit(".",1)[0].casefold().strip()
+        photos.append((priority.get(stem,10),name.casefold(),file))
+    if not photos:return None
+    chosen=min(photos,key=lambda x:(x[0],x[1]))[2]
+    return {"id":chosen["id"],"mimeType":chosen["mimeType"]}
+
+
 def speaker_names_from_folder_entries(records):
     """Public-safe speaker names from Drive (including empty folders)."""
     folder_mime = "application/vnd.google-apps.folder"
@@ -185,7 +206,8 @@ def build_maps(source_files, previous_private=None, generated_at=None):
         generated = (old.get("generated", {}) if old and (old_video or (not video and old_audio)) else {})
         has_audio = bool(audio or generated.get("audioDriveId"))
         hls = generated.get("hls", {}) if isinstance(generated.get("hls", {}), dict) else {}
-        is_video_playable = bool(video and (extension(video["name"]) in {".mp4", ".webm"} or generated.get("previewMp4DriveId") or hls.get("masterDriveId")))
+        # Video is available only when HLS is ready. Preserve source originals for download.
+        is_video_playable = bool(video and hls.get("masterDriveId"))
         is_audio_playable = bool(audio and extension(audio["name"]) in {".mp3", ".m4a", ".aac", ".ogg", ".opus"} or generated.get("audioDriveId"))
         private = {
             "id": uid, "library": "series", "speaker": g["speaker"], "year": g["year"],

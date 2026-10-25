@@ -54,8 +54,8 @@ class SeriesMediaTests(unittest.TestCase):
              patch("series_media.make_preview_mp4",return_value="/tmp/preview.mp4"), \
              patch("series_media.make_hls",side_effect=encode_hls):
             result=encode_video(FakeDrive(),item,"output-root",audio_created)
-        self.assertLess(sequence.index("audio-published"),sequence.index("upload:preview.mp4"))
-        self.assertLess(sequence.index("upload:preview.mp4"),sequence.index("hls-encoded"))
+        self.assertNotIn("upload:preview.mp4",sequence)
+        self.assertLess(sequence.index("audio-published"),sequence.index("hls-encoded"))
         self.assertEqual(result["audioDriveId"],"id-audio.mp3")
         self.assertIn("masterDriveId",result["hls"])
 
@@ -103,15 +103,15 @@ class SeriesMediaTests(unittest.TestCase):
         self.assertTrue(is_native_web_video("shiur.webm",{"codec_name":"vp9","audioCodec":"opus"},True))
         self.assertFalse(is_native_web_video("shiur.webm",{"codec_name":"av1","audioCodec":"aac"},True))
 
-    def test_mts_preview_makes_video_ready_before_hls(self):
+    def test_old_preview_does_not_mark_video_ready_before_hls(self):
         files=[source("Shabbos MTS shiur.mts",file_id="camera-source")]
         public,private=build_maps(files)
         self.assertFalse(public["items"][0]["videoReady"])
         private["items"][0]["generated"]={"previewMp4DriveId":"early-mp4"}
         updated,retained=build_maps(files,private)
-        self.assertTrue(updated["items"][0]["videoReady"])
+        self.assertFalse(updated["items"][0]["videoReady"])
         self.assertFalse(updated["items"][0]["hlsReady"])
-        self.assertEqual(updated["items"][0]["status"],"ready")
+        self.assertEqual(updated["items"][0]["status"],"processing")
         self.assertEqual(retained["items"][0]["generated"]["previewMp4DriveId"],"early-mp4")
 
     def test_poster_and_preview_flags_never_publish_drive_ids(self):
@@ -124,7 +124,7 @@ class SeriesMediaTests(unittest.TestCase):
         public,_=build_maps(files,private)
         self.assertTrue(public["items"][0]["posterReady"])
         self.assertTrue(public["items"][0]["previewReady"])
-        self.assertTrue(public["items"][0]["videoReady"])
+        self.assertFalse(public["items"][0]["videoReady"])
         self.assertNotIn("secret-drive-poster-id",str(public))
         self.assertNotIn("secret-drive-preview-id",str(public))
 
@@ -133,7 +133,7 @@ class SeriesMediaTests(unittest.TestCase):
         file["file"]["appProperties"]={"irgunSeriesParsha":"Lech-Lecha","irgunSeriesHoliday":""}
         public,_=build_maps([file])
         self.assertEqual(public["items"][0]["parsha"],"Lech-Lecha")
-        self.assertTrue(public["items"][0]["videoReady"])
+        self.assertFalse(public["items"][0]["videoReady"])
 
     def test_ladder_never_upscales(self):
         self.assertEqual([r["height"] for r in quality_ladder(1920,1080)],[360,480,720,1080])
