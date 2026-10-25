@@ -2,7 +2,7 @@
   "version": 1,
   "library": "series",
   "mode": "staging",
-  "generatedAt": "2026-10-25T16:21:45.320282Z",
+  "generatedAt": "2026-10-25T16:37:53.766319Z",
   "items": [
     {
       "id": "series-cf5cca1156bd9f672f89f3a7",
@@ -212,6 +212,36 @@
       "public": true,
       "autoImported": true,
       "series": "Short Word for Shabbos"
+    },
+    {
+      "id": "series-57d1936b291474b23401e15e",
+      "library": "series",
+      "speaker": "Reb Nachum Cohen",
+      "title": "דברים - תשעה באב - תשפ-ד (לשון הקודש)",
+      "year": 5775,
+      "parsha": "Devarim",
+      "parshas": [
+        "Devarim"
+      ],
+      "holiday": "Tisha B'Av",
+      "hidden": false,
+      "hasAudio": true,
+      "hasVideo": true,
+      "audioReady": true,
+      "videoReady": true,
+      "hlsReady": true,
+      "previewReady": false,
+      "posterReady": true,
+      "audioFormat": "mp3",
+      "mediaType": "video",
+      "status": "ready",
+      "created": "2026-10-25T16:32:06Z",
+      "sourceModified": "2024-08-07T09:43:50Z",
+      "originalFilename": "לשון הקודש.MTS",
+      "originalFormat": "mts",
+      "public": true,
+      "autoImported": true,
+      "series": "Parsha Shiurim"
     }
   ],
   "speakers": [
