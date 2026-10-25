@@ -38,6 +38,7 @@ jobs:
           python -m py_compile dropbox_import.py dropbox_series_bridge.py
           python -m unittest discover -s tests -p 'test_dropbox_import.py' -v
           python -m unittest discover -s tests -p 'test_dropbox_series_bridge.py' -v
+          python -m unittest discover -s tests -p 'test_series_visibility.py' -v
       - name: Import one pending file from the approved Gamliel/Biderman collections
         env:
           DROPBOX_APP_KEY: ${{ secrets.DROPBOX_APP_KEY }}
