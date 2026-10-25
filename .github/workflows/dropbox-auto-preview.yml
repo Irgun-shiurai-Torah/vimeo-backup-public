@@ -1,0 +1,78 @@
+name: Read-only auto-publish preview against real Google Drive
+
+on:
+  push:
+    branches: [feature/dropbox-auto-publish-series]
+    paths: [.github/workflows/dropbox-auto-preview.yml]
+
+permissions:
+  contents: read
+
+jobs:
+  preview:
+    if: ${{ github.event.head_commit.message == 'PREFLIGHT_AUTO_DROPBOX_CATALOG' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install read-only Google Drive client
+        run: pip install google-api-python-client google-auth google-auth-httplib2
+      - name: Authenticate without uploading, publishing, or changing overrides
+        env:
+          GOOGLE_TOKEN_JSON: ${{ secrets.GOOGLE_TOKEN_JSON }}
+        run: |
+          python - <<'PY'
+          import os,json,pickle
+          from google.auth.transport.requests import Request
+          from google.oauth2.credentials import Credentials
+          info=json.loads(os.environ["GOOGLE_TOKEN_JSON"])
+          creds=Credentials.from_authorized_user_info(info,
+            scopes=info.get("scopes") or ["https://www.googleapis.com/auth/drive"])
+          if creds.expired and creds.refresh_token:creds.refresh(Request())
+          if not creds.valid:raise RuntimeError("Cannot authenticate with Drive")
+          with open("token.pickle","wb") as f:pickle.dump(creds,f)
+          PY
+      - name: Verify real private imports produce safe auto-public Series entries
+        env:
+          SERIES_DRIVE_ROOT_ID: 1B5myYj9rsqfoRO8Cjjr6CQOf-q2Q71Ft
+        run: |
+          python - <<'PY'
+          import json
+          from series_catalog import build_maps
+          from series_drive import SeriesDrive
+          from dropbox_series_bridge import merge_approved_dropbox
+          drive=SeriesDrive()
+          baseline,baseline_private=build_maps(drive.list_source_files())
+          imported=drive.read_dropbox_import_map()
+          if not imported or not isinstance(imported.get("items"),dict):
+              raise RuntimeError("No private Dropbox imports found")
+          pub,priv=merge_approved_dropbox(baseline,baseline_private,imported)
+          new=[x for x in pub["items"] if x.get("id") not in
+               {b["id"] for b in baseline["items"]}]
+          automatic=[x for x in new if x.get("autoImported")]
+          speakers={x["speaker"] for x in automatic}
+          required={"Reb Nachum Cohen","Reb Yitzchok Ahron Goldhirsch",
+                    "Rabbi Meilech Biderman"}
+          if not required.issubset(speakers):
+              raise RuntimeError("New Dropbox auto-published speakers missing: "+str(required-speakers))
+          if len(automatic)<4:
+              raise RuntimeError("Expected at least four completed, eligible new Dropbox test records")
+          if len(new)!=len({x["id"] for x in new}):
+              raise RuntimeError("Automatic imports duplicated a Series media ID")
+          if any("Shinyev" in x["title"] or "Yurtziet" in x["title"] for x in new):
+              raise RuntimeError("Excluded event appeared in the test catalog")
+          public_json=json.dumps(pub,ensure_ascii=False)
+          for private_field in ('"originalDriveId"','"audioDriveId"','"masterDriveId"',
+                                '"sourcePath"','"rlkey"','"dropboxFileId"'):
+              if private_field in public_json:
+                  raise RuntimeError("Private field leaked into public catalog: "+private_field)
+          print("PASS: read-only catalog preflight: existing",len(baseline["items"]),
+                "new Dropbox",len(new),"automatically published",len(automatic),
+                "with speaker counts",{
+                  name:sum(x["speaker"]==name for x in new)
+                  for name in sorted({x["speaker"] for x in new})})
+          print("No public map or private Drive storage was changed.")
+          PY
