@@ -22,9 +22,9 @@ permissions:
 
 concurrency:
   group: irgun-series-test-drive-map
-  # Only replace obsolete long-running conversions when a new converter
-  # version is published. Hourly/scheduled runs never preempt each other.
-  cancel-in-progress: ${{ github.event_name == 'push' }}
+  # The hourly catalog scan shares this group to protect its private map.
+  # A converter code update must not cancel a folder scan already in progress.
+  cancel-in-progress: false
 
 jobs:
   convert:
