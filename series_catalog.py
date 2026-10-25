@@ -168,8 +168,9 @@ def build_maps(source_files, previous_private=None, generated_at=None):
         holiday = match_topic(title, HOLIDAY_ALIASES)
         old_video = bool(old and video and old.get("videoDriveId") == video.get("id")
                          and old.get("videoSourceModified") == video.get("modifiedTime"))
-        old_audio = bool(old and audio and old.get("audioDriveId") == audio.get("id"))
-        generated = (old.get("generated", {}) if old_video and old else {})
+        old_audio = bool(old and audio and old.get("audioDriveId") == audio.get("id")
+                         and old.get("audioSourceModified") == audio.get("modifiedTime"))
+        generated = (old.get("generated", {}) if old and (old_video or (not video and old_audio)) else {})
         has_audio = bool(audio or generated.get("audioDriveId"))
         hls = generated.get("hls", {}) if isinstance(generated.get("hls", {}), dict) else {}
         is_video_playable = bool(video and (extension(video["name"]) in {".mp4", ".webm", ".mov", ".m4v"} or hls.get("masterDriveId")))
@@ -195,6 +196,8 @@ def build_maps(source_files, previous_private=None, generated_at=None):
             "title": title, "parsha": parsha, "holiday": holiday,
             "hasAudio": has_audio, "hasVideo": bool(video),
             "audioReady": is_audio_playable, "videoReady": is_video_playable,
+            "hlsReady": bool(hls.get("masterDriveId")),
+            "audioFormat": extension(audio["name"]).lstrip(".") if audio and extension(audio["name"]) in {".mp3",".m4a",".aac",".ogg",".opus"} else ("mp3" if generated.get("audioDriveId") else None),
             "mediaType": "video" if video else "audio",
             "status": private["status"],
             "created": main.get("createdTime"), "sourceModified": modified,
