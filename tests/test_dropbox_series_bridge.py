@@ -39,7 +39,7 @@ class ApprovedDropboxBridgeTest(unittest.TestCase):
         unapproved = self.video()
         unapproved["sourceLabel"] = "Unapproved unknown Dropbox folder"
         unapproved["approvedMetadata"] = {
-            "speaker": "Reb Mielech", "title": "Thursday shiur", "year": 5787,
+            "speaker": "Rabbi Meilech Biderman", "title": "Thursday shiur", "year": 5787,
         }
         pub, priv = merge_approved_dropbox(
             public, private,
@@ -194,7 +194,7 @@ class ApprovedDropboxBridgeTest(unittest.TestCase):
             **self.video(),
             "approved": True,
             "approvedMetadata": {
-                "speaker": "Reb Mielech", "title": "Thursday shiur",
+                "speaker": "Rabbi Meilech Biderman", "title": "Thursday shiur",
                 "year": 5787, "series": "Leil Shishi",
             },
         }
@@ -212,7 +212,7 @@ class ApprovedDropboxBridgeTest(unittest.TestCase):
         self.assertEqual(secure["generated"]["hls"]["masterDriveId"], "m" * 24)
         self.assertEqual(secure["generated"]["audioDriveId"], "a" * 24)
         self.assertEqual(secure["originalDriveId"], "o" * 24)
-        self.assertEqual(pub["speakers"], ["Reb Mielech"])
+        self.assertEqual(pub["speakers"], ["Rabbi Meilech Biderman"])
         # Neither Dropbox URLs nor private Google Drive IDs belong in GitHub.
         public_json = json.dumps(pub)
         for fragment in ["o" * 24, "m" * 24, "a" * 24,
@@ -231,7 +231,7 @@ class ApprovedDropboxBridgeTest(unittest.TestCase):
         public, private = self.catalog()
         entry = {**self.video(), "approved": True,
                  "approvedMetadata": {
-                     "speaker": "Rav A", "title": "Shiur", "year": 5787,
+                     "speaker": "Rabbi Meilech Biderman", "title": "Shiur", "year": 5787,
                  }}
         entry.pop("hls")
         with self.assertRaises(ValueError):
@@ -243,7 +243,7 @@ class ApprovedDropboxBridgeTest(unittest.TestCase):
         public, private = self.catalog()
         entry = {**self.video(), "approved": True,
                  "approvedMetadata": {
-                     "speaker": "Rav A", "title": "Shiur", "year": 2026,
+                     "speaker": "Rabbi Meilech Biderman", "title": "Shiur", "year": 2026,
                  }}
         with self.assertRaises(ValueError):
             merge_approved_dropbox(
@@ -255,7 +255,7 @@ class ApprovedDropboxBridgeTest(unittest.TestCase):
         entry = {**self.video(), "kind": "audio", "sourcePath": "/Lecture.wav",
                  "approved": True,
                  "approvedMetadata": {
-                     "speaker": "Rav A", "title": "Lecture", "year": 5787,
+                     "speaker": "Rabbi Meilech Biderman", "title": "Lecture", "year": 5787,
                  }}
         entry.pop("hls")
         pub, priv = merge_approved_dropbox(
