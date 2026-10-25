@@ -113,7 +113,7 @@ class ApprovedDropboxBridgeTest(unittest.TestCase):
 
     def test_auto_publish_completed_lecture_but_not_unrelated_sources(self):
         src = {**self.video(), "sourceLabel": "Reb Gamliel Rabinowitz",
-               "sourcePath": "/כי תצא תשפ-ג/לשון הקודש.MTS"
+               "sourcePath": "/כי תצא תשפ-ג/לשון הקודש.MTS"}
         pub, private = merge_approved_dropbox(*self.catalog(),
             {"version": 1, "items": {self.MEDIA_ID: src}})
         self.assertEqual(len(pub["items"]), 1)
