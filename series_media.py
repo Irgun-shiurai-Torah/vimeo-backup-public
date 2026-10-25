@@ -178,6 +178,34 @@ def encode_video(drive,item,outputs_parent,on_audio_ready=None):
                    "renditions":renditions,"duration":duration}
         }
 
+def repair_video_audio(drive, item, outputs_parent, on_audio_ready=None):
+    """Recover a missing MP3 even when HLS was completed in an earlier run.
+
+    This is intentionally audio-only: do not re-encode the already published
+    360p/480p/720p/1080p ladder or change the source MTS/MP4.
+    """
+    source=item.get("videoDriveId")
+    if not source:
+        raise RuntimeError("Cannot repair audio without the original video")
+    output=drive.folder(outputs_parent,item["id"])
+    with tempfile.TemporaryDirectory(prefix="irgun-series-repair-mp3-") as temp:
+        suffix=extension(item.get("videoFilename") or "") or ".mp4"
+        original=os.path.join(temp,"source"+suffix)
+        drive.download(source,original)
+        _,has_audio,_=probe(original)
+        generated=dict(item.get("generated") or {})
+        if not has_audio:
+            generated["audioNoTrack"]=True
+            print("No audio track in Series video:",item["id"],flush=True)
+            return generated
+        print("Repairing missing Series MP3 without regenerating HLS:",item["id"],flush=True)
+        generated["audioDriveId"]=drive.upload(make_mp3(original,temp),output,"audio.mp3","audio/mpeg")
+        generated.pop("audioNoTrack",None)
+        if on_audio_ready:
+            on_audio_ready(dict(generated))
+        return generated
+
+
 def encode_audio_only(drive,item,outputs_parent):
     audio_id=item.get("audioDriveId")
     if not audio_id or item.get("videoDriveId"):
@@ -229,8 +257,13 @@ def main(limit=1):
         generated=item.get("generated") or {}
         video=bool(item.get("videoDriveId"))
         if video:
-            pending=not (generated.get("hls",{}).get("masterDriveId") and
-                         generated.get("posterDriveId"))
+            hls_complete=bool(generated.get("hls",{}).get("masterDriveId") and
+                              generated.get("posterDriveId"))
+            # Deleting the old independently uploaded audio must not prevent
+            # regeneration from the original camera video.
+            missing_mp3=not item.get("audioDriveId") and not generated.get("audioDriveId") \
+                and not generated.get("audioNoTrack")
+            pending=not hls_complete or missing_mp3
         else:
             ext=extension(item.get("audioFilename") or "")
             pending=bool(item.get("audioDriveId") and ext!=".mp3" and
@@ -243,7 +276,8 @@ def main(limit=1):
                 item["generated"]=partial
                 drive.write_json(maps,PRIVATE_MAP_NAME,private)
                 refresh_public_catalog()
-            fresh=encode_video(drive,item,output_root,on_audio_ready) if video else encode_audio_only(drive,item,output_root)
+            fresh=(encode_video(drive,item,output_root,on_audio_ready) if not hls_complete else
+                   repair_video_audio(drive,item,output_root,on_audio_ready)) if video else encode_audio_only(drive,item,output_root)
             item["generated"]=fresh
             # Persist after every successful lecture; don't lose work if the
             # next recording fails or GitHub runner is interrupted.
