@@ -55,15 +55,20 @@ def file_id(source, item):
 
 def sources_from_env(env=os.environ):
     sources = []
-    original = str(env.get("DROPBOX_SHARED_LINK") or "").strip()
-    if original:
-        sources.append({"url": original, "password": str(env.get("DROPBOX_LINK_PASSWORD") or "")})
     extra = str(env.get("DROPBOX_SOURCES_JSON") or "").strip()
     if extra:
+        # A complete explicit source list supersedes the original single-link
+        # test secret so old unrelated recordings aren't unexpectedly imported.
         decoded = json.loads(extra)
         if not isinstance(decoded, list):
             raise ValueError("DROPBOX_SOURCES_JSON must contain an array of source objects")
         sources.extend(decoded)
+    else:
+        original = str(env.get("DROPBOX_SHARED_LINK") or "").strip()
+        if original:
+            sources.append({"url": original,
+                            "password": str(env.get("DROPBOX_LINK_PASSWORD") or ""),
+                            "label": "Initial Dropbox test source"})
     result = {}
     for source in sources:
         if not isinstance(source, dict) or not isinstance(source.get("url"), str):
@@ -76,10 +81,15 @@ def sources_from_env(env=os.environ):
         password = source.get("password") or ""
         if not isinstance(password, str):
             raise ValueError("Source password must be a string")
+        label = source.get("label") or source.get("name") or "Unnamed Dropbox collection"
+        if (not isinstance(label, str) or not label.strip() or len(label) > 120
+                or any(ord(ch) < 32 for ch in label)):
+            raise ValueError("Each source label must be a short, printable name")
+        label = label.strip()
         sid = source_id(url)
         if sid in result and result[sid]["password"] != password:
             raise ValueError("Conflicting passwords for the same Dropbox folder link")
-        result[sid] = {"id": sid, "url": url, "password": password}
+        result[sid] = {"id": sid, "url": url, "password": password, "label": label}
     if not result:
         raise ValueError("Set DROPBOX_SHARED_LINK or DROPBOX_SOURCES_JSON")
     return list(result.values())
@@ -335,6 +345,9 @@ def run(mode="scan", max_files=1, only_id=""):
         count, items = api.list_tree(source)
         folders += count
         scanned.extend((source, item) for item in items)
+        print(f"Dropbox source '{source['label']}': {count} folder(s), "
+              f"{sum(item['kind'] == 'video' for item in items)} video(s), "
+              f"{sum(item['kind'] == 'audio' for item in items)} audio file(s)")
     videos = sum(item["kind"] == "video" for _, item in scanned)
     audios = len(scanned) - videos
     print(f"Dropbox scan succeeded: {len(sources)} shared source(s), {folders} nested folder(s), "
@@ -392,7 +405,8 @@ def run(mode="scan", max_files=1, only_id=""):
             if item["kind"] == "audio" and not generated.get("audioDriveId"):
                 generated["audioDriveId"] = orig_id
             items_by_id[mid] = {
-                "id": mid, "sourceId": source["id"], "sourcePath": item["path"],
+                "id": mid, "sourceId": source["id"], "sourceLabel": source["label"],
+                "sourcePath": item["path"],
                 "dropboxFileId": item.get("id"), "rev": item["rev"],
                 "sourceModified": item["modified"], "size": item["size"],
                 "kind": item["kind"], "originalDriveId": orig_id,
