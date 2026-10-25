@@ -15,6 +15,7 @@ from pathlib import PurePosixPath
 
 from series_catalog import HOLIDAY_ALIASES, PARSHA_ALIASES, clean_key, match_topic
 from dropbox_media_policy import is_excluded_nonlecture
+from series_visibility import ALLOWED_DROPBOX_SOURCES, permitted_series_speaker
 
 
 DRIVE_ID = re.compile(r"^[A-Za-z0-9_-]{10,200}$")
@@ -78,13 +79,10 @@ def parshas_from_title(title):
     return [name for name, _ in sorted(matches.items(), key=lambda pair: pair[1])][:4]
 
 
-# These are the five links whose recordings the website owner has explicitly
-# asked to publish automatically. New, unrelated Dropbox links remain private
-# until added to this list. The list contains no Dropbox URL or access secret.
+# Only Gamliel and Biderman recordings may be published in the Series catalog.
+# Other Dropbox links remain private; no source URL or secret appears here.
 AUTO_SOURCE_SERIES = {
     "Reb Gamliel Rabinowitz": ("Reb Gamliel Rabinowitz", "Parsha Shiurim"),
-    "Reb Nachum Cohen": ("Reb Nachum Cohen", "Parsha Shiurim"),
-    "Reb Yitzchok Ahron Goldhirsch": ("Reb Yitzchok Ahron Goldhirsch", "Parsha Shiurim"),
     "Reb Mielech - Leil Shishi": ("Rabbi Meilech Biderman", "Leil Shishi"),
     "Reb Mielech - Short Word for Shabbos": ("Rabbi Meilech Biderman", "Short Word for Shabbos"),
 }
@@ -201,6 +199,10 @@ def merge_approved_dropbox(public, private, dropbox_map):
     for source_id, source in sorted(entries.items()):
         if not isinstance(source, dict):
             continue
+        # Existing recordings from all other Dropbox folders remain staged
+        # privately, even if an old manual approval flag was set.
+        if source.get("sourceLabel") not in ALLOWED_DROPBOX_SOURCES:
+            continue
         # Excluded special-occasion footage must never be treated as a shiur,
         # even if a stale private approval flag was set by mistake.
         if is_excluded_nonlecture(source, source):
@@ -231,6 +233,8 @@ def merge_approved_dropbox(public, private, dropbox_map):
                     len(source["hls"]["renditions"]) > 0):
                 continue
         speaker = required_text(reviewed.get("speaker"), 140, "speaker")
+        if not permitted_series_speaker(speaker):
+            continue
         title = required_text(reviewed.get("title"), 350, "title")
         year = reviewed.get("year")
         if year is None and not manual:

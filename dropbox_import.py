@@ -27,6 +27,7 @@ from googleapiclient.http import MediaFileUpload
 
 from series_media import make_hls, make_mp3, make_poster, probe, quality_ladder
 from dropbox_media_policy import is_excluded_nonlecture
+from series_visibility import ALLOWED_DROPBOX_SOURCES
 
 VIDEO_EXT = {".mp4", ".mov", ".m4v", ".mts", ".m2ts", ".mkv", ".avi",
              ".webm", ".wmv", ".mpg", ".mpeg", ".ts"}
@@ -374,6 +375,14 @@ def run(mode="scan", max_files=1, only_id="", source_label="", min_video_bytes=0
         if len(matches) != 1:
             raise ValueError("Requested Dropbox source label must match exactly one approved source")
         sources = matches
+    if mode == "import":
+        denied = [s["label"] for s in sources
+                  if s["label"] not in ALLOWED_DROPBOX_SOURCES]
+        if denied:
+            # No network, downloads, or Google Drive changes for unapproved
+            # source links, even if an operator manually starts the workflow.
+            raise ValueError("Dropbox import is limited to Gamliel and Biderman. "
+                             "Unapproved source(s): " + ", ".join(denied))
     api = DropboxLinks(os.getenv("DROPBOX_APP_KEY"), os.getenv("DROPBOX_APP_SECRET"))
     scanned = []
     folders = 0

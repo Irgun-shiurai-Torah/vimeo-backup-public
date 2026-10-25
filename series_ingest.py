@@ -10,6 +10,7 @@ import sys
 
 from series_catalog import build_maps
 from dropbox_series_bridge import merge_approved_dropbox
+from series_visibility import filter_series_maps
 from series_drive import SeriesDrive, PRIVATE_MAP_NAME
 
 PUBLIC_OUTPUT = pathlib.Path("series-public-map.json")
@@ -30,6 +31,10 @@ def main():
     # the Worker (not lost when this hourly catalog is regenerated).
     dropbox_map = drive.read_dropbox_import_map()
     pub, private = merge_approved_dropbox(pub, private, dropbox_map)
+    # Apply the same speaker allowlist to native Drive media and Dropbox media.
+    # Non-approved recordings remain in Drive but cannot enter public/private
+    # playback maps or the website speaker dropdown.
+    pub, private = filter_series_maps(pub, private)
     prior_count = len((previous or {}).get("items", []))
     if prior_count and not len(pub["items"]) and not ALLOW_EMPTY:
         raise RuntimeError("Scan unexpectedly empty after previous catalog; refusing to erase it")
