@@ -5,6 +5,7 @@ import os
 import pickle
 
 from google.auth.transport.requests import Request
+from series_catalog import speaker_names_from_folder_entries
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload, MediaIoBaseDownload, MediaIoBaseUpload
 
@@ -149,12 +150,7 @@ class SeriesDrive:
         The public catalog includes names only; no Drive IDs are exposed.
         Underscore-prefixed system and pending folders are always excluded.
         """
-        return sorted(
-            {entry["name"] for entry in self.children(SERIES_ROOT_ID)
-             if entry.get("mimeType") == FOLDER_MIME
-             and entry.get("name") and not entry["name"].startswith("_")},
-            key=str.casefold,
-        )
+        return speaker_names_from_folder_entries(self.children(SERIES_ROOT_ID))
 
     def list_source_files(self):
         info = self.metadata(SERIES_ROOT_ID)
