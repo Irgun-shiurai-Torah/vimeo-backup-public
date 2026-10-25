@@ -2,7 +2,7 @@
   "version": 1,
   "library": "series",
   "mode": "staging",
-  "generatedAt": "2026-10-25T07:24:25.570462Z",
+  "generatedAt": "2026-10-25T07:55:34.242788Z",
   "items": [
     {
       "id": "series-cf5cca1156bd9f672f89f3a7",
@@ -30,5 +30,8 @@
       "audioDownloadUrl": null,
       "public": true
     }
+  ],
+  "speakers": [
+    "Rabbi Meilech Biderman"
   ]
 }
