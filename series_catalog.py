@@ -209,6 +209,8 @@ def build_maps(source_files, previous_private=None, generated_at=None):
             "hasAudio": has_audio, "hasVideo": bool(video),
             "audioReady": is_audio_playable, "videoReady": is_video_playable,
             "hlsReady": bool(hls.get("masterDriveId")),
+            "previewReady": bool(generated.get("previewMp4DriveId")),
+            "posterReady": bool(generated.get("posterDriveId")),
             "audioFormat": extension(audio["name"]).lstrip(".") if audio and extension(audio["name"]) in {".mp3",".m4a",".aac",".ogg",".opus"} else ("mp3" if generated.get("audioDriveId") else None),
             "mediaType": "video" if video else "audio",
             "status": private["status"],
