@@ -326,7 +326,7 @@ def check_disk(size):
                            "use a larger runner or process fewer renditions")
 
 
-def run(mode="scan", max_files=1):
+def run(mode="scan", max_files=1, only_id=""):
     sources = sources_from_env()
     api = DropboxLinks(os.getenv("DROPBOX_APP_KEY"), os.getenv("DROPBOX_APP_SECRET"))
     scanned = []
@@ -339,6 +339,14 @@ def run(mode="scan", max_files=1):
     audios = len(scanned) - videos
     print(f"Dropbox scan succeeded: {len(sources)} shared source(s), {folders} nested folder(s), "
           f"{videos} video(s), {audios} audio file(s).")
+    video_candidates = sorted(
+        ((s, item) for s, item in scanned if item["kind"] == "video"),
+        key=lambda pair: (pair[1]["size"], file_id(pair[0]["id"], pair[1]))
+    )
+    if video_candidates:
+        candidate_source, candidate_item = video_candidates[0]
+        print("Smallest video for safe test:", file_id(candidate_source["id"], candidate_item),
+              "size:", candidate_item["size"], "bytes")
     if mode == "scan":
         print("Read-only scan finished. No media downloaded or Drive files changed.")
         return
@@ -362,7 +370,11 @@ def run(mode="scan", max_files=1):
         pending.append((source, item, mid))
     # Start with a small video for the first test; large recordings can follow.
     pending.sort(key=lambda pair: (pair[1]["kind"] != "video", pair[1]["size"], pair[2]))
-    print(f"Already imported: {len(scanned) - len(pending)}; pending: {len(pending)}; "
+    if only_id:
+        if only_id not in {file_id(s["id"], item) for s, item in scanned}:
+            raise ValueError("Requested test file ID is not among the approved Dropbox sources")
+        pending = [entry for entry in pending if entry[2] == only_id]
+    print(f"Pending for this run: {len(pending)}; "
           f"processing up to {max_files}.")
     converted = 0
     for source, item, mid in pending[:max_files]:
@@ -398,7 +410,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--mode", choices=("scan", "import"), default="scan")
     parser.add_argument("--max-files", type=int, default=1)
+    parser.add_argument("--only-id", default="", help="Import only this stable media ID")
     args = parser.parse_args()
     if not 1 <= args.max_files <= 4:
         parser.error("--max-files must be between 1 and 4")
-    run(mode=args.mode, max_files=args.max_files)
+    run(mode=args.mode, max_files=args.max_files, only_id=args.only_id)
