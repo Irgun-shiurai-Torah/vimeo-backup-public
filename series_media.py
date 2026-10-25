@@ -100,7 +100,7 @@ def make_hls(src,destination,qualities):
     pathlib.Path(master).write_text("\n".join(lines)+"\n",encoding="utf-8")
     return master
 
-def encode_video(drive,item,outputs_parent):
+def encode_video(drive,item,outputs_parent,on_audio_ready=None):
     video_id=item.get("videoDriveId")
     if not video_id:
         raise RuntimeError("Video source ID missing")
@@ -116,6 +116,19 @@ def encode_video(drive,item,outputs_parent):
         if not video:
             raise RuntimeError("Uploaded file has no decodable video stream")
         out=os.path.join(directory,"hls")
+        os.makedirs(out,exist_ok=True)
+        interim=dict(item.get("generated") or {})
+        # Publish MP3 before beginning slow HLS transcoding, particularly for
+        # large camera-origin MTS recordings. The current original stays intact.
+        if not item.get("audioDriveId") and has_audio and not interim.get("audioDriveId"):
+            interim["audioDriveId"]=drive.upload(
+                make_mp3(original,out),destination,"audio.mp3","audio/mpeg"
+            )
+            if on_audio_ready:
+                on_audio_ready(dict(interim))
+        poster_id=interim.get("posterDriveId") or drive.upload(
+            make_poster(original,out,duration),destination,"poster.jpg","image/jpeg"
+        )
         qualities=quality_ladder(int(video["width"]),int(video["height"]))
         master=make_hls(original,out,qualities)
         renditions=[]
@@ -127,17 +140,12 @@ def encode_video(drive,item,outputs_parent):
                 "playlist":pl,"playlistDriveId":drive.upload(os.path.join(out,pl),destination,pl,"application/vnd.apple.mpegurl"),
                 "media":media,"mediaDriveId":drive.upload(os.path.join(out,media),destination,media,"video/mp2t")
             })
-        result={
+        return {**interim,
             "generatedAt":datetime.now(timezone.utc).isoformat().replace("+00:00","Z"),
-            "posterDriveId":drive.upload(make_poster(original,out,duration),destination,"poster.jpg","image/jpeg"),
+            "posterDriveId":poster_id,
             "hls":{"masterDriveId":drive.upload(master,destination,"master.m3u8","application/vnd.apple.mpegurl"),
                    "renditions":renditions,"duration":duration}
         }
-        # Existing contributor MP3/M4A takes precedence: no unnecessary extra
-        # audio file is generated when a matching original audio was uploaded.
-        if not item.get("audioDriveId") and has_audio:
-            result["audioDriveId"]=drive.upload(make_mp3(original,out),destination,"audio.mp3","audio/mpeg")
-        return result
 
 def encode_audio_only(drive,item,outputs_parent):
     audio_id=item.get("audioDriveId")
@@ -156,6 +164,24 @@ def encode_audio_only(drive,item,outputs_parent):
         dest=make_mp3(src,directory)
         return {"generatedAt":datetime.now(timezone.utc).isoformat().replace("+00:00","Z"),
                 "audioDriveId":drive.upload(dest,folder,"audio.mp3","audio/mpeg")}
+
+def refresh_public_catalog():
+    """Preserve an audio-ready map even while HLS transcoding continues."""
+    import sys
+    subprocess.run([sys.executable, "-u", "series_ingest.py"], check=True)
+    if os.getenv("GITHUB_ACTIONS","").lower()!="true":
+        return
+    run("git","config","user.name","Irgun Series Converter")
+    run("git","config","user.email","actions@users.noreply.github.com")
+    run("git","add","series-public-map.json")
+    changed=subprocess.run(["git","diff","--cached","--quiet"])
+    if changed.returncode==1:
+        run("git","commit","-m","Publish Series audio while HLS encoding continues [skip ci]")
+        run("git","push","origin","HEAD:main")
+        print("Published audio-ready Series catalog before HLS",flush=True)
+    elif changed.returncode:
+        raise RuntimeError("Unable to inspect pending Series map changes")
+
 
 def main(limit=1):
     limit=max(1,min(int(limit),4))
@@ -182,7 +208,11 @@ def main(limit=1):
         try:
             if output_root is None:output_root=drive.series_outputs_folder()
             print("Processing Series",item["id"],"format",extension(item.get("videoFilename") or item.get("audioFilename") or ""),flush=True)
-            fresh=encode_video(drive,item,output_root) if video else encode_audio_only(drive,item,output_root)
+            def on_audio_ready(partial):
+                item["generated"]=partial
+                drive.write_json(maps,PRIVATE_MAP_NAME,private)
+                refresh_public_catalog()
+            fresh=encode_video(drive,item,output_root,on_audio_ready) if video else encode_audio_only(drive,item,output_root)
             item["generated"]=fresh
             # Persist after every successful lecture; don't lose work if the
             # next recording fails or GitHub runner is interrupted.
