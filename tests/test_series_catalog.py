@@ -1,6 +1,7 @@
 import unittest
+import json
 
-from series_catalog import build_maps, clean_key, match_topic, PARSHA_ALIASES, HOLIDAY_ALIASES, speaker_names_from_folder_entries, choose_speaker_photo
+from series_catalog import build_maps, clean_key, match_topic, PARSHA_ALIASES, HOLIDAY_ALIASES, speaker_names_from_folder_entries, choose_speaker_photo, read_review_metadata, UPLOAD_METADATA_MARKER
 
 
 def source(name, file_id, year="5787", speaker="Rabbi Meilech Biderman", modified="2026-10-25T00:10:00Z"):
@@ -105,6 +106,56 @@ class SeriesCatalogTests(unittest.TestCase):
         changed, no_keep = build_maps(modified, private)
         self.assertFalse(changed["items"][0]["videoReady"])
         self.assertFalse(no_keep["items"][0]["generated"])
+
+    def test_full_upload_review_fields_preserved_in_public_map(self):
+        metadata = {
+            "titleEnglish": "Friday shiur", "titleHebrew": "שיעור ליל שישי",
+            "speakerEnglish": "Rabbi Meilech Biderman", "speakerHebrew": "רבי מיילך בידרמן",
+            "rabbiAlternate": "R Meilech", "lecturerAlternate": "Reb Meilech",
+            "topic": "Emunah", "topicEnglish": "Faith", "topicHebrew": "אמונה",
+            "category": "Weekly", "program": "Friday night", "series": "Lel Shishi",
+            "language": "Yiddish", "organization": "Irgun", "location": "Jerusalem",
+            "shiurCode": "RB-24-04", "lectureDate": "2026-10-25", "hidden": False
+        }
+        entry=source("Friday Shiur.mp3","uploaded-series-file")
+        entry["file"]["description"]="A meaningful shiur" + UPLOAD_METADATA_MARKER + json.dumps(metadata)
+        entry["file"]["appProperties"]={"irgunSeriesParsha":"Lech-Lecha","irgunSeriesHoliday":""}
+        public, private=build_maps([entry])
+        item=public["items"][0]
+        self.assertEqual(item["description"],"A meaningful shiur")
+        self.assertEqual(item["parsha"],"Lech-Lecha")
+        for key,value in metadata.items():
+            self.assertEqual(item[key],value,key)
+        self.assertNotIn("uploaded-series-file",str(public))
+        self.assertEqual(private["items"][0]["speakerHebrew"],metadata["speakerHebrew"])
+
+    def test_hidden_upload_is_indexed_but_flagged_for_public_API(self):
+        entry=source("Private Shiur.mp3","file-secret")
+        entry["file"]["description"]="" + UPLOAD_METADATA_MARKER + json.dumps({"hidden": True})
+        public, _=build_maps([entry])
+        self.assertEqual(len(public["items"]),1)
+        self.assertIs(public["items"][0]["hidden"],True)
+        self.assertEqual(public["items"][0]["description"],"")
+
+    def test_audio_video_pair_uses_metadata_attached_to_either_format(self):
+        video=source("Same Shiur.mp4","video-id")
+        audio=source("Same Shiur.mp3","audio-id")
+        audio["file"]["description"]="By the speaker"+UPLOAD_METADATA_MARKER+json.dumps({"topic":"Parsha insight"})
+        public,_=build_maps([video,audio])
+        self.assertEqual(len(public["items"]),1)
+        self.assertEqual(public["items"][0]["topic"],"Parsha insight")
+        self.assertEqual(public["items"][0]["description"],"By the speaker")
+
+    def test_invalid_review_metadata_does_not_expose_untrusted_keys(self):
+        human,fields,hidden=read_review_metadata("Normal description")
+        self.assertEqual((human,fields,hidden),("Normal description",{},False))
+        human,fields,hidden=read_review_metadata("Plain"+UPLOAD_METADATA_MARKER+json.dumps({
+            "secretToken":"must-not-export","titleHebrew":"שלום","lectureDate":"not a date","hidden":"yes"}))
+        self.assertEqual(human,"Plain")
+        self.assertEqual(fields["titleHebrew"],"שלום")
+        self.assertNotIn("secretToken",fields)
+        self.assertNotIn("lectureDate",fields)
+        self.assertIs(hidden,False)
 
     def test_unicode_mark_and_holiday_aliases(self):
         self.assertEqual(match_topic("שיעור לפורים", HOLIDAY_ALIASES), "Purim")
