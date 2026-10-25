@@ -156,6 +156,23 @@ class ApprovedDropboxBridgeTest(unittest.TestCase):
         self.assertEqual(parshas_from_title("Ordinary Thursday lecture"), [])
         self.assertEqual(parshas_from_title("נשא - נשא"), ["Nasso"])
 
+    def test_excluded_goldhirsch_event_not_published_even_if_approved(self):
+        record = {
+            **self.video(),
+            "sourceLabel": "Reb Yitzchok Ahron Goldhirsch",
+            "sourcePath": "/Shinyev Yurtziet/MovaviClips_Video_20250114-101140.mp4",
+            "approved": True,
+            "approvedMetadata": {
+                "speaker": "Reb Yitzchok Ahron Goldhirsch",
+                "title": "Shinyev Yurtziet",
+                "year": 5785,
+            },
+        }
+        public, private = merge_approved_dropbox(
+            *self.catalog(), {"version": 1, "items": {self.MEDIA_ID: record}})
+        self.assertEqual(public["items"], [])
+        self.assertEqual(private["items"], [])
+
     def test_stable_series_ids(self):
         self.assertEqual(series_id(self.MEDIA_ID), series_id(self.MEDIA_ID))
         with self.assertRaises(ValueError):
