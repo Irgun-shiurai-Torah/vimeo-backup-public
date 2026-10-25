@@ -1,0 +1,29 @@
+name: Test approved Dropbox Series preview
+
+on:
+  pull_request:
+    paths:
+      - dropbox_approve.py
+      - tests/test_dropbox_approve.py
+      - dropbox_series_bridge.py
+      - .github/workflows/test-dropbox-approval.yml
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install Drive import dependencies
+        run: pip install google-api-python-client google-auth google-auth-httplib2
+      - name: Validate one-record approval and privacy
+        run: |
+          python -m py_compile dropbox_approve.py dropbox_import.py dropbox_series_bridge.py
+          python -m unittest discover -s tests -p 'test_dropbox_approve.py' -v
+          python -m unittest discover -s tests -p 'test_dropbox_series_bridge.py' -v
