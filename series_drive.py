@@ -57,15 +57,36 @@ class SeriesDrive:
             fields="id", supportsAllDrives=True,
         ).execute(num_retries=5)["id"]
 
+    def series_system_folder(self):
+        # Unlike Vimeo Backup/Maps, the separate Series root is not shared
+        # with anyone holding a link. Contributors receive access only to their
+        # own speaker subfolders, never to this underscore-named system folder.
+        self.metadata(SERIES_ROOT_ID)  # ensure it exists before writing
+        return self.folder(SERIES_ROOT_ID, "_System")
+
     def backup_maps_folder(self):
-        # Create no city or regular video folders. This location matches the
-        # existing backup map storage and is a private staging namespace.
-        root = self.root_folder_by_name("Vimeo Backup")
-        return self.folder(root, "Maps")
+        private = self.series_system_folder()
+        # One-time migration: the earliest test scan wrote its private map
+        # under the legacy Maps location. Move that same file atomically into
+        # the restricted Series hierarchy, without copying confidential IDs.
+        old_root = self.root_folder_by_name("Vimeo Backup")
+        old_maps = self.find(old_root, "Maps")
+        legacy = self.find(old_maps["id"], PRIVATE_MAP_NAME) if old_maps else None
+        if legacy:
+            current = self.find(private, PRIVATE_MAP_NAME)
+            if current and current["id"] != legacy["id"]:
+                raise RuntimeError("Both old and private Series maps exist; refusing ambiguous migration")
+            self.api.files().update(
+                fileId=legacy["id"], addParents=private,removeParents=old_maps["id"],
+                fields="id,parents", supportsAllDrives=True
+            ).execute(num_retries=5)
+            print("Moved restricted Series map out of legacy shared backup folder", flush=True)
+            if self.find(old_maps["id"], PRIVATE_MAP_NAME):
+                raise RuntimeError("Legacy Series map remains visible in shared Maps; stopping")
+        return private
 
     def series_outputs_folder(self):
-        root = self.root_folder_by_name("Vimeo Backup")
-        return self.folder(root, "Series-HLS")
+        return self.folder(self.series_system_folder(), "_Processed")
 
     def root_folder_by_name(self, name):
         q = "name = '" + name.replace("\\", "\\\\").replace("'", "\\'") + "' and mimeType = 'application/vnd.google-apps.folder' and trashed = false"
