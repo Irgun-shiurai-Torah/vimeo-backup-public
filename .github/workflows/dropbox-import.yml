@@ -30,6 +30,10 @@ on:
         description: "Optional stable Dropbox media ID to import just one recording"
         required: false
         default: ""
+      source_label:
+        description: "Optional label of one approved Dropbox folder to scan/import"
+        required: false
+        default: ""
 
 permissions:
   contents: read
@@ -70,6 +74,7 @@ jobs:
           # Feature-branch pushes are always read-only. Import only when dispatched manually.
           MODE: ${{ github.event_name == 'push' && 'scan' || inputs.mode }}
           TEST_ID: ${{ inputs.only_id }}
+          SOURCE_LABEL: ${{ github.event_name == 'push' && 'Reb Gamliel Rabinowitz' || inputs.source_label }}
           MAX_FILES: ${{ inputs.max_files }}
         run: |
-          python -u dropbox_import.py --mode "${MODE:-scan}" --max-files "${MAX_FILES:-1}" --only-id "${TEST_ID:-}"
+          python -u dropbox_import.py --mode "${MODE:-scan}" --max-files "${MAX_FILES:-1}" --only-id "${TEST_ID:-}" --source-label "${SOURCE_LABEL:-}"

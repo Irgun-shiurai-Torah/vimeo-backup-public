@@ -68,6 +68,27 @@ class SharedLinksTest(unittest.TestCase):
             dropbox.return_value.download.assert_not_called()
             drive.assert_not_called()
 
+    def test_scan_fails_on_missing_source_label_before_network(self):
+        from dropbox_import import run
+        with patch("dropbox_import.sources_from_env", return_value=[
+            {"id": "dbx-a", "url": self.URL, "label": "Other", "password": ""}]), \
+             patch("dropbox_import.DropboxLinks") as dropbox:
+            with self.assertRaises(ValueError):
+                run(mode="scan", source_label="Reb Gamliel Rabinowitz")
+            dropbox.assert_not_called()
+
+    def test_source_label_restricts_scan_to_one_folder(self):
+        from dropbox_import import run
+        two = [{"id": "dbx-a", "url": self.URL, "label": "Reb Gamliel Rabinowitz", "password": ""},
+               {"id": "dbx-b", "url": self.URL, "label": "Someone else", "password": ""}]
+        with patch("dropbox_import.sources_from_env", return_value=two), \
+             patch("dropbox_import.DropboxLinks") as dropbox, \
+             patch("dropbox_import.DriveStore") as drive:
+            dropbox.return_value.list_tree.return_value = (0, [])
+            run(mode="scan", source_label="Reb Gamliel Rabinowitz")
+            dropbox.return_value.list_tree.assert_called_once_with(two[0])
+            drive.assert_not_called()
+
     def test_deterministic_media_id(self):
         item = {"id": "id:example", "path": "/Year/Lecture.mov"}
         self.assertEqual(file_id("dbx-folder", item), file_id("dbx-folder", item))

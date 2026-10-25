@@ -336,8 +336,13 @@ def check_disk(size):
                            "use a larger runner or process fewer renditions")
 
 
-def run(mode="scan", max_files=1, only_id=""):
+def run(mode="scan", max_files=1, only_id="", source_label=""):
     sources = sources_from_env()
+    if source_label:
+        matches = [source for source in sources if source["label"] == source_label]
+        if len(matches) != 1:
+            raise ValueError("Requested Dropbox source label must match exactly one approved source")
+        sources = matches
     api = DropboxLinks(os.getenv("DROPBOX_APP_KEY"), os.getenv("DROPBOX_APP_SECRET"))
     scanned = []
     folders = 0
@@ -357,9 +362,13 @@ def run(mode="scan", max_files=1, only_id=""):
         key=lambda pair: (pair[1]["size"], file_id(pair[0]["id"], pair[1]))
     )
     if video_candidates:
-        candidate_source, candidate_item = video_candidates[0]
-        print("Smallest video for safe test:", file_id(candidate_source["id"], candidate_item),
-              "size:", candidate_item["size"], "bytes")
+        # Prefer real lecture-sized candidates rather than tiny sample clips.
+        sizeable = [pair for pair in video_candidates if pair[1]["size"] >= 50 * 1024 * 1024]
+        shortlist = sizeable[:5] if sizeable else video_candidates[:5]
+        for candidate_source, candidate_item in shortlist:
+            print("Video candidate:", file_id(candidate_source["id"], candidate_item),
+                  "size:", candidate_item["size"], "bytes",
+                  "path:", candidate_item["path"])
     if mode == "scan":
         print("Read-only scan finished. No media downloaded or Drive files changed.")
         return
@@ -425,7 +434,8 @@ if __name__ == "__main__":
     parser.add_argument("--mode", choices=("scan", "import"), default="scan")
     parser.add_argument("--max-files", type=int, default=1)
     parser.add_argument("--only-id", default="", help="Import only this stable media ID")
+    parser.add_argument("--source-label", default="", help="Restrict scan and import to one approved source label")
     args = parser.parse_args()
     if not 1 <= args.max_files <= 4:
         parser.error("--max-files must be between 1 and 4")
-    run(mode=args.mode, max_files=args.max_files, only_id=args.only_id)
+    run(mode=args.mode, max_files=args.max_files, only_id=args.only_id, source_label=args.source_label)
