@@ -59,7 +59,7 @@ class ApprovedDropboxBridgeTest(unittest.TestCase):
 
     def test_automatic_metadata_for_generic_or_numbered_files(self):
         source = {**self.video(), "sourceLabel": "Reb Gamliel Rabinowitz",
-                  "sourcePath": "/כי תצא תשפ-ג/לשון הקודש.MTS"
+                  "sourcePath": "/כי תצא תשפ-ג/לשון הקודש.MTS"}
         m = automatic_metadata(source)
         self.assertIn("כי תצא", m["title"])
         self.assertEqual(m["year"], 5783)
