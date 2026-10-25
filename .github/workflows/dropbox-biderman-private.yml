@@ -1,0 +1,70 @@
+name: Biderman Dropbox media import (private)
+
+on:
+  schedule:
+    # Two recordings per run at most (one per approved Biderman collection).
+    # Four-hour cadence limits Drive storage growth and runner usage.
+    - cron: "17 */4 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: irgun-dropbox-shared-link-import
+  cancel-in-progress: false
+
+jobs:
+  biderman-only:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install media and Google Drive dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+          python -m pip install google-api-python-client google-auth google-auth-httplib2
+      - name: Verify guarded importer code and source configuration
+        env:
+          DROPBOX_SOURCES_JSON: ${{ secrets.DROPBOX_SOURCES_JSON }}
+        run: |
+          test -n "$DROPBOX_SOURCES_JSON" || {
+            echo "::error::DROPBOX_SOURCES_JSON is missing; the old trial link must not be used."
+            exit 1
+          }
+          python -m py_compile dropbox_import.py
+          python -m unittest discover -s tests -p 'test_dropbox_import.py' -v
+          python -m unittest discover -s tests -p 'test_dropbox_series_bridge.py' -v
+      - name: Import only two Biderman collections, one pending file each
+        env:
+          DROPBOX_APP_KEY: ${{ secrets.DROPBOX_APP_KEY }}
+          DROPBOX_APP_SECRET: ${{ secrets.DROPBOX_APP_SECRET }}
+          DROPBOX_SOURCES_JSON: ${{ secrets.DROPBOX_SOURCES_JSON }}
+          GOOGLE_TOKEN_JSON: ${{ secrets.GOOGLE_TOKEN_JSON }}
+        shell: bash
+        run: |
+          # Do NOT import Gamliel, Nachum or Goldhirsch beyond their initial
+          # private test samples without separate explicit approval.
+          # No new Dropbox files are approved for website publication here.
+          failed=0
+          for label in \
+            'Reb Mielech - Leil Shishi' \
+            'Reb Mielech - Short Word for Shabbos'
+          do
+            echo "::group::Private import from $label"
+            if python -u dropbox_import.py --mode import \
+              --source-label "$label" --max-files 1 \
+              --max-source-bytes 750000000 --reserve-gib 50; then
+              echo "::notice::Finished one cautious import batch from $label."
+            else
+              echo "::error::Import from $label failed or was paused for storage safety."
+              failed=$((failed + 1))
+            fi
+            echo "::endgroup::"
+          done
+          if [ "$failed" -ne 0 ]; then exit 1; fi
+          echo "Finished one Biderman-only private batch. No records auto-published."
