@@ -4,7 +4,7 @@ The website owner has requested **automatic publication of lectures from all fiv
 
 ## Import workflow
 
-`.github/workflows/dropbox-all-series.yml` runs every four hours (and can be started manually). Each batch selects at most one pending media file from each of the following sources:
+`.github/workflows/dropbox-all-series.yml` runs every hour at 17 minutes past the hour (and can be started manually). Each batch selects at most one pending media file from each of the following sources:
 
 1. Reb Gamliel Rabinowitz
 2. Reb Nachum Cohen
