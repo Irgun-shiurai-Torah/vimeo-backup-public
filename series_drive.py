@@ -5,7 +5,7 @@ import os
 import pickle
 
 from google.auth.transport.requests import Request
-from series_catalog import speaker_names_from_folder_entries
+from series_catalog import speaker_names_from_folder_entries, choose_speaker_photo
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload, MediaIoBaseDownload, MediaIoBaseUpload
 
@@ -143,6 +143,25 @@ class SeriesDrive:
         while result is None:
             _, result = request.next_chunk(num_retries=5)
         return result["id"]
+
+    def list_speaker_photos(self):
+        """Find one supported portrait in each speaker's top-level Drive folder.
+
+        Photos are not recordings and never enter the city or year import.
+        The public catalog contains speaker names only; IDs stay private.
+        Recommended filename: speaker.jpg (also portrait/profile/photo).
+        """
+        allowed = {"image/jpeg", "image/png", "image/webp"}
+        preferred = {"speaker": 0, "portrait": 1, "profile": 2,
+                     "photo": 3, "headshot": 4}
+        result = {}
+        for speaker in self.children(SERIES_ROOT_ID):
+            if speaker.get("mimeType") != FOLDER_MIME or speaker.get("name","").startswith("_"):
+                continue
+            chosen = choose_speaker_photo(self.children(speaker["id"]))
+            if chosen:
+                result[speaker["name"]] = chosen
+        return result
 
     def list_speaker_folders(self):
         """List all actual speaker folders, even when they contain no shiurim.
