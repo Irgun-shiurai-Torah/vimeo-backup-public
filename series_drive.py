@@ -144,6 +144,38 @@ class SeriesDrive:
             _, result = request.next_chunk(num_retries=5)
         return result["id"]
 
+    def list_speaker_photos(self):
+        """Find one supported portrait in each speaker's top-level Drive folder.
+
+        Photos are not recordings and never enter the city or year import.
+        The public catalog contains speaker names only; IDs stay private.
+        Recommended filename: speaker.jpg (also portrait/profile/photo).
+        """
+        allowed = {"image/jpeg", "image/png", "image/webp"}
+        preferred = {"speaker": 0, "portrait": 1, "profile": 2,
+                     "photo": 3, "headshot": 4}
+        result = {}
+        for speaker in self.children(SERIES_ROOT_ID):
+            if speaker.get("mimeType") != FOLDER_MIME or speaker.get("name","").startswith("_"):
+                continue
+            photos = []
+            for file in self.children(speaker["id"]):
+                name = str(file.get("name") or "")
+                mime = str(file.get("mimeType") or "")
+                if mime not in allowed or name.startswith("_"):
+                    continue
+                if file.get("size") and int(file["size"]) > 25*1024*1024:
+                    continue
+                stem = name.rsplit(".",1)[0].casefold().strip()
+                rank = preferred.get(stem, 10)
+                photos.append((rank, name.casefold(), file))
+            if photos:
+                chosen = sorted(photos,key=lambda x:(x[0],x[1]))[0][2]
+                result[speaker["name"]] = {
+                    "id": chosen["id"],"mimeType": chosen["mimeType"]
+                }
+        return result
+
     def list_speaker_folders(self):
         """List all actual speaker folders, even when they contain no shiurim.
 
