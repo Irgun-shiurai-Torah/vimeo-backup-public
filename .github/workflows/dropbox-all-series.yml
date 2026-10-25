@@ -38,7 +38,7 @@ jobs:
           python -m py_compile dropbox_import.py dropbox_series_bridge.py
           python -m unittest discover -s tests -p 'test_dropbox_import.py' -v
           python -m unittest discover -s tests -p 'test_dropbox_series_bridge.py' -v
-      - name: Import one pending file per speaker collection
+      - name: Import one pending file from the approved Gamliel/Biderman collections
         env:
           DROPBOX_APP_KEY: ${{ secrets.DROPBOX_APP_KEY }}
           DROPBOX_APP_SECRET: ${{ secrets.DROPBOX_APP_SECRET }}
@@ -49,10 +49,11 @@ jobs:
           set -uo pipefail
           # Order rotates to give every collection a chance if a very long
           # conversion approaches the GitHub runner execution limit.
+          # Only the two approved speakers are allowed in the Series importer.
+          # Other shared folders remain available privately but are NOT
+          # downloaded or published by this scheduled workflow.
           sources=(
             'Reb Gamliel Rabinowitz'
-            'Reb Nachum Cohen'
-            'Reb Yitzchok Ahron Goldhirsch'
             'Reb Mielech - Leil Shishi'
             'Reb Mielech - Short Word for Shabbos'
           )
