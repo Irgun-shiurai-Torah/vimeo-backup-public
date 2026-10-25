@@ -9,6 +9,8 @@ on:
       - series_ingest.py
       - dropbox_series_bridge.py
       - dropbox_media_policy.py
+      - series_visibility.py
+      - tests/test_series_visibility.py
       - tests/test_dropbox_series_bridge.py
       - tests/test_series_catalog.py
       - .github/workflows/series-map-hourly.yml
@@ -38,6 +40,8 @@ jobs:
         run: python -m unittest discover -s tests -p 'test_series_catalog.py' -v
       - name: Verify Dropbox approval safety
         run: python -m unittest discover -s tests -p 'test_dropbox_series_bridge.py' -v
+      - name: Verify the two-speaker visibility restriction
+        run: python -m unittest discover -s tests -p 'test_series_visibility.py' -v
       - name: Install existing Drive OAuth dependencies
         run: pip install google-api-python-client google-auth google-auth-httplib2
       - name: Authenticate with the existing backup Google account
