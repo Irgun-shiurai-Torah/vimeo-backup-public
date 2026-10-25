@@ -1,6 +1,6 @@
 import unittest
 
-from series_catalog import build_maps, clean_key, match_topic, PARSHA_ALIASES, HOLIDAY_ALIASES
+from series_catalog import build_maps, clean_key, match_topic, PARSHA_ALIASES, HOLIDAY_ALIASES, speaker_names_from_folder_entries
 
 
 def source(name, file_id, year="5787", speaker="Rabbi Meilech Biderman", modified="2026-10-25T00:10:00Z"):
@@ -10,6 +10,17 @@ def source(name, file_id, year="5787", speaker="Rabbi Meilech Biderman", modifie
 
 
 class SeriesCatalogTests(unittest.TestCase):
+    def test_speaker_folders_include_empty_and_exclude_system(self):
+        folder = "application/vnd.google-apps.folder"
+        records = [
+            {"name":"Rabbi B","mimeType":folder,"id":"folder-b"},
+            {"name":"Rabbi A","mimeType":folder,"id":"folder-a"},
+            {"name":"_System","mimeType":folder,"id":"folder-private"},
+            {"name":"_Pending","mimeType":folder,"id":"folder-upload"},
+            {"name":"test.mp3","mimeType":"audio/mpeg","id":"not-a-folder"}
+        ]
+        self.assertEqual(speaker_names_from_folder_entries(records),["Rabbi A","Rabbi B"])
+
     def test_actual_hebrew_mp3_test_file(self):
         pub, private = build_maps(
             [source("\u202aר' מיילך בידרמן ליל שישי לך לך תשפ-ז.mp3", "internal-drive-id")],

@@ -20,6 +20,7 @@ def main():
     maps_folder = drive.backup_maps_folder()
     previous = drive.read_json(maps_folder, PRIVATE_MAP_NAME)
     pub, private = build_maps(files, previous_private=previous)
+    pub["speakers"] = drive.list_speaker_folders()
     prior_count = len((previous or {}).get("items", []))
     if prior_count and not len(pub["items"]) and not ALLOW_EMPTY:
         raise RuntimeError("Scan unexpectedly empty after previous catalog; refusing to erase it")
@@ -35,7 +36,7 @@ def main():
     # it includes display metadata and internal API paths, never Drive IDs.
     PUBLIC_OUTPUT.write_text(json.dumps(pub,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
     print("Series root scan completed")
-    print(f"Scanned files: {len(files)}, grouped shiurim: {len(pub['items'])}")
+    print(f"Scanned files: {len(files)}, speaker folders: {len(pub['speakers'])}, grouped shiurim: {len(pub['items'])}")
     print(f"Audio: {sum(1 for x in pub['items'] if x['hasAudio'])}, video: {sum(1 for x in pub['items'] if x['hasVideo'])}")
     print(f"Private Drive map updated (ID deliberately not printed); public staging catalog: {PUBLIC_OUTPUT}")
     return 0

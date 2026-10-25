@@ -5,6 +5,7 @@ import os
 import pickle
 
 from google.auth.transport.requests import Request
+from series_catalog import speaker_names_from_folder_entries
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload, MediaIoBaseDownload, MediaIoBaseUpload
 
@@ -142,6 +143,14 @@ class SeriesDrive:
         while result is None:
             _, result = request.next_chunk(num_retries=5)
         return result["id"]
+
+    def list_speaker_folders(self):
+        """List all actual speaker folders, even when they contain no shiurim.
+
+        The public catalog includes names only; no Drive IDs are exposed.
+        Underscore-prefixed system and pending folders are always excluded.
+        """
+        return speaker_names_from_folder_entries(self.children(SERIES_ROOT_ID))
 
     def list_source_files(self):
         info = self.metadata(SERIES_ROOT_ID)
