@@ -31,7 +31,7 @@ class SeriesDrive:
                 q=f"'{folder_id}' in parents and trashed = false",
                 pageSize=1000, pageToken=page, supportsAllDrives=True,
                 includeItemsFromAllDrives=True,
-                fields="nextPageToken,files(id,name,mimeType,size,createdTime,modifiedTime,appProperties)"
+                fields="nextPageToken,files(id,name,mimeType,size,createdTime,modifiedTime,appProperties,description)"
             ).execute(num_retries=5)
             records.extend(result.get("files", []))
             page = result.get("nextPageToken")
