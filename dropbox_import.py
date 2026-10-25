@@ -344,8 +344,9 @@ def run(mode="scan", max_files=1):
         return
 
     store = DriveStore(os.getenv("GOOGLE_TOKEN_JSON"))
-    root = store.folder(None, "Vimeo Backup")
-    staging = store.folder(root, "Dropbox Imports")
+    # Isolated top-level staging, not under a potentially shared Vimeo Backup root.
+    # Originals and private source identifiers must not inherit public sharing.
+    staging = store.folder(None, "IST Dropbox Imports (Private)")
     originals = store.folder(staging, "Originals")
     processed = store.folder(staging, "Processed")
     maps = store.folder(staging, "Maps")
