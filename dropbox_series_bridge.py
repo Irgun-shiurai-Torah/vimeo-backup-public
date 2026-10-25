@@ -1,9 +1,9 @@
-"""Connect explicitly approved Dropbox imports to the TEST Series website.
+"""Connect completed recordings from five known Dropbox folders to TEST Series.
 
-This is a pure catalog bridge: imported files stay in private Google Drive.
-It never publishes recordings just because a Dropbox link was scanned or
-converted. Every item requires an explicit approval and reviewed metadata in
-the private Dropbox import map before it joins the public Series catalog.
+Originals and generated media remain in private Google Drive storage. Fully
+converted known-source recordings are indexed automatically; explicitly
+disabled files and excluded non-lectures remain hidden. The website's Durable
+Object keeps its hide/show overrides across every catalog regeneration.
 """
 from __future__ import annotations
 
