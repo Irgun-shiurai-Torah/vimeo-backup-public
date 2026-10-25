@@ -145,6 +145,11 @@ def encode_video(drive,item,outputs_parent,on_audio_ready=None):
             interim["audioDriveId"]=drive.upload(
                 make_mp3(original,out),destination,"audio.mp3","audio/mpeg"
             )
+            interim.pop("audioNoTrack",None)
+            if on_audio_ready:
+                on_audio_ready(dict(interim))
+        elif not has_audio:
+            interim["audioNoTrack"]=True
             if on_audio_ready:
                 on_audio_ready(dict(interim))
         # Browsers can stream MP4/WebM directly; MTS and MOV require a
@@ -242,6 +247,19 @@ def refresh_public_catalog():
         raise RuntimeError("Unable to inspect pending Series map changes")
 
 
+def needs_series_work(item):
+    generated=item.get("generated") or {}
+    video=bool(item.get("videoDriveId"))
+    if video:
+        hls_complete=bool(generated.get("hls",{}).get("masterDriveId") and
+                          generated.get("posterDriveId"))
+        missing_mp3=bool(not item.get("audioDriveId") and not generated.get("audioDriveId")
+                         and not generated.get("audioNoTrack"))
+        return not hls_complete or missing_mp3, hls_complete
+    ext=extension(item.get("audioFilename") or "")
+    return bool(item.get("audioDriveId") and ext!=".mp3" and not generated.get("audioDriveId")), False
+
+
 def main(limit=1):
     limit=max(1,min(int(limit),4))
     drive=SeriesDrive()
@@ -254,20 +272,8 @@ def main(limit=1):
     count=0; errors=[]
     for item in private["items"]:
         if count>=limit:break
-        generated=item.get("generated") or {}
         video=bool(item.get("videoDriveId"))
-        if video:
-            hls_complete=bool(generated.get("hls",{}).get("masterDriveId") and
-                              generated.get("posterDriveId"))
-            # Deleting the old independently uploaded audio must not prevent
-            # regeneration from the original camera video.
-            missing_mp3=not item.get("audioDriveId") and not generated.get("audioDriveId") \
-                and not generated.get("audioNoTrack")
-            pending=not hls_complete or missing_mp3
-        else:
-            ext=extension(item.get("audioFilename") or "")
-            pending=bool(item.get("audioDriveId") and ext!=".mp3" and
-                         not generated.get("audioDriveId"))
+        pending,hls_complete=needs_series_work(item)
         if not pending: continue
         try:
             if output_root is None:output_root=drive.series_outputs_folder()
