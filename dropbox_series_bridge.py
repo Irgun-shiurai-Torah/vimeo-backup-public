@@ -123,6 +123,13 @@ def automatic_metadata(source):
     if not stem:
         return None
     parents = components[:-1]
+    # The source folder "סיכות תשפ-ב" is a confirmed misspelling of
+    # "סוכות תשפ-ב" in Reb Meilech's Short Word for Shabbos collection.
+    # Fix only this exact source/folder, not every occurrence of סיכות
+    # (which can have a different meaning). Never rename the Dropbox file.
+    if (source.get("sourceLabel") == "Reb Mielech - Short Word for Shabbos"
+            and parents and clean_key(parents[0]) == clean_key("סיכות תשפ-ב")):
+        parents[0] = "סוכות תשפ-ב"
     is_clip = bool(re.fullmatch(r"(?:clip[-_ ]*)?0*[0-9]{1,7}", stem, re.I))
     generic = clean_key(stem) in {
         "source", "video", "audio", "english", "hebrew", "yiddish", "with subtitles", "subtitles",
