@@ -143,6 +143,19 @@ class SeriesDrive:
             _, result = request.next_chunk(num_retries=5)
         return result["id"]
 
+    def list_speaker_folders(self):
+        """List all actual speaker folders, even when they contain no shiurim.
+
+        The public catalog includes names only; no Drive IDs are exposed.
+        Underscore-prefixed system and pending folders are always excluded.
+        """
+        return sorted(
+            {entry["name"] for entry in self.children(SERIES_ROOT_ID)
+             if entry.get("mimeType") == FOLDER_MIME
+             and entry.get("name") and not entry["name"].startswith("_")},
+            key=str.casefold,
+        )
+
     def list_source_files(self):
         info = self.metadata(SERIES_ROOT_ID)
         if info.get("name", "").lower() != "series" or info.get("mimeType") != FOLDER_MIME:
