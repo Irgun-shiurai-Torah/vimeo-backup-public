@@ -61,10 +61,25 @@ jobs:
         run: |
           git config user.name "Irgun Series Importer"
           git config user.email "actions@users.noreply.github.com"
-          git add series-public-map.json
-          if git diff --cached --quiet; then
-            echo "Series catalog unchanged."
-          else
+          cp series-public-map.json "$RUNNER_TEMP/series-public-map.json"
+          # Other GitHub jobs can update main while the hourly Drive scan runs.
+          # Start each attempt from the newest main, then stage ONLY the safe
+          # generated catalog. Never force push or replace unrelated commits.
+          for attempt in 1 2 3; do
+            git fetch origin main
+            git reset --hard FETCH_HEAD
+            cp "$RUNNER_TEMP/series-public-map.json" series-public-map.json
+            git add series-public-map.json
+            if git diff --cached --quiet; then
+              echo "Series catalog unchanged."
+              exit 0
+            fi
             git commit -m "Update staging Series catalog from Google Drive [skip ci]"
-            git push origin HEAD:main
-          fi
+            if git push origin HEAD:main; then
+              echo "Published Series map on attempt $attempt"
+              exit 0
+            fi
+            echo "Series map publish raced with another commit, retrying on newest main"
+          done
+          echo "Could not publish Series map after 3 safe retries"
+          exit 1
