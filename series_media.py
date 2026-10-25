@@ -32,12 +32,16 @@ def run(*args):
 
 def probe(path):
     result=subprocess.run(["ffprobe","-v","error","-show_entries",
-        "format=duration:stream=codec_type,width,height","-of","json",path],
+        "format=duration:stream=codec_type,codec_name,width,height","-of","json",path],
         check=True,capture_output=True,text=True)
     data=json.loads(result.stdout)
     streams=data.get("streams",[])
     video=next((s for s in streams if s.get("codec_type")=="video"),None)
-    audio=any(s.get("codec_type")=="audio" for s in streams)
+    audio_stream=next((s for s in streams if s.get("codec_type")=="audio"),None)
+    audio=audio_stream is not None
+    if video is not None:
+        video=dict(video)
+        video["audioCodec"]=str(audio_stream.get("codec_name") or "").lower() if audio_stream else ""
     duration=max(0,float(data.get("format",{}).get("duration") or 0))
     return video,audio,duration
 
@@ -68,17 +72,33 @@ def make_poster(input_file,out_dir,duration):
         raise RuntimeError("Poster output was empty")
     return destination
 
+def is_native_web_video(name, video, has_audio):
+    """Use the upload itself as a fallback when its codecs work in browsers."""
+    ext=extension(name or "")
+    codec=str((video or {}).get("codec_name") or "").lower()
+    audio=str((video or {}).get("audioCodec") or "").lower()
+    if ext==".mp4":
+        return codec=="h264" and (not has_audio or audio in {"aac","mp3"})
+    if ext==".webm":
+        return codec in {"vp8","vp9","av1"} and (not has_audio or audio in {"opus","vorbis"})
+    return False
+
+
 def make_preview_mp4(src, output_dir, width, height, has_audio=True):
-    """Fast, full-length 480p MP4 for MTS/MOV uploads before expensive HLS."""
+    """Small full-length fallback when browser cannot decode original video.
+
+    It remains usable before HLS exists or if HLS playback fails. Rate caps
+    prevent a needless high-bitrate half-gigabyte 480p duplicate.
+    """
     os.makedirs(output_dir, exist_ok=True)
     preview=os.path.join(output_dir,"preview.mp4")
-    target_height=even(min(480, int(height)))
-    print(f"Encoding Series early-playback MP4 at {target_height}p",flush=True)
+    target_height=even(min(360, int(height)))
+    print(f"Encoding compact Series fallback MP4 at {target_height}p",flush=True)
     args=["ffmpeg","-hide_banner","-loglevel","error","-y","-i",src,
           "-map","0:v:0","-map","0:a:0?","-vf",f"scale=-2:{target_height}",
-          "-c:v","libx264","-preset","ultrafast","-crf","29",
-          "-pix_fmt","yuv420p","-c:a","aac","-b:a","96k",
-          "-movflags","+faststart",preview]
+          "-c:v","libx264","-preset","ultrafast","-b:v","280k",
+          "-maxrate","360k","-bufsize","720k","-pix_fmt","yuv420p",
+          "-c:a","aac","-b:a","56k","-movflags","+faststart",preview]
     run(*args)
     if os.path.getsize(preview)<1024:
         raise RuntimeError("Playable MP4 conversion produced an empty file")
@@ -154,7 +174,7 @@ def encode_video(drive,item,outputs_parent,on_audio_ready=None):
                 on_audio_ready(dict(interim))
         # Browsers can stream MP4/WebM directly; MTS and MOV require a
         # browser-compatible preview before the full HLS ladder is generated.
-        if suffix.lower() not in {".mp4",".webm"} and not interim.get("previewMp4DriveId"):
+        if not is_native_web_video(item.get("videoFilename"),video,has_audio) and not interim.get("previewMp4DriveId"):
             interim["previewMp4DriveId"]=drive.upload(
                 make_preview_mp4(original,out,int(video["width"]),int(video["height"]),has_audio),
                 destination,"preview.mp4","video/mp4"
