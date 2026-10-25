@@ -1,4 +1,5 @@
 name: Approve one Reb Gamliel recording for TEST Series
+# Reviewed single-record preview: 2026-10-25 (test website only).
 
 on:
   push:
