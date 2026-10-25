@@ -54,7 +54,7 @@ jobs:
       - name: Install existing Drive client dependencies
         run: pip install google-api-python-client google-auth google-auth-httplib2
       - name: Install FFmpeg for media imports
-        if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'import' }}
+        if: ${{ (github.event_name == 'workflow_dispatch' && inputs.mode == 'import') || (github.event_name == 'push' && github.event.head_commit.message == 'TEST_GAMLIEL_ONE_VIDEO') }}
         run: |
           sudo apt-get update
           sudo apt-get install -y ffmpeg
@@ -72,9 +72,9 @@ jobs:
           DROPBOX_LINK_PASSWORD: ${{ secrets.DROPBOX_LINK_PASSWORD }}
           GOOGLE_TOKEN_JSON: ${{ secrets.GOOGLE_TOKEN_JSON }}
           # Feature-branch pushes are always read-only. Import only when dispatched manually.
-          MODE: ${{ github.event_name == 'push' && 'scan' || inputs.mode }}
-          TEST_ID: ${{ inputs.only_id }}
+          MODE: ${{ github.event_name == 'push' && github.event.head_commit.message == 'TEST_GAMLIEL_ONE_VIDEO' && 'import' || github.event_name == 'push' && 'scan' || inputs.mode }}
+          TEST_ID: ${{ github.event_name == 'push' && github.event.head_commit.message == 'TEST_GAMLIEL_ONE_VIDEO' && 'dbx-media-b10df8d9b922db4b49f24e64' || inputs.only_id }}
           SOURCE_LABEL: ${{ github.event_name == 'push' && 'Reb Gamliel Rabinowitz' || inputs.source_label }}
-          MAX_FILES: ${{ inputs.max_files }}
+          MAX_FILES: ${{ github.event_name == 'push' && '1' || inputs.max_files }}
         run: |
           python -u dropbox_import.py --mode "${MODE:-scan}" --max-files "${MAX_FILES:-1}" --only-id "${TEST_ID:-}" --source-label "${SOURCE_LABEL:-}"
