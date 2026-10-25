@@ -5,7 +5,7 @@ import os
 import pickle
 
 from google.auth.transport.requests import Request
-from series_catalog import speaker_names_from_folder_entries
+from series_catalog import speaker_names_from_folder_entries, choose_speaker_photo
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload, MediaIoBaseDownload, MediaIoBaseUpload
 
@@ -158,22 +158,9 @@ class SeriesDrive:
         for speaker in self.children(SERIES_ROOT_ID):
             if speaker.get("mimeType") != FOLDER_MIME or speaker.get("name","").startswith("_"):
                 continue
-            photos = []
-            for file in self.children(speaker["id"]):
-                name = str(file.get("name") or "")
-                mime = str(file.get("mimeType") or "")
-                if mime not in allowed or name.startswith("_"):
-                    continue
-                if file.get("size") and int(file["size"]) > 25*1024*1024:
-                    continue
-                stem = name.rsplit(".",1)[0].casefold().strip()
-                rank = preferred.get(stem, 10)
-                photos.append((rank, name.casefold(), file))
-            if photos:
-                chosen = sorted(photos,key=lambda x:(x[0],x[1]))[0][2]
-                result[speaker["name"]] = {
-                    "id": chosen["id"],"mimeType": chosen["mimeType"]
-                }
+            chosen = choose_speaker_photo(self.children(speaker["id"]))
+            if chosen:
+                result[speaker["name"]] = chosen
         return result
 
     def list_speaker_folders(self):
