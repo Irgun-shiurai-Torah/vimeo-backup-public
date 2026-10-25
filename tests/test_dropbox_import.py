@@ -111,6 +111,20 @@ class SharedLinksTest(unittest.TestCase):
         check_drive_headroom(store, 200_000_000, reserve_gib=0)
         store.api.about.assert_not_called()
 
+    def test_recurring_imports_are_restricted_to_biderman_only(self):
+        from pathlib import Path
+        workflow = Path(".github/workflows/dropbox-biderman-private.yml").read_text()
+        for label in ("Reb Mielech - Leil Shishi",
+                      "Reb Mielech - Short Word for Shabbos"):
+            self.assertIn(label, workflow)
+        for excluded in ("Reb Gamliel Rabinowitz", "Reb Nachum Cohen",
+                         "Reb Yitzchok Ahron Goldhirsch"):
+            self.assertNotIn("--source-label '" + excluded + "'", workflow)
+        self.assertIn("--max-files 1", workflow)
+        self.assertIn("--reserve-gib 50", workflow)
+        self.assertIn("--max-source-bytes 750000000", workflow)
+        self.assertNotIn("secrets.DROPBOX_SHARED_LINK", workflow)
+
     def test_deterministic_media_id(self):
         item = {"id": "id:example", "path": "/Year/Lecture.mov"}
         self.assertEqual(file_id("dbx-folder", item), file_id("dbx-folder", item))
