@@ -2,7 +2,7 @@
   "version": 1,
   "library": "series",
   "mode": "staging",
-  "generatedAt": "2026-10-25T06:48:46.492564Z",
+  "generatedAt": "2026-10-25T07:24:25.570462Z",
   "items": [
     {
       "id": "series-cf5cca1156bd9f672f89f3a7",
@@ -12,22 +12,22 @@
       "title": "ר' מיילך בידרמן ליל שישי לך לך תשפ-ז",
       "parsha": "Lech-Lecha",
       "holiday": null,
-      "hasAudio": true,
+      "hasAudio": false,
       "hasVideo": true,
-      "audioReady": true,
+      "audioReady": false,
       "videoReady": true,
       "hlsReady": true,
-      "audioFormat": "mp3",
+      "audioFormat": null,
       "mediaType": "video",
       "status": "ready",
       "created": "2026-10-25T00:51:45.902Z",
       "sourceModified": "2026-10-25T00:29:14.815Z",
       "originalFilename": "ר' מיילך בידרמן ליל שישי לך לך תשפ-ז.MTS",
       "originalFormat": "mts",
-      "audioPlaybackUrl": "/api/series/media/series-cf5cca1156bd9f672f89f3a7/audio",
+      "audioPlaybackUrl": null,
       "videoPlaybackUrl": "/api/series/media/series-cf5cca1156bd9f672f89f3a7/video",
       "originalDownloadUrl": "/api/series/media/series-cf5cca1156bd9f672f89f3a7/original",
-      "audioDownloadUrl": "/api/series/media/series-cf5cca1156bd9f672f89f3a7/audio?download=1",
+      "audioDownloadUrl": null,
       "public": true
     }
   ]
