@@ -7,6 +7,7 @@ filenames, and produces a separate public-safe and private media map.
 from __future__ import annotations
 
 import hashlib
+import json
 import os
 import re
 import unicodedata
@@ -17,6 +18,40 @@ AUDIO_EXTENSIONS = {".mp3", ".m4a", ".aac", ".wav", ".flac", ".ogg", ".opus", ".
 AUDIO_PRIORITY = {ext: pos for pos, ext in enumerate([".mp3", ".m4a", ".aac", ".flac", ".wav", ".ogg", ".opus", ".aiff", ".aif", ".wma"])}
 VIDEO_PRIORITY = {ext: pos for pos, ext in enumerate([".mp4", ".mov", ".m4v", ".webm", ".mkv", ".mts", ".m2ts", ".avi", ".ts", ".mpeg", ".mpg", ".wmv"])}
 FOLDER_MIME = "application/vnd.google-apps.folder"
+# Full Review & Publish metadata is stored in the original recording's
+# Google Drive description. This remains separate from all city catalog data.
+UPLOAD_METADATA_MARKER = "\n\n[IST_SERIES_METADATA_V1]\n"
+UPLOAD_FIELD_LIMITS = {
+    "titleEnglish": 350, "titleHebrew": 350, "speakerEnglish": 160,
+    "speakerHebrew": 160, "rabbiAlternate": 160, "lecturerAlternate": 160,
+    "topic": 260, "topicEnglish": 260, "topicHebrew": 260,
+    "category": 160, "program": 200, "series": 200, "language": 80,
+    "organization": 160, "location": 160, "shiurCode": 100,
+    "lectureDate": 20,
+}
+
+
+def read_review_metadata(description):
+    """Read only known public display fields; reject malformed metadata."""
+    raw = str(description or "")
+    if UPLOAD_METADATA_MARKER not in raw:
+        return raw[:2400], {}, False
+    human, encoded = raw.rsplit(UPLOAD_METADATA_MARKER, 1)
+    try:
+        payload = json.loads(encoded)
+    except (TypeError, ValueError):
+        return raw[:2400], {}, False
+    if not isinstance(payload, dict):
+        return raw[:2400], {}, False
+    fields = {
+        key: str(payload[key]).strip()[:limit]
+        for key, limit in UPLOAD_FIELD_LIMITS.items()
+        if isinstance(payload.get(key), str)
+    }
+    if "lectureDate" in fields and fields["lectureDate"] and not re.fullmatch(r"\d{4}-\d{2}-\d{2}", fields["lectureDate"]):
+        fields.pop("lectureDate")
+    return human.strip()[:2400], fields, payload.get("hidden") is True
+
 
 # All names resolve to one canonical English ID. Hebrew aliases cover typical
 # Orthodox Hebrew/Yiddish titles; only explicit aliases are used to avoid
@@ -196,9 +231,14 @@ def build_maps(source_files, previous_private=None, generated_at=None):
         used_ids.add(uid)
         title = stem(main["name"]).replace("_", " ")
         modified = str(main.get("modifiedTime") or main.get("createdTime") or "")
+        # If two formats share a title, either source can carry metadata.
+        meta_source = next((f for f in (main, video, audio) if f and
+                            UPLOAD_METADATA_MARKER in str(f.get("description") or "")), main)
+        description, extra_metadata, hidden = read_review_metadata(meta_source.get("description"))
         props = main.get("appProperties") or {}
-        parsha = clean_name(props.get("irgunSeriesParsha")) or match_topic(title, PARSHA_ALIASES)
-        holiday = clean_name(props.get("irgunSeriesHoliday")) or match_topic(title, HOLIDAY_ALIASES)
+        meta_props = meta_source.get("appProperties") or {}
+        parsha = clean_name(meta_props.get("irgunSeriesParsha") or props.get("irgunSeriesParsha")) or match_topic(title, PARSHA_ALIASES)
+        holiday = clean_name(meta_props.get("irgunSeriesHoliday") or props.get("irgunSeriesHoliday")) or match_topic(title, HOLIDAY_ALIASES)
         old_video = bool(old and video and old.get("videoDriveId") == video.get("id")
                          and old.get("videoSourceModified") == video.get("modifiedTime"))
         old_audio = bool(old and audio and old.get("audioDriveId") == audio.get("id")
@@ -212,6 +252,7 @@ def build_maps(source_files, previous_private=None, generated_at=None):
         private = {
             "id": uid, "library": "series", "speaker": g["speaker"], "year": g["year"],
             "title": title, "parsha": parsha, "holiday": holiday,
+            "description": description, "hidden": hidden, **extra_metadata,
             "videoDriveId": str(video["id"]) if video else None,
             "audioDriveId": str(audio["id"]) if audio else None,
             "videoSourceModified": str(video.get("modifiedTime") or "") if video else None,
@@ -228,6 +269,7 @@ def build_maps(source_files, previous_private=None, generated_at=None):
         safe = {
             "id": uid, "library": "series", "speaker": g["speaker"], "year": g["year"],
             "title": title, "parsha": parsha, "holiday": holiday,
+            "description": description, "hidden": hidden, **extra_metadata,
             "hasAudio": has_audio, "hasVideo": bool(video),
             "audioReady": is_audio_playable, "videoReady": is_video_playable,
             "hlsReady": bool(hls.get("masterDriveId")),
