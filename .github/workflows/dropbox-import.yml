@@ -1,0 +1,55 @@
+name: Dropbox shared-link import (manual test)
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "Scan only (no downloads) or import up to 1-4 files"
+        required: true
+        type: choice
+        options:
+          - scan
+          - import
+        default: scan
+      max_files:
+        description: "Maximum files to import per run (1-4)"
+        required: false
+        default: "1"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: irgun-dropbox-shared-link-import
+  cancel-in-progress: false
+
+jobs:
+  dropbox:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install existing FFmpeg and Drive dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+          pip install google-api-python-client google-auth google-auth-httplib2
+      - name: Check Dropbox importer syntax and sources
+        run: |
+          python -m py_compile dropbox_import.py
+          python -m unittest discover -s tests -p 'test_dropbox_import.py' -v
+      - name: Scan or import approved Dropbox links
+        env:
+          DROPBOX_APP_KEY: ${{ secrets.DROPBOX_APP_KEY }}
+          DROPBOX_APP_SECRET: ${{ secrets.DROPBOX_APP_SECRET }}
+          DROPBOX_SHARED_LINK: ${{ secrets.DROPBOX_SHARED_LINK }}
+          DROPBOX_SOURCES_JSON: ${{ secrets.DROPBOX_SOURCES_JSON }}
+          DROPBOX_LINK_PASSWORD: ${{ secrets.DROPBOX_LINK_PASSWORD }}
+          GOOGLE_TOKEN_JSON: ${{ secrets.GOOGLE_TOKEN_JSON }}
+          MODE: ${{ inputs.mode }}
+          MAX_FILES: ${{ inputs.max_files }}
+        run: |
+          python -u dropbox_import.py --mode "${MODE:-scan}" --max-files "${MAX_FILES:-1}"
