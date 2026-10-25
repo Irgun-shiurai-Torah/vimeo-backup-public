@@ -164,8 +164,9 @@ def build_maps(source_files, previous_private=None, generated_at=None):
         used_ids.add(uid)
         title = stem(main["name"]).replace("_", " ")
         modified = str(main.get("modifiedTime") or main.get("createdTime") or "")
-        parsha = match_topic(title, PARSHA_ALIASES)
-        holiday = match_topic(title, HOLIDAY_ALIASES)
+        props = main.get("appProperties") or {}
+        parsha = clean_name(props.get("irgunSeriesParsha")) or match_topic(title, PARSHA_ALIASES)
+        holiday = clean_name(props.get("irgunSeriesHoliday")) or match_topic(title, HOLIDAY_ALIASES)
         old_video = bool(old and video and old.get("videoDriveId") == video.get("id")
                          and old.get("videoSourceModified") == video.get("modifiedTime"))
         old_audio = bool(old and audio and old.get("audioDriveId") == audio.get("id")
@@ -173,7 +174,7 @@ def build_maps(source_files, previous_private=None, generated_at=None):
         generated = (old.get("generated", {}) if old and (old_video or (not video and old_audio)) else {})
         has_audio = bool(audio or generated.get("audioDriveId"))
         hls = generated.get("hls", {}) if isinstance(generated.get("hls", {}), dict) else {}
-        is_video_playable = bool(video and (extension(video["name"]) in {".mp4", ".webm", ".mov", ".m4v"} or hls.get("masterDriveId")))
+        is_video_playable = bool(video and (extension(video["name"]) in {".mp4", ".webm"} or generated.get("previewMp4DriveId") or hls.get("masterDriveId")))
         is_audio_playable = bool(audio and extension(audio["name"]) in {".mp3", ".m4a", ".aac", ".ogg", ".opus"} or generated.get("audioDriveId"))
         private = {
             "id": uid, "library": "series", "speaker": g["speaker"], "year": g["year"],
@@ -187,7 +188,7 @@ def build_maps(source_files, previous_private=None, generated_at=None):
             "videoFilename": clean_name(video["name"]) if video else None,
             "audioFilename": clean_name(audio["name"]) if audio else None,
             "sourceModified": modified, "created": main.get("createdTime"),
-            "generated": generated, "status": "ready" if is_audio_playable or bool(hls) else "processing",
+            "generated": generated, "status": "ready" if is_audio_playable or is_video_playable else "processing",
             "duplicateInputCount": max(0, len(g["audio"])-1) + max(0,len(g["video"])-1),
         }
         priv.append(private)
