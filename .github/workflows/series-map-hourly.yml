@@ -7,6 +7,8 @@ on:
       - series_catalog.py
       - series_drive.py
       - series_ingest.py
+      - dropbox_series_bridge.py
+      - tests/test_dropbox_series_bridge.py
       - tests/test_series_catalog.py
       - .github/workflows/series-map-hourly.yml
   schedule:
@@ -33,6 +35,8 @@ jobs:
           python-version: "3.12"
       - name: Verify scanner logic
         run: python -m unittest discover -s tests -p 'test_series_catalog.py' -v
+      - name: Verify Dropbox approval safety
+        run: python -m unittest discover -s tests -p 'test_dropbox_series_bridge.py' -v
       - name: Install existing Drive OAuth dependencies
         run: pip install google-api-python-client google-auth google-auth-httplib2
       - name: Authenticate with the existing backup Google account

@@ -9,6 +9,7 @@ import pathlib
 import sys
 
 from series_catalog import build_maps
+from dropbox_series_bridge import merge_approved_dropbox
 from series_drive import SeriesDrive, PRIVATE_MAP_NAME
 
 PUBLIC_OUTPUT = pathlib.Path("series-public-map.json")
@@ -24,6 +25,10 @@ def main():
     portraits = drive.list_speaker_photos()
     private["speakerPhotos"] = portraits
     pub["speakerPhotos"] = sorted(portraits.keys(),key=str.casefold)
+    # Dropbox is an additional, approval-gated Series source. A successful
+    # Dropbox scan/import alone cannot make any recording publicly visible.
+    dropbox_map = drive.read_dropbox_import_map()
+    pub, private = merge_approved_dropbox(pub, private, dropbox_map)
     prior_count = len((previous or {}).get("items", []))
     if prior_count and not len(pub["items"]) and not ALLOW_EMPTY:
         raise RuntimeError("Scan unexpectedly empty after previous catalog; refusing to erase it")
