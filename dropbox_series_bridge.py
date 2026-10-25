@@ -93,10 +93,10 @@ AUTO_SOURCE_SERIES = {
 def hebrew_year_from_path(path):
     """Parse actual Hebrew years in Dropbox titles; never guess from upload time."""
     normalized = str(path or "").replace("״", '"').replace("׳", "'")
-    match = re.search(r"(?<!\\d)(57[0-9]{2})(?!\\d)", normalized)
+    match = re.search(r"(?<![0-9])(57[0-9]{2})(?![0-9])", normalized)
     if match:
         return int(match.group(1))
-    match = re.search(r"(תשפ|תשע|תשצ)[\\s\\-_'\\"־]*([אבגדהוזחט])", normalized)
+    match = re.search(r"(תשפ|תשע|תשצ)[^א-ת0-9]{0,4}([אבגדהוזחט])", normalized)
     if match:
         base = {"תשפ": 5780, "תשע": 5770, "תשצ": 5790}[match.group(1)]
         return base + "אבגדהוזחט".index(match.group(2)) + 1
@@ -114,7 +114,7 @@ def automatic_metadata(source):
     if not cfg:
         return None
     path = str(source.get("sourcePath") or "")
-    if not path.startswith("/") or "\\x00" in path:
+    if not path.startswith("/") or any(ord(ch) < 32 for ch in path):
         return None
     components = [x.strip() for x in PurePosixPath(path).parts[1:] if x.strip()]
     if not components or len(components) > 20:
@@ -123,9 +123,9 @@ def automatic_metadata(source):
     if not stem:
         return None
     parents = components[:-1]
-    is_clip = bool(re.fullmatch(r"(?:clip[-_ ]*)?0*\\d{1,7}", stem, re.I))
+    is_clip = bool(re.fullmatch(r"(?:clip[-_ ]*)?0*[0-9]{1,7}", stem, re.I))
     generic = clean_key(stem) in {
-        "source", "video", "audio", "english", "hebrew", "yiddish",
+        "source", "video", "audio", "english", "hebrew", "yiddish", "with subtitles", "subtitles",
         "לשון הקודש", "אידיש", "עברית", "וידאו", "אודיו",
     }
     if is_clip or generic:
