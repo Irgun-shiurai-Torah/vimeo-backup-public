@@ -6,7 +6,7 @@ import tempfile
 import unittest
 
 from series_catalog import build_maps
-from series_media import make_hls, make_mp3, make_poster, probe, quality_ladder
+from series_media import make_hls, make_mp3, make_poster, make_preview_mp4, probe, quality_ladder
 
 
 def source(name="Lecture.wav", file_id="audio-original", modified="2026-10-25T00:00:00Z"):
@@ -92,6 +92,17 @@ class SeriesMediaTests(unittest.TestCase):
         self.assertEqual(result["hls"],old_hls)
         self.assertEqual(fake.last,("audio.mp3","audio/mpeg"))
 
+    def test_only_browser_supported_original_video_skips_early_preview(self):
+        from series_media import is_native_web_video
+        h264={"codec_name":"h264","audioCodec":"aac"}
+        self.assertTrue(is_native_web_video("shiur.mp4",h264,True))
+        self.assertFalse(is_native_web_video("shiur.mts",h264,True))
+        self.assertFalse(is_native_web_video("shiur.mov",h264,True))
+        self.assertFalse(is_native_web_video("shiur.mp4",{"codec_name":"hevc","audioCodec":"aac"},True))
+        self.assertFalse(is_native_web_video("shiur.mp4",{"codec_name":"h264","audioCodec":"ac3"},True))
+        self.assertTrue(is_native_web_video("shiur.webm",{"codec_name":"vp9","audioCodec":"opus"},True))
+        self.assertFalse(is_native_web_video("shiur.webm",{"codec_name":"av1","audioCodec":"aac"},True))
+
     def test_mts_preview_makes_video_ready_before_hls(self):
         files=[source("Shabbos MTS shiur.mts",file_id="camera-source")]
         public,private=build_maps(files)
@@ -150,6 +161,9 @@ class SeriesMediaTests(unittest.TestCase):
             self.assertIn("#EXT-X-BYTERANGE",pathlib.Path(out,"360p.m3u8").read_text())
             self.assertGreater(pathlib.Path(make_mp3(video,out)).stat().st_size,500)
             self.assertGreater(pathlib.Path(make_poster(video,out,duration)).stat().st_size,300)
+            preview=pathlib.Path(make_preview_mp4(video,out,640,360))
+            self.assertTrue(preview.exists())
+            self.assertLess(preview.stat().st_size,1_000_000,"Short Series fallback must stay compact")
 
 if __name__=="__main__":
     unittest.main()
