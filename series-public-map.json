@@ -2,7 +2,7 @@
   "version": 1,
   "library": "series",
   "mode": "staging",
-  "generatedAt": "2026-10-25T14:37:09.073581Z",
+  "generatedAt": "2026-10-25T15:07:36.117336Z",
   "items": [
     {
       "id": "series-cf5cca1156bd9f672f89f3a7",
@@ -100,6 +100,7 @@
     "Reb Gamliel Rabinowitz"
   ],
   "speakerPhotos": [
-    "Rabbi Meilech Biderman"
+    "Rabbi Meilech Biderman",
+    "Reb Gamliel Rabinowitz"
   ]
 }
