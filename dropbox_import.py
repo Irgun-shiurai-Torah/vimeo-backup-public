@@ -26,6 +26,7 @@ from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 
 from series_media import make_hls, make_mp3, make_poster, probe, quality_ladder
+from dropbox_media_policy import is_excluded_nonlecture
 
 VIDEO_EXT = {".mp4", ".mov", ".m4v", ".mts", ".m2ts", ".mkv", ".avi",
              ".webm", ".wmv", ".mpg", ".mpeg", ".ts"}
@@ -363,15 +364,6 @@ def check_drive_headroom(store, media_size, reserve_gib):
     if remaining < required:
         raise RuntimeError("Drive storage is below the configured safety reserve; "
                            "automatic import paused without deleting anything")
-
-
-def is_excluded_nonlecture(source, item):
-    """Don't ingest the Goldhirsch Shinyev Yurtziet occasion as a lecture."""
-    if source.get("label") != "Reb Yitzchok Ahron Goldhirsch":
-        return False
-    path = str(item.get("path") or "").replace("\\", "/").casefold()
-    first_folder = path.strip("/").split("/", 1)[0].strip()
-    return first_folder in {"shinyev yurtziet", "shinyev yahrzeit"}
 
 
 def run(mode="scan", max_files=1, only_id="", source_label="", min_video_bytes=0,
