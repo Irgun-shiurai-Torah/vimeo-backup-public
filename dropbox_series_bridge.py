@@ -13,6 +13,7 @@ import os
 import re
 
 from series_catalog import HOLIDAY_ALIASES, PARSHA_ALIASES, clean_key, match_topic
+from dropbox_media_policy import is_excluded_nonlecture
 
 
 DRIVE_ID = re.compile(r"^[A-Za-z0-9_-]{10,200}$")
@@ -95,7 +96,13 @@ def merge_approved_dropbox(public, private, dropbox_map):
     count = 0
 
     for source_id, source in sorted(entries.items()):
-        if not isinstance(source, dict) or source.get("approved") is not True:
+        if not isinstance(source, dict):
+            continue
+        # Excluded special-occasion footage must never be treated as a shiur,
+        # even if a stale private approval flag was set by mistake.
+        if is_excluded_nonlecture(source, source):
+            continue
+        if source.get("approved") is not True:
             continue
         reviewed = source.get("approvedMetadata")
         if not isinstance(reviewed, dict):
