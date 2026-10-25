@@ -1,6 +1,6 @@
 import unittest
 
-from series_catalog import build_maps, clean_key, match_topic, PARSHA_ALIASES, HOLIDAY_ALIASES
+from series_catalog import build_maps, clean_key, match_topic, PARSHA_ALIASES, HOLIDAY_ALIASES, speaker_names_from_folder_entries
 
 
 def source(name, file_id, year="5787", speaker="Rabbi Meilech Biderman", modified="2026-10-25T00:10:00Z"):
@@ -11,19 +11,15 @@ def source(name, file_id, year="5787", speaker="Rabbi Meilech Biderman", modifie
 
 class SeriesCatalogTests(unittest.TestCase):
     def test_speaker_folders_include_empty_and_exclude_system(self):
-        from series_drive import SeriesDrive, FOLDER_MIME, SERIES_ROOT_ID
-        drive=SeriesDrive.__new__(SeriesDrive)
-        def children(parent):
-            self.assertEqual(parent,SERIES_ROOT_ID)
-            return [
-                {"name":"Rabbi B","mimeType":FOLDER_MIME,"id":"folder-b"},
-                {"name":"Rabbi A","mimeType":FOLDER_MIME,"id":"folder-a"},
-                {"name":"_System","mimeType":FOLDER_MIME,"id":"folder-private"},
-                {"name":"_Pending","mimeType":FOLDER_MIME,"id":"folder-upload"},
-                {"name":"test.mp3","mimeType":"audio/mpeg","id":"not-a-folder"}
-            ]
-        drive.children=children
-        self.assertEqual(drive.list_speaker_folders(),["Rabbi A","Rabbi B"])
+        folder = "application/vnd.google-apps.folder"
+        records = [
+            {"name":"Rabbi B","mimeType":folder,"id":"folder-b"},
+            {"name":"Rabbi A","mimeType":folder,"id":"folder-a"},
+            {"name":"_System","mimeType":folder,"id":"folder-private"},
+            {"name":"_Pending","mimeType":folder,"id":"folder-upload"},
+            {"name":"test.mp3","mimeType":"audio/mpeg","id":"not-a-folder"}
+        ]
+        self.assertEqual(speaker_names_from_folder_entries(records),["Rabbi A","Rabbi B"])
 
     def test_actual_hebrew_mp3_test_file(self):
         pub, private = build_maps(
