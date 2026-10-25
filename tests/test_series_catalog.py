@@ -159,6 +159,12 @@ class SeriesCatalogTests(unittest.TestCase):
 
     def test_unicode_mark_and_holiday_aliases(self):
         self.assertEqual(match_topic("שיעור לפורים", HOLIDAY_ALIASES), "Purim")
+        # Dropbox sources sometimes spell the holiday סיכות. Both whole-word
+        # spellings must map to the existing canonical Sukkot category.
+        self.assertEqual(match_topic("סוכות תשפ-ב", HOLIDAY_ALIASES), "Sukkot")
+        self.assertEqual(match_topic("סיכות תשפ-ב", HOLIDAY_ALIASES), "Sukkot")
+        self.assertEqual(match_topic("שיעור בסיכות תשפ-ב", HOLIDAY_ALIASES), "Sukkot")
+        self.assertIsNone(match_topic("סיכויות", HOLIDAY_ALIASES))
         self.assertEqual(match_topic("פרשת לך לך", PARSHA_ALIASES), "Lech-Lecha")
         self.assertEqual(match_topic("פרשת וירא", PARSHA_ALIASES), "Vayera")
 
