@@ -1,0 +1,66 @@
+name: Review Goldhirsch lecture candidates (read-only)
+
+on:
+  push:
+    branches: [fix/goldhirsch-replace-nonlecture-sample]
+    paths: [.github/workflows/goldhirsch-one-off-review.yml]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: irgun-dropbox-shared-link-import
+  cancel-in-progress: false
+
+jobs:
+  scan:
+    if: ${{ github.event.head_commit.message == 'SCAN_GOLDHIRSCH_LECTURES' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install google-api-python-client google-auth google-auth-httplib2
+      - name: List candidate lectures without downloading or writing to Drive
+        env:
+          DROPBOX_APP_KEY: ${{ secrets.DROPBOX_APP_KEY }}
+          DROPBOX_APP_SECRET: ${{ secrets.DROPBOX_APP_SECRET }}
+          DROPBOX_SOURCES_JSON: ${{ secrets.DROPBOX_SOURCES_JSON }}
+        run: |
+          python -u - <<'PY'
+          import collections, re
+          from pathlib import Path
+          from dropbox_import import sources_from_env,DropboxLinks,file_id
+          sources=[x for x in sources_from_env() if x['label']=='Reb Yitzchok Ahron Goldhirsch']
+          if len(sources)!=1: raise RuntimeError('Goldhirsch Dropbox source not configured exactly once')
+          source=sources[0]
+          api=DropboxLinks(__import__('os').environ.get('DROPBOX_APP_KEY'),
+                           __import__('os').environ.get('DROPBOX_APP_SECRET'))
+          folders, all_items=api.list_tree(source)
+          print('Read-only scan:',folders,'folders',len(all_items),'files')
+          groups=collections.defaultdict(list)
+          for item in all_items:
+              parts=Path(item['path']).parts
+              group=parts[1] if len(parts)>2 else '(root)'
+              groups[group].append(item)
+          print('Top-level groups:')
+          for group,items in sorted(groups.items(),key=lambda x:x[0].casefold()):
+              vids=[x for x in items if x['kind']=='video']
+              aud=[x for x in items if x['kind']=='audio']
+              print('GROUP:',group,'videos:',len(vids),'audio:',len(aud))
+          skip=re.compile(r'shinyev|shinyev|yurtz?eit|יורצייט|יארצייט', re.I)
+          candidates=[x for x in all_items if x['kind']=='video' and not skip.search(x['path'])
+                     and x['size']>=40_000_000]
+          print('Video candidates outside excluded special occasions:',len(candidates))
+          # Prioritize descriptive lecture filenames and 100-800MB files.
+          def score(x):
+              base=Path(x['name']).stem
+              named=bool(re.search(r'[א-ת]|[A-Za-z]{5}',base))
+              preferred=100_000_000<=x['size']<=800_000_000
+              return (-int(named),-int(preferred),abs(x['size']-250_000_000),x['path'])
+          for item in sorted(candidates,key=score)[:65]:
+              print('CANDIDATE',file_id(source['id'],item),'size',item['size'],'path',item['path'])
+          print('Read-only review complete; no files imported or published.')
+          PY
