@@ -134,6 +134,17 @@ def pick_media(files, priority):
     return min(files, key=lambda x: (priority.get(extension(x.get("name")), 999),
                                     str(x.get("createdTime") or ""), str(x.get("id") or ""))) if files else None
 
+def speaker_names_from_folder_entries(records):
+    """Public-safe speaker names from Drive (including empty folders)."""
+    folder_mime = "application/vnd.google-apps.folder"
+    return sorted(
+        {item["name"] for item in records
+         if item.get("mimeType") == folder_mime
+         and item.get("name") and not item["name"].startswith("_")},
+        key=str.casefold,
+    )
+
+
 def build_maps(source_files, previous_private=None, generated_at=None):
     """Return (public catalog, private catalog). No private Drive IDs in public."""
     now = generated_at or datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
