@@ -53,6 +53,7 @@ jobs:
           if not creds.valid: raise SystemExit("Drive OAuth credentials are not valid")
           with open("token.pickle","wb") as handle: pickle.dump(creds,handle)
           PY
+      # This scan also indexes empty speaker folders for the website dropdown.
       - name: Scan the separate Series speaker folders
         env:
           SERIES_DRIVE_ROOT_ID: 1B5myYj9rsqfoRO8Cjjr6CQOf-q2Q71Ft
