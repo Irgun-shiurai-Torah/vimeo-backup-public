@@ -70,7 +70,7 @@ def parshas_from_title(title):
             alias = clean_key(name)
             if not alias:
                 continue
-            found = re.search(r"(?<!\\S)" + re.escape(alias) + r"(?!\\S)", normalized)
+            found = re.search(r"(?<!\S)" + re.escape(alias) + r"(?!\S)", normalized)
             if found and (canonical not in matches or found.start() < matches[canonical]):
                 matches[canonical] = found.start()
     return [name for name, _ in sorted(matches.items(), key=lambda pair: pair[1])][:4]
