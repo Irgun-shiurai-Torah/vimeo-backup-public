@@ -103,6 +103,20 @@ class SeriesMediaTests(unittest.TestCase):
         self.assertEqual(updated["items"][0]["status"],"ready")
         self.assertEqual(retained["items"][0]["generated"]["previewMp4DriveId"],"early-mp4")
 
+    def test_poster_and_preview_flags_never_publish_drive_ids(self):
+        files=[source("Shiur.mts",file_id="source-video")]
+        _,private=build_maps(files)
+        private["items"][0]["generated"]={
+            "posterDriveId":"secret-drive-poster-id",
+            "previewMp4DriveId":"secret-drive-preview-id"
+        }
+        public,_=build_maps(files,private)
+        self.assertTrue(public["items"][0]["posterReady"])
+        self.assertTrue(public["items"][0]["previewReady"])
+        self.assertTrue(public["items"][0]["videoReady"])
+        self.assertNotIn("secret-drive-poster-id",str(public))
+        self.assertNotIn("secret-drive-preview-id",str(public))
+
     def test_uploaded_parsha_metadata_is_preserved(self):
         file=source("Thursday Evening shiur.mp4",file_id="source")
         file["file"]["appProperties"]={"irgunSeriesParsha":"Lech-Lecha","irgunSeriesHoliday":""}
