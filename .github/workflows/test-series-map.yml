@@ -1,0 +1,25 @@
+name: Test Series catalog safety
+
+on:
+  pull_request:
+    paths:
+      - 'series_catalog.py'
+      - 'series_drive.py'
+      - 'series_ingest.py'
+      - 'tests/test_series_catalog.py'
+      - '.github/workflows/series-map-hourly.yml'
+      - '.github/workflows/test-series-map.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m unittest discover -s tests -p 'test_series_catalog.py' -v
+      - run: python -m py_compile series_catalog.py series_drive.py series_ingest.py
