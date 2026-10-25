@@ -1,0 +1,18 @@
+name: Stop pre-restriction Dropbox import
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/stop-old-dropbox-import.yml
+permissions:
+  contents: read
+concurrency:
+  group: irgun-dropbox-shared-link-import
+  cancel-in-progress: true
+jobs:
+  stop-old-run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Cancel older five-source import without starting any import
+        run: echo "Old import cancelled; future imports are restricted to Gamliel/Biderman."
