@@ -2,7 +2,7 @@
   "version": 1,
   "library": "series",
   "mode": "staging",
-  "generatedAt": "2026-10-25T02:32:04.143212Z",
+  "generatedAt": "2026-10-25T02:56:33.234369Z",
   "items": [
     {
       "id": "series-cf5cca1156bd9f672f89f3a7",
@@ -15,7 +15,7 @@
       "hasAudio": true,
       "hasVideo": true,
       "audioReady": true,
-      "videoReady": false,
+      "videoReady": true,
       "hlsReady": false,
       "audioFormat": "mp3",
       "mediaType": "video",
@@ -25,7 +25,7 @@
       "originalFilename": "ר' מיילך בידרמן ליל שישי לך לך תשפ-ז.MTS",
       "originalFormat": "mts",
       "audioPlaybackUrl": "/api/series/media/series-cf5cca1156bd9f672f89f3a7/audio",
-      "videoPlaybackUrl": null,
+      "videoPlaybackUrl": "/api/series/media/series-cf5cca1156bd9f672f89f3a7/video",
       "originalDownloadUrl": "/api/series/media/series-cf5cca1156bd9f672f89f3a7/original",
       "audioDownloadUrl": "/api/series/media/series-cf5cca1156bd9f672f89f3a7/audio?download=1",
       "public": true
