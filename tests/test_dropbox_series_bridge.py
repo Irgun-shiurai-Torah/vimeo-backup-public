@@ -50,16 +50,16 @@ class ApprovedDropboxBridgeTest(unittest.TestCase):
         self.assertEqual(pub["speakers"], [])
 
     def test_automatic_metadata_from_descriptive_parsha_filename(self):
-        source = {**self.video(), "sourceLabel": "Reb Yitzchok Ahron Goldhirsch",
+        source = {**self.video(), "sourceLabel": "Reb Gamliel Rabinowitz",
                   "sourcePath": "/פרשת בראשית תשפ-ה/פרשת בראשית תשפ-ה.MTS"}
         self.assertEqual(automatic_metadata(source), {
-            "speaker": "Reb Yitzchok Ahron Goldhirsch",
+            "speaker": "Reb Gamliel Rabinowitz",
             "title": "פרשת בראשית תשפ-ה", "year": 5785,
             "series": "Parsha Shiurim"})
 
     def test_automatic_metadata_for_generic_or_numbered_files(self):
-        source = {**self.video(), "sourceLabel": "Reb Nachum Cohen",
-                  "sourcePath": "/כי תצא תשפ-ג/לשון הקודש.MTS"}
+        source = {**self.video(), "sourceLabel": "Reb Gamliel Rabinowitz",
+                  "sourcePath": "/כי תצא תשפ-ג/לשון הקודש.MTS"
         m = automatic_metadata(source)
         self.assertIn("כי תצא", m["title"])
         self.assertEqual(m["year"], 5783)
@@ -95,7 +95,7 @@ class ApprovedDropboxBridgeTest(unittest.TestCase):
     def test_sukkot_alias_tags_other_speakers_without_renaming_titles(self):
         video = {
             **self.video(),
-            "sourceLabel": "Reb Nachum Cohen",
+            "sourceLabel": "Reb Gamliel Rabinowitz",
             "sourcePath": "/סיכות תשפ-ב/בית שמש/00004.MTS",
         }
         reviewed = automatic_metadata(video)
@@ -112,18 +112,50 @@ class ApprovedDropboxBridgeTest(unittest.TestCase):
         self.assertIsNone(hebrew_year_from_path("/Thursday/lecture.mp4"))
 
     def test_auto_publish_completed_lecture_but_not_unrelated_sources(self):
-        src = {**self.video(), "sourceLabel": "Reb Nachum Cohen",
-               "sourcePath": "/כי תצא תשפ-ג/לשון הקודש.MTS"}
+        src = {**self.video(), "sourceLabel": "Reb Gamliel Rabinowitz",
+               "sourcePath": "/כי תצא תשפ-ג/לשון הקודש.MTS"
         pub, private = merge_approved_dropbox(*self.catalog(),
             {"version": 1, "items": {self.MEDIA_ID: src}})
         self.assertEqual(len(pub["items"]), 1)
-        self.assertEqual(pub["items"][0]["speaker"], "Reb Nachum Cohen")
+        self.assertEqual(pub["items"][0]["speaker"], "Reb Gamliel Rabinowitz")
         self.assertEqual(pub["items"][0]["year"], 5783)
         self.assertEqual(pub["items"][0]["parshas"], ["Ki Teitzei"])
         self.assertEqual(pub["items"][0]["autoImported"], True)
         self.assertEqual(pub["items"][0]["id"], private["items"][0]["id"])
         for secret in ("originalDriveId", "audioDriveId", "sourcePath", "rlkey"):
             self.assertNotIn('"' + secret + '"', json.dumps(pub))
+
+    def test_other_speakers_remain_private_even_with_stale_approval(self):
+        for other_label, other_speaker in (
+            ("Reb Nachum Cohen", "Reb Nachum Cohen"),
+            ("Reb Yitzchok Ahron Goldhirsch", "Reb Yitzchok Ahron Goldhirsch"),
+        ):
+            video = {
+                **self.video(),
+                "sourceLabel": other_label,
+                "approved": True,
+                "approvedMetadata": {
+                    "speaker": other_speaker, "title": "Previously approved lecture",
+                    "year": 5786,
+                }
+            }
+            pub, priv = merge_approved_dropbox(*self.catalog(),
+                {"version": 1, "items": {self.MEDIA_ID: video}})
+            self.assertEqual(pub["items"], [])
+            self.assertEqual(priv["items"], [])
+
+    def test_allowed_source_cannot_publish_as_another_speaker(self):
+        item = {
+            **self.video(), "approved": True,
+            "approvedMetadata": {
+                "speaker": "Reb Nachum Cohen", "title": "Misassigned",
+                "year": 5786,
+            },
+        }
+        pub, priv = merge_approved_dropbox(*self.catalog(),
+            {"version": 1, "items": {self.MEDIA_ID: item}})
+        self.assertEqual(pub["items"], [])
+        self.assertEqual(priv["items"], [])
 
     def test_auto_skip_incomplete_or_manually_disabled_recording(self):
         for mutation in ({"hls": {}}, {"audioDriveId": None},
@@ -137,7 +169,7 @@ class ApprovedDropboxBridgeTest(unittest.TestCase):
 
     def test_duplicate_mp3_in_same_folder_does_not_make_second_shiur(self):
         video = {**self.video(), "sourceId": "dbx-shared",
-                 "sourceLabel": "Reb Yitzchok Ahron Goldhirsch",
+                 "sourceLabel": "Reb Gamliel Rabinowitz",
                  "sourcePath": "/פרשת בראשית תשפ-ה/פרשת בראשית תשפ-ה.MTS"}
         audio = {**video, "kind": "audio", "sourcePath":
                  "/פרשת בראשית תשפ-ה/פרשת בראשית תשפ-ה.mp3"}
