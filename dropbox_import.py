@@ -398,6 +398,8 @@ def run(mode="scan", max_files=1, only_id="", source_label="", min_video_bytes=0
         # capable of importing audio-only and short recordings.
         pending = [entry for entry in pending if
                    entry[1]["kind"] == "video" and entry[1]["size"] >= min_video_bytes]
+        if not pending:
+            raise RuntimeError("No unimported video meets the sample size minimum")
     if only_id:
         if only_id not in {file_id(s["id"], item) for s, item in scanned}:
             raise ValueError("Requested test file ID is not among the approved Dropbox sources")
@@ -410,7 +412,8 @@ def run(mode="scan", max_files=1, only_id="", source_label="", min_video_bytes=0
         with tempfile.TemporaryDirectory(prefix="irgun-dropbox-") as tmp:
             source_name = "source" + (Path(item["name"]).suffix.lower() or ".mp4")
             media = os.path.join(tmp, source_name)
-            print(f"Importing {mid} ({item['size']} bytes; {item['kind']}).")
+            print(f"Importing {mid} ({item['size']} bytes; {item['kind']}); source: "
+                  f"{source['label']}; path: {item['path']}", flush=True)
             api.download(source, item["path"], media)
             if item["size"] and os.path.getsize(media) != item["size"]:
                 raise RuntimeError("Dropbox download size did not match folder metadata")
