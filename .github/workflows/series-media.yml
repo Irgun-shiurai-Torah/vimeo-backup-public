@@ -68,13 +68,4 @@ jobs:
           SERIES_DRIVE_ROOT_ID: 1B5myYj9rsqfoRO8Cjjr6CQOf-q2Q71Ft
         run: python -u series_ingest.py
       - name: Publish updated public map
-        run: |
-          git config user.name "Irgun Series Converter"
-          git config user.email "actions@users.noreply.github.com"
-          git add series-public-map.json
-          if git diff --cached --quiet; then
-            echo "Public Series map unchanged."
-          else
-            git commit -m "Update staging Series processing status [skip ci]"
-            git push origin HEAD:main
-          fi
+        run: python -c 'from series_media import publish_series_map_safely; publish_series_map_safely("Update staging Series processing status")'

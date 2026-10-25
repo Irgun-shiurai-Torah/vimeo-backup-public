@@ -59,6 +59,39 @@ class SeriesMediaTests(unittest.TestCase):
         self.assertEqual(result["audioDriveId"],"id-audio.mp3")
         self.assertIn("masterDriveId",result["hls"])
 
+    def test_missing_mp3_is_queued_even_when_hls_is_ready(self):
+        from series_media import needs_series_work
+        item={"id":"series-"+"a"*24,"videoDriveId":"source-mts",
+              "audioDriveId":None,"generated":{"hls":{"masterDriveId":"master-id"},
+              "posterDriveId":"poster-id"}}
+        self.assertEqual(needs_series_work(item),(True,True))
+        item["generated"]["audioDriveId"]="repaired-audio-id"
+        self.assertEqual(needs_series_work(item),(False,True))
+        del item["generated"]["audioDriveId"]
+        item["generated"]["audioNoTrack"]=True
+        self.assertEqual(needs_series_work(item),(False,True))
+
+    def test_repair_does_not_reencode_video(self):
+        from unittest.mock import patch
+        from series_media import repair_video_audio
+        class FakeDrive:
+            def folder(self,parent,name):return "outputs"
+            def download(self,fid,path):pathlib.Path(path).write_bytes(b"original")
+            def upload(self,path,parent,name,mime):
+                self.last=(name,mime)
+                return "repaired-mp3-id"
+        old_hls={"masterDriveId":"old-master-id","renditions":[{"height":720}]}
+        item={"id":"series-"+"b"*24,"videoDriveId":"source-mts",
+          "videoFilename":"lecture.mts","generated":{"hls":old_hls,"posterDriveId":"old-poster"}}
+        fake=FakeDrive()
+        with patch("series_media.probe",return_value=({"width":1920,"height":1080},True,30)), \
+             patch("series_media.make_mp3",return_value="/tmp/audio.mp3"), \
+             patch("series_media.make_hls",side_effect=AssertionError("HLS must not be re-encoded")):
+            result=repair_video_audio(fake,item,"outputs")
+        self.assertEqual(result["audioDriveId"],"repaired-mp3-id")
+        self.assertEqual(result["hls"],old_hls)
+        self.assertEqual(fake.last,("audio.mp3","audio/mpeg"))
+
     def test_mts_preview_makes_video_ready_before_hls(self):
         files=[source("Shabbos MTS shiur.mts",file_id="camera-source")]
         public,private=build_maps(files)

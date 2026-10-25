@@ -145,6 +145,11 @@ def encode_video(drive,item,outputs_parent,on_audio_ready=None):
             interim["audioDriveId"]=drive.upload(
                 make_mp3(original,out),destination,"audio.mp3","audio/mpeg"
             )
+            interim.pop("audioNoTrack",None)
+            if on_audio_ready:
+                on_audio_ready(dict(interim))
+        elif not has_audio:
+            interim["audioNoTrack"]=True
             if on_audio_ready:
                 on_audio_ready(dict(interim))
         # Browsers can stream MP4/WebM directly; MTS and MOV require a
@@ -178,6 +183,34 @@ def encode_video(drive,item,outputs_parent,on_audio_ready=None):
                    "renditions":renditions,"duration":duration}
         }
 
+def repair_video_audio(drive, item, outputs_parent, on_audio_ready=None):
+    """Recover a missing MP3 even when HLS was completed in an earlier run.
+
+    This is intentionally audio-only: do not re-encode the already published
+    360p/480p/720p/1080p ladder or change the source MTS/MP4.
+    """
+    source=item.get("videoDriveId")
+    if not source:
+        raise RuntimeError("Cannot repair audio without the original video")
+    output=drive.folder(outputs_parent,item["id"])
+    with tempfile.TemporaryDirectory(prefix="irgun-series-repair-mp3-") as temp:
+        suffix=extension(item.get("videoFilename") or "") or ".mp4"
+        original=os.path.join(temp,"source"+suffix)
+        drive.download(source,original)
+        _,has_audio,_=probe(original)
+        generated=dict(item.get("generated") or {})
+        if not has_audio:
+            generated["audioNoTrack"]=True
+            print("No audio track in Series video:",item["id"],flush=True)
+            return generated
+        print("Repairing missing Series MP3 without regenerating HLS:",item["id"],flush=True)
+        generated["audioDriveId"]=drive.upload(make_mp3(original,temp),output,"audio.mp3","audio/mpeg")
+        generated.pop("audioNoTrack",None)
+        if on_audio_ready:
+            on_audio_ready(dict(generated))
+        return generated
+
+
 def encode_audio_only(drive,item,outputs_parent):
     audio_id=item.get("audioDriveId")
     if not audio_id or item.get("videoDriveId"):
@@ -196,22 +229,53 @@ def encode_audio_only(drive,item,outputs_parent):
         return {"generatedAt":datetime.now(timezone.utc).isoformat().replace("+00:00","Z"),
                 "audioDriveId":drive.upload(dest,folder,"audio.mp3","audio/mpeg")}
 
-def refresh_public_catalog():
-    """Preserve an audio-ready map even while HLS transcoding continues."""
-    import sys
-    subprocess.run([sys.executable, "-u", "series_ingest.py"], check=True)
+def publish_series_map_safely(description):
+    """Commit only the safe map on the current main, retrying concurrent pushes."""
     if os.getenv("GITHUB_ACTIONS","").lower()!="true":
         return
-    run("git","config","user.name","Irgun Series Converter")
-    run("git","config","user.email","actions@users.noreply.github.com")
-    run("git","add","series-public-map.json")
-    changed=subprocess.run(["git","diff","--cached","--quiet"])
-    if changed.returncode==1:
-        run("git","commit","-m","Publish Series audio while HLS encoding continues [skip ci]")
-        run("git","push","origin","HEAD:main")
-        print("Published audio-ready Series catalog before HLS",flush=True)
-    elif changed.returncode:
-        raise RuntimeError("Unable to inspect pending Series map changes")
+    with tempfile.TemporaryDirectory(prefix="irgun-series-public-map-") as temp:
+        snapshot=os.path.join(temp,"series-public-map.json")
+        shutil.copyfile("series-public-map.json",snapshot)
+        run("git","config","user.name","Irgun Series Converter")
+        run("git","config","user.email","actions@users.noreply.github.com")
+        for attempt in range(1,5):
+            run("git","fetch","origin","main")
+            run("git","reset","--hard","FETCH_HEAD")
+            shutil.copyfile(snapshot,"series-public-map.json")
+            run("git","add","series-public-map.json")
+            result=subprocess.run(["git","diff","--cached","--quiet"])
+            if result.returncode==0:
+                print("Series catalog unchanged after rebasing onto main",flush=True)
+                return
+            if result.returncode!=1:
+                raise RuntimeError("Unable to compare Series catalog changes")
+            run("git","commit","-m",description+" [skip ci]")
+            pushed=subprocess.run(["git","push","origin","HEAD:main"])
+            if pushed.returncode==0:
+                print("Published safe Series map, attempt",attempt,flush=True)
+                return
+            print("Catalog changed concurrently; retrying on newest main",flush=True)
+        raise RuntimeError("Series public map push conflicted after four attempts")
+
+
+def refresh_public_catalog():
+    """Preserve audio-ready map while HLS runs, without losing new git commits."""
+    import sys
+    subprocess.run([sys.executable,"-u","series_ingest.py"],check=True)
+    publish_series_map_safely("Publish Series audio independently of HLS")
+
+
+def needs_series_work(item):
+    generated=item.get("generated") or {}
+    video=bool(item.get("videoDriveId"))
+    if video:
+        hls_complete=bool(generated.get("hls",{}).get("masterDriveId") and
+                          generated.get("posterDriveId"))
+        missing_mp3=bool(not item.get("audioDriveId") and not generated.get("audioDriveId")
+                         and not generated.get("audioNoTrack"))
+        return not hls_complete or missing_mp3, hls_complete
+    ext=extension(item.get("audioFilename") or "")
+    return bool(item.get("audioDriveId") and ext!=".mp3" and not generated.get("audioDriveId")), False
 
 
 def main(limit=1):
@@ -226,15 +290,8 @@ def main(limit=1):
     count=0; errors=[]
     for item in private["items"]:
         if count>=limit:break
-        generated=item.get("generated") or {}
         video=bool(item.get("videoDriveId"))
-        if video:
-            pending=not (generated.get("hls",{}).get("masterDriveId") and
-                         generated.get("posterDriveId"))
-        else:
-            ext=extension(item.get("audioFilename") or "")
-            pending=bool(item.get("audioDriveId") and ext!=".mp3" and
-                         not generated.get("audioDriveId"))
+        pending,hls_complete=needs_series_work(item)
         if not pending: continue
         try:
             if output_root is None:output_root=drive.series_outputs_folder()
@@ -243,7 +300,8 @@ def main(limit=1):
                 item["generated"]=partial
                 drive.write_json(maps,PRIVATE_MAP_NAME,private)
                 refresh_public_catalog()
-            fresh=encode_video(drive,item,output_root,on_audio_ready) if video else encode_audio_only(drive,item,output_root)
+            fresh=(encode_video(drive,item,output_root,on_audio_ready) if not hls_complete else
+                   repair_video_audio(drive,item,output_root,on_audio_ready)) if video else encode_audio_only(drive,item,output_root)
             item["generated"]=fresh
             # Persist after every successful lecture; don't lose work if the
             # next recording fails or GitHub runner is interrupted.
