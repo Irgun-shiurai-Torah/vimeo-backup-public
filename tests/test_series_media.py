@@ -99,9 +99,18 @@ class SeriesMediaTests(unittest.TestCase):
         private["items"][0]["generated"]={"previewMp4DriveId":"early-mp4"}
         updated,retained=build_maps(files,private)
         self.assertTrue(updated["items"][0]["videoReady"])
+        self.assertTrue(updated["items"][0]["previewReady"])
         self.assertFalse(updated["items"][0]["hlsReady"])
         self.assertEqual(updated["items"][0]["status"],"ready")
         self.assertEqual(retained["items"][0]["generated"]["previewMp4DriveId"],"early-mp4")
+
+    def test_poster_ready_is_safe_boolean(self):
+        files=[source("Shiur.mts",file_id="source-video")]
+        _,private=build_maps(files)
+        private["items"][0]["generated"]={"posterDriveId":"secret-drive-poster-id"}
+        public,_=build_maps(files,private)
+        self.assertTrue(public["items"][0]["posterReady"])
+        self.assertNotIn("secret-drive-poster-id",str(public))
 
     def test_uploaded_parsha_metadata_is_preserved(self):
         file=source("Thursday Evening shiur.mp4",file_id="source")
