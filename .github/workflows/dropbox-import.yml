@@ -8,6 +8,8 @@ on:
       - feature/dropbox-shared-link-import
     paths:
       - dropbox_import.py
+      - dropbox_series_bridge.py
+      - tests/test_dropbox_series_bridge.py
       - tests/test_dropbox_import.py
       - .github/workflows/dropbox-import.yml
   workflow_dispatch:
@@ -56,6 +58,7 @@ jobs:
         run: |
           python -m py_compile dropbox_import.py
           python -m unittest discover -s tests -p 'test_dropbox_import.py' -v
+          python -m unittest discover -s tests -p 'test_dropbox_series_bridge.py' -v
       - name: Scan or import approved Dropbox links
         env:
           DROPBOX_APP_KEY: ${{ secrets.DROPBOX_APP_KEY }}
