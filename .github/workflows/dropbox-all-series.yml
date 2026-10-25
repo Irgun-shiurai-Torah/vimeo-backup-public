@@ -3,7 +3,7 @@ name: Dropbox shiurim import for test Series
 on:
   schedule:
     # Process completed new files in small, renewable batches.
-    - cron: "17 */4 * * *"
+    - cron: "17 * * * *"
   workflow_dispatch:
 
 permissions:
@@ -56,7 +56,7 @@ jobs:
             'Reb Mielech - Leil Shishi'
             'Reb Mielech - Short Word for Shabbos'
           )
-          slot=$(( (10#$(date -u +%H) / 4) % ${#sources[@]} ))
+          slot=$(( 10#$(date -u +%H) % ${#sources[@]} ))
           failed=0
           for ((i=0;i<${#sources[@]};i++)); do
             index=$(( (slot + i) % ${#sources[@]} ))
