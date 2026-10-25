@@ -2,7 +2,7 @@
   "version": 1,
   "library": "series",
   "mode": "staging",
-  "generatedAt": "2026-10-25T15:23:13.326712Z",
+  "generatedAt": "2026-10-25T15:38:37.185731Z",
   "items": [
     {
       "id": "series-cf5cca1156bd9f672f89f3a7",
@@ -189,11 +189,11 @@
       "id": "series-16e38a41f65f8bdc466bd008",
       "library": "series",
       "speaker": "Rabbi Meilech Biderman",
-      "title": "סיכות תשפ-ב — בית שמש (Clip 4)",
+      "title": "סוכות תשפ-ב — בית שמש (Clip 4)",
       "year": 5782,
       "parsha": null,
       "parshas": [],
-      "holiday": null,
+      "holiday": "Sukkot",
       "hidden": false,
       "hasAudio": true,
       "hasVideo": true,
