@@ -23,11 +23,30 @@ class SharedLinksTest(unittest.TestCase):
         links = sources_from_env({
             "DROPBOX_SHARED_LINK": self.URL,
             "DROPBOX_SOURCES_JSON": json.dumps([
-                {"url": self.URL},
-                {"url": "https://www.dropbox.com/scl/fo/another/entry?rlkey=b"}
+                {"url": self.URL, "label": "Rav A"},
+                {"url": "https://www.dropbox.com/scl/fo/another/entry?rlkey=b", "name": "Rav B"},
+                {"url": self.URL, "label": "Rav A"}
             ])
         })
         self.assertEqual(len(links), 2)
+        self.assertEqual({entry["label"] for entry in links}, {"Rav A", "Rav B"})
+
+    def test_multisource_overrides_legacy_single_link(self):
+        import json
+        links = sources_from_env({
+            "DROPBOX_SHARED_LINK": self.URL,
+            "DROPBOX_SOURCES_JSON": json.dumps([
+                {"url": "https://www.dropbox.com/scl/fo/new/source?rlkey=new", "label": "Only new"}
+            ])
+        })
+        self.assertEqual(len(links), 1)
+        self.assertEqual(links[0]["label"], "Only new")
+
+    def test_rejects_unsafe_collection_label(self):
+        import json
+        with self.assertRaises(ValueError):
+            sources_from_env({"DROPBOX_SOURCES_JSON": json.dumps([
+                {"url": self.URL, "label": "Bad\\nLabel"}])})
 
     def test_reject_non_dropbox(self):
         with self.assertRaises(ValueError):
