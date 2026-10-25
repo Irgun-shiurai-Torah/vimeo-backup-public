@@ -111,18 +111,20 @@ class SharedLinksTest(unittest.TestCase):
         check_drive_headroom(store, 200_000_000, reserve_gib=0)
         store.api.about.assert_not_called()
 
-    def test_recurring_imports_are_restricted_to_biderman_only(self):
+    def test_recurring_imports_use_only_five_owner_authorized_sources(self):
         from pathlib import Path
-        workflow = Path(".github/workflows/dropbox-biderman-private.yml").read_text()
+        workflow = Path(".github/workflows/dropbox-all-series.yml").read_text()
         for label in ("Reb Mielech - Leil Shishi",
-                      "Reb Mielech - Short Word for Shabbos"):
-            self.assertIn(label, workflow)
-        for excluded in ("Reb Gamliel Rabinowitz", "Reb Nachum Cohen",
-                         "Reb Yitzchok Ahron Goldhirsch"):
-            self.assertNotIn("--source-label '" + excluded + "'", workflow)
+                      "Reb Mielech - Short Word for Shabbos",
+                      "Reb Gamliel Rabinowitz", "Reb Nachum Cohen",
+                      "Reb Yitzchok Ahron Goldhirsch"):
+            self.assertIn("'" + label + "'", workflow)
+        self.assertEqual(workflow.count("    runs-on:"), 1,
+                         "Keep import writes serial to protect the private Drive map")
         self.assertIn("--max-files 1", workflow)
         self.assertIn("--reserve-gib 50", workflow)
-        self.assertIn("--max-source-bytes 750000000", workflow)
+        self.assertIn("--max-source-bytes 2200000000", workflow)
+        self.assertIn("secrets.DROPBOX_SOURCES_JSON", workflow)
         self.assertNotIn("secrets.DROPBOX_SHARED_LINK", workflow)
 
     def test_goldhirsch_shinyev_occasion_is_not_ingested(self):

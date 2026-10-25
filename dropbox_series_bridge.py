@@ -1,9 +1,9 @@
-"""Connect explicitly approved Dropbox imports to the TEST Series website.
+"""Connect completed recordings from five known Dropbox folders to TEST Series.
 
-This is a pure catalog bridge: imported files stay in private Google Drive.
-It never publishes recordings just because a Dropbox link was scanned or
-converted. Every item requires an explicit approval and reviewed metadata in
-the private Dropbox import map before it joins the public Series catalog.
+Originals and generated media remain in private Google Drive storage. Fully
+converted known-source recordings are indexed automatically; explicitly
+disabled files and excluded non-lectures remain hidden. The website's Durable
+Object keeps its hide/show overrides across every catalog regeneration.
 """
 from __future__ import annotations
 
@@ -11,6 +11,7 @@ import hashlib
 import mimetypes
 import os
 import re
+from pathlib import PurePosixPath
 
 from series_catalog import HOLIDAY_ALIASES, PARSHA_ALIASES, clean_key, match_topic
 from dropbox_media_policy import is_excluded_nonlecture
@@ -77,11 +78,106 @@ def parshas_from_title(title):
     return [name for name, _ in sorted(matches.items(), key=lambda pair: pair[1])][:4]
 
 
-def merge_approved_dropbox(public, private, dropbox_map):
-    """Return copies of Series maps with reviewed, fully encoded Dropbox items.
+# These are the five links whose recordings the website owner has explicitly
+# asked to publish automatically. New, unrelated Dropbox links remain private
+# until added to this list. The list contains no Dropbox URL or access secret.
+AUTO_SOURCE_SERIES = {
+    "Reb Gamliel Rabinowitz": ("Reb Gamliel Rabinowitz", "Parsha Shiurim"),
+    "Reb Nachum Cohen": ("Reb Nachum Cohen", "Parsha Shiurim"),
+    "Reb Yitzchok Ahron Goldhirsch": ("Reb Yitzchok Ahron Goldhirsch", "Parsha Shiurim"),
+    "Reb Mielech - Leil Shishi": ("Rabbi Meilech Biderman", "Leil Shishi"),
+    "Reb Mielech - Short Word for Shabbos": ("Rabbi Meilech Biderman", "Short Word for Shabbos"),
+}
 
-    Raises on invalid *approved* records. An incomplete or malformed approval
-    cannot silently publish an original or leak internal storage paths.
+
+def hebrew_year_from_path(path):
+    """Parse actual Hebrew years in Dropbox titles; never guess from upload time."""
+    normalized = str(path or "").replace("״", '"').replace("׳", "'")
+    match = re.search(r"(?<![0-9])(57[0-9]{2})(?![0-9])", normalized)
+    if match:
+        return int(match.group(1))
+    match = re.search(r"(תשפ|תשע|תשצ)[^א-ת0-9]{0,4}([אבגדהוזחט])", normalized)
+    if match:
+        base = {"תשפ": 5780, "תשע": 5770, "תשצ": 5790}[match.group(1)]
+        return base + "אבגדהוזחט".index(match.group(2)) + 1
+    return None
+
+
+def automatic_metadata(source):
+    """Build the display name from descriptive filenames and containing folder.
+
+    Camera clips named 00004.MTS or generic files named לשון הקודש.MTS
+    inherit their parent topic so they never appear as bare file numbers.
+    Their clip/format annotation stays visible for administrative review.
+    """
+    cfg = AUTO_SOURCE_SERIES.get(str(source.get("sourceLabel") or ""))
+    if not cfg:
+        return None
+    path = str(source.get("sourcePath") or "")
+    if not path.startswith("/") or any(ord(ch) < 32 for ch in path):
+        return None
+    components = [x.strip() for x in PurePosixPath(path).parts[1:] if x.strip()]
+    if not components or len(components) > 20:
+        return None
+    stem = PurePosixPath(components[-1]).stem.strip()
+    if not stem:
+        return None
+    parents = components[:-1]
+    is_clip = bool(re.fullmatch(r"(?:clip[-_ ]*)?0*[0-9]{1,7}", stem, re.I))
+    generic = clean_key(stem) in {
+        "source", "video", "audio", "english", "hebrew", "yiddish", "with subtitles", "subtitles",
+        "לשון הקודש", "אידיש", "עברית", "וידאו", "אודיו",
+    }
+    if is_clip or generic:
+        if not parents:
+            return None
+        context = parents[-2:] if (is_clip and len(parents) > 1) else parents[-1:]
+        title = " — ".join(context)
+        if is_clip:
+            title += " (Clip " + str(int(stem)) + ")"
+        elif stem.lower() not in ("video", "audio", "source"):
+            title += " (" + stem + ")"
+    else:
+        title = stem
+    year = hebrew_year_from_path(path)
+    if len(title) > 350:
+        return None
+    speaker, series = cfg
+    return {"speaker": speaker, "title": title, "year": year, "series": series}
+
+
+def paired_audio_for_video(entries, source):
+    """Prevent an original audio twin from becoming a second website shiur.
+
+    Videos already have an extracted MP3. A separately imported audio file is
+    suppressed only if a video in the same Dropbox folder shares its stem, or
+    the folder contains exactly one video and one audio.
+    """
+    path = str(source.get("sourcePath") or "")
+    parent = path.rsplit("/", 1)[0]
+    siblings = [row for row in entries.values() if isinstance(row, dict)
+                and row.get("sourceId") == source.get("sourceId")
+                and row.get("kind") == "video"
+                and str(row.get("sourcePath") or "").rsplit("/", 1)[0] == parent]
+    if not siblings:
+        return False
+    audio_stem = clean_key(PurePosixPath(path).stem)
+    if any(audio_stem == clean_key(PurePosixPath(str(row.get("sourcePath") or "")).stem)
+           for row in siblings):
+        return True
+    audio_siblings = [row for row in entries.values() if isinstance(row, dict)
+                      and row.get("sourceId") == source.get("sourceId")
+                      and row.get("kind") == "audio"
+                      and str(row.get("sourcePath") or "").rsplit("/", 1)[0] == parent]
+    return len(siblings) == 1 and len(audio_siblings) == 1
+
+
+def merge_approved_dropbox(public, private, dropbox_map):
+    """Combine explicitly reviewed entries and completed automatic imports.
+
+    Known Dropbox sources auto-publish when media is finished and metadata
+    can be inferred. Explicit admin hide overrides are applied by the website's
+    Durable Object and remain in effect across every catalog refresh.
     """
     if not dropbox_map:
         return public, private
@@ -102,15 +198,37 @@ def merge_approved_dropbox(public, private, dropbox_map):
         # even if a stale private approval flag was set by mistake.
         if is_excluded_nonlecture(source, source):
             continue
-        if source.get("approved") is not True:
+        if source.get("approved") is False or source.get("autoPublish") is False:
             continue
-        reviewed = source.get("approvedMetadata")
-        if not isinstance(reviewed, dict):
-            raise ValueError("Approved Dropbox entry has no reviewed metadata")
+        manual = source.get("approved") is True
+        if manual:
+            reviewed = source.get("approvedMetadata")
+            if not isinstance(reviewed, dict):
+                raise ValueError("Approved Dropbox entry has no reviewed metadata")
+        else:
+            reviewed = automatic_metadata(source)
+            if reviewed is None:
+                continue
+            # Automatic records are only published once all playback outputs
+            # are safely staged. Never publish a partially transcoded file.
+            if source.get("kind") == "audio" and paired_audio_for_video(entries, source):
+                continue
+            if not (drive_id(source.get("originalDriveId")) and
+                    drive_id(source.get("audioDriveId"))):
+                continue
+            if source.get("kind") == "video" and not (
+                    drive_id(source.get("posterDriveId")) and
+                    isinstance(source.get("hls"), dict) and
+                    drive_id(source["hls"].get("masterDriveId")) and
+                    isinstance(source["hls"].get("renditions"), list) and
+                    len(source["hls"]["renditions"]) > 0):
+                continue
         speaker = required_text(reviewed.get("speaker"), 140, "speaker")
         title = required_text(reviewed.get("title"), 350, "title")
         year = reviewed.get("year")
-        if isinstance(year, bool) or not isinstance(year, int) or not 5700 <= year <= 5999:
+        if year is None and not manual:
+            pass  # Display without guessing a false Hebrew year; admin can set it.
+        elif isinstance(year, bool) or not isinstance(year, int) or not 5700 <= year <= 5999:
             raise ValueError("Approved Dropbox year must be a Hebrew year")
         if not drive_id(source.get("originalDriveId")):
             raise ValueError("Approved Dropbox original is not in Drive")
@@ -176,7 +294,7 @@ def merge_approved_dropbox(public, private, dropbox_map):
             "audioFormat": "mp3", "mediaType": kind, "status": "ready",
             "created": source.get("generatedAt"), "sourceModified": source.get("sourceModified"),
             "originalFilename": filename, "originalFormat": original_ext,
-            "public": True, **fields,
+            "public": True, "autoImported": not manual, **fields,
         }
         private_item = {
             "id": sid, "library": "series", "speaker": speaker,

@@ -1,4 +1,4 @@
-name: Check Dropbox preview and Biderman import safety
+name: Check Dropbox auto-import safety
 
 on:
   push:
@@ -6,13 +6,13 @@ on:
     paths:
       - dropbox_import.py
       - tests/test_dropbox_import.py
-      - .github/workflows/dropbox-biderman-private.yml
+      - .github/workflows/dropbox-all-series.yml
       - .github/workflows/test-dropbox-priority.yml
   pull_request:
     paths:
       - dropbox_import.py
       - tests/test_dropbox_import.py
-      - .github/workflows/dropbox-biderman-private.yml
+      - .github/workflows/dropbox-all-series.yml
       - .github/workflows/test-dropbox-priority.yml
 
 permissions:

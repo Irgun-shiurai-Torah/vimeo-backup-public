@@ -2,7 +2,7 @@
 import json
 import unittest
 
-from dropbox_series_bridge import merge_approved_dropbox, parshas_from_title, series_id
+from dropbox_series_bridge import merge_approved_dropbox, parshas_from_title, series_id, automatic_metadata, hebrew_year_from_path
 
 
 class ApprovedDropboxBridgeTest(unittest.TestCase):
@@ -37,6 +37,7 @@ class ApprovedDropboxBridgeTest(unittest.TestCase):
     def test_unapproved_import_does_not_appear_on_site(self):
         public, private = self.catalog()
         unapproved = self.video()
+        unapproved["sourceLabel"] = "Unapproved unknown Dropbox folder"
         unapproved["approvedMetadata"] = {
             "speaker": "Reb Mielech", "title": "Thursday shiur", "year": 5787,
         }
@@ -47,6 +48,80 @@ class ApprovedDropboxBridgeTest(unittest.TestCase):
         self.assertEqual(pub["items"], [])
         self.assertEqual(priv["items"], [])
         self.assertEqual(pub["speakers"], [])
+
+    def test_automatic_metadata_from_descriptive_parsha_filename(self):
+        source = {**self.video(), "sourceLabel": "Reb Yitzchok Ahron Goldhirsch",
+                  "sourcePath": "/פרשת בראשית תשפ-ה/פרשת בראשית תשפ-ה.MTS"}
+        self.assertEqual(automatic_metadata(source), {
+            "speaker": "Reb Yitzchok Ahron Goldhirsch",
+            "title": "פרשת בראשית תשפ-ה", "year": 5785,
+            "series": "Parsha Shiurim"})
+
+    def test_automatic_metadata_for_generic_or_numbered_files(self):
+        source = {**self.video(), "sourceLabel": "Reb Nachum Cohen",
+                  "sourcePath": "/כי תצא תשפ-ג/לשון הקודש.MTS"}
+        m = automatic_metadata(source)
+        self.assertIn("כי תצא", m["title"])
+        self.assertEqual(m["year"], 5783)
+        source = {**self.video(), "sourceLabel": "Reb Mielech - Short Word for Shabbos",
+                  "sourcePath": "/סיכות תשפ-ב/בית שמש/00004.MTS"}
+        m = automatic_metadata(source)
+        self.assertEqual(m["year"], 5782)
+        self.assertEqual(m["speaker"], "Rabbi Meilech Biderman")
+        self.assertIn("Clip 4", m["title"])
+        self.assertIn("בית שמש", m["title"])
+        self.assertEqual(m["series"], "Short Word for Shabbos")
+
+    def test_hebrew_years_are_parsed_not_guessed(self):
+        self.assertEqual(hebrew_year_from_path("/פרשת ויחי תשפ״ו/file.mp4"), 5786)
+        self.assertEqual(hebrew_year_from_path("/תשפ-ז/file.mts"), 5787)
+        self.assertEqual(hebrew_year_from_path("/סיכות תשפ-ב/clip.mov"), 5782)
+        self.assertIsNone(hebrew_year_from_path("/Thursday/lecture.mp4"))
+
+    def test_auto_publish_completed_lecture_but_not_unrelated_sources(self):
+        src = {**self.video(), "sourceLabel": "Reb Nachum Cohen",
+               "sourcePath": "/כי תצא תשפ-ג/לשון הקודש.MTS"}
+        pub, private = merge_approved_dropbox(*self.catalog(),
+            {"version": 1, "items": {self.MEDIA_ID: src}})
+        self.assertEqual(len(pub["items"]), 1)
+        self.assertEqual(pub["items"][0]["speaker"], "Reb Nachum Cohen")
+        self.assertEqual(pub["items"][0]["year"], 5783)
+        self.assertEqual(pub["items"][0]["parshas"], ["Ki Teitzei"])
+        self.assertEqual(pub["items"][0]["autoImported"], True)
+        self.assertEqual(pub["items"][0]["id"], private["items"][0]["id"])
+        for secret in ("originalDriveId", "audioDriveId", "sourcePath", "rlkey"):
+            self.assertNotIn('"' + secret + '"', json.dumps(pub))
+
+    def test_auto_skip_incomplete_or_manually_disabled_recording(self):
+        for mutation in ({"hls": {}}, {"audioDriveId": None},
+                         {"posterDriveId": None}, {"approved": False},
+                         {"autoPublish": False}):
+            src = {**self.video(), **mutation}
+            pub, private = merge_approved_dropbox(*self.catalog(),
+                {"version": 1, "items": {self.MEDIA_ID: src}})
+            self.assertEqual(pub["items"], [])
+            self.assertEqual(private["items"], [])
+
+    def test_duplicate_mp3_in_same_folder_does_not_make_second_shiur(self):
+        video = {**self.video(), "sourceId": "dbx-shared",
+                 "sourceLabel": "Reb Yitzchok Ahron Goldhirsch",
+                 "sourcePath": "/פרשת בראשית תשפ-ה/פרשת בראשית תשפ-ה.MTS"}
+        audio = {**video, "kind": "audio", "sourcePath":
+                 "/פרשת בראשית תשפ-ה/פרשת בראשית תשפ-ה.mp3"}
+        audio.pop("hls")
+        pub, private = merge_approved_dropbox(*self.catalog(),
+            {"version": 1, "items": {self.MEDIA_ID: video,
+                                      "dbx-media-" + "b"*24: audio}})
+        self.assertEqual(len(pub["items"]), 1)
+        self.assertEqual(pub["items"][0]["mediaType"], "video")
+
+    def test_auto_publish_two_parshas_with_one_media_id(self):
+        video = {**self.video(), "sourceLabel": "Reb Gamliel Rabinowitz",
+                 "sourcePath": "/נשא (חול) - בהעלותך תשפ-ג/with subtitles.mp4"}
+        pub, _ = merge_approved_dropbox(*self.catalog(),
+            {"version": 1, "items": {self.MEDIA_ID: video}})
+        self.assertEqual(len(pub["items"]), 1)
+        self.assertEqual(pub["items"][0]["parshas"], ["Nasso", "Beha'alotcha"])
 
     def test_approved_video_reuses_existing_hls_audio_and_poster(self):
         public, private = self.catalog()
