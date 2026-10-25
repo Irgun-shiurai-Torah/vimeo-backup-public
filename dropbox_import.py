@@ -423,7 +423,12 @@ def run(mode="scan", max_files=1, only_id="", source_label="", min_video_bytes=0
     # Start with a small video for the first test; large recordings can follow.
     pending.sort(key=lambda pair: (pair[1]["kind"] != "video", pair[1]["size"], pair[2]))
     if max_source_bytes:
+        before_size_limit = len(pending)
         pending = [entry for entry in pending if entry[1]["size"] <= max_source_bytes]
+        deferred = before_size_limit - len(pending)
+        if deferred:
+            print(f"Deferred {deferred} oversized recordings for a separate "
+                  f"high-capacity import (limit {max_source_bytes} bytes).", flush=True)
     if min_video_bytes:
         # A first test should be a real recording, not a tiny/empty clip.
         # Only explicit preview runs use this limit. Production remains
