@@ -2,7 +2,7 @@
   "version": 1,
   "library": "series",
   "mode": "staging",
-  "generatedAt": "2026-10-25T14:36:10.946682Z",
+  "generatedAt": "2026-10-25T14:37:09.073581Z",
   "items": [
     {
       "id": "series-cf5cca1156bd9f672f89f3a7",
@@ -70,7 +70,11 @@
       "speaker": "Reb Gamliel Rabinowitz",
       "title": "נשא (חול) - בהעלותך תשפ-ג",
       "year": 5783,
-      "parsha": "Beha'alotcha",
+      "parsha": "Nasso",
+      "parshas": [
+        "Nasso",
+        "Beha'alotcha"
+      ],
       "holiday": null,
       "hidden": false,
       "hasAudio": true,
