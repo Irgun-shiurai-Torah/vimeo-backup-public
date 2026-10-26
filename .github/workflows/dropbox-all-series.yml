@@ -2,24 +2,39 @@ name: Dropbox shiurim import for test Series
 
 on:
   schedule:
-    # Process up to 20 completed recordings hourly (7 + 7 + 6 across approved sources).
+    # Three independently checkpointed sources, 7+7+6 recordings per hour.
     - cron: "17 * * * *"
   workflow_dispatch:
 
 permissions:
   contents: read
 
-concurrency:
-  group: irgun-dropbox-shared-link-import
-  cancel-in-progress: false
-
 jobs:
   import:
+    name: Import ${{ matrix.source_key }}
     runs-on: ubuntu-latest
     timeout-minutes: 350
+    strategy:
+      fail-fast: false
+      max-parallel: 3
+      matrix:
+        include:
+          - source_key: gamliel
+            source_label: 'Reb Gamliel Rabinowitz'
+            max_files: 7
+          - source_key: leil-shishi
+            source_label: 'Reb Mielech - Leil Shishi'
+            max_files: 7
+          - source_key: short-word
+            source_label: 'Reb Mielech - Short Word for Shabbos'
+            max_files: 6
+    # Do not overlap two runs targeting the same source's private map.
+    # Different sources now run concurrently on separate GitHub runners.
+    concurrency:
+      group: irgun-dropbox-source-${{ matrix.source_key }}
+      cancel-in-progress: false
     env:
       DROPBOX_PROGRESS_DIR: /tmp/dropbox-import-progress
-      # Faster encoding, with the same bitrate and available HLS quality ladder.
       SERIES_HLS_PRESET: ultrafast
     steps:
       - uses: actions/checkout@v4
@@ -39,63 +54,34 @@ jobs:
             echo "::error::DROPBOX_SOURCES_JSON is missing; no fallback to the trial link."
             exit 1
           }
-          python -m py_compile dropbox_import.py dropbox_series_bridge.py
+          python -m py_compile dropbox_import.py series_drive.py dropbox_series_bridge.py
           python -m unittest discover -s tests -p 'test_dropbox_import.py' -v
+          python -m unittest discover -s tests -p 'test_dropbox_parallel.py' -v
           python -m unittest discover -s tests -p 'test_dropbox_progress.py' -v
           python -m unittest discover -s tests -p 'test_dropbox_series_bridge.py' -v
           python -m unittest discover -s tests -p 'test_series_visibility.py' -v
-      - name: Import up to 20 recordings across approved Gamliel/Biderman collections
+      - name: Import ${{ matrix.source_label }} (up to ${{ matrix.max_files }})
         env:
           DROPBOX_APP_KEY: ${{ secrets.DROPBOX_APP_KEY }}
           DROPBOX_APP_SECRET: ${{ secrets.DROPBOX_APP_SECRET }}
           DROPBOX_SOURCES_JSON: ${{ secrets.DROPBOX_SOURCES_JSON }}
           GOOGLE_TOKEN_JSON: ${{ secrets.GOOGLE_TOKEN_JSON }}
-        shell: bash
+          SOURCE_LABEL: ${{ matrix.source_label }}
+          MAX_FILES: ${{ matrix.max_files }}
         run: |
-          set -uo pipefail
-          # Keep each collection isolated so one failure does not stop the others.
-          # Rotate source order and the six-file share each hour. The total
-          # limit is 7 + 7 + 6 = 20 files, not 20 files per source.
-          # Only the two approved speakers are allowed in the Series importer.
-          # Other shared folders remain available privately but are NOT
-          # downloaded or published by this scheduled workflow.
-          sources=(
-            'Reb Gamliel Rabinowitz'
-            'Reb Mielech - Leil Shishi'
-            'Reb Mielech - Short Word for Shabbos'
-          )
-          slot=$(( 10#$(date -u +%H) % ${#sources[@]} ))
-          batch_sizes=(7 7 6)
-          failed=0
-          for ((i=0;i<${#sources[@]};i++)); do
-            index=$(( (slot + i) % ${#sources[@]} ))
-            label="${sources[index]}"
-            max_files="${batch_sizes[i]}"
-            echo "::group::Dropbox import: $label (up to $max_files recordings)"
-            if python -u dropbox_import.py --mode import \
-              --source-label "$label" --max-files "$max_files" \
-              --max-source-bytes 2200000000 --reserve-gib 50; then
-              echo "::notice::Completed a safe Dropbox batch for $label."
-            else
-              echo "::error::Dropbox import paused or failed for $label. Other sources continue."
-              failed=$((failed + 1))
-            fi
-            echo "::endgroup::"
-          done
-          if [ "$failed" -ne 0 ]; then
-            echo "$failed collection(s) require follow-up."
-            exit 1
-          fi
-          echo "Finished private Drive imports. The hourly TEST Series scanner will"
-          echo "automatically publish complete eligible shiurim; admins can hide any item."
-      - name: Show final import progress and unfinished recording
+          # Extra 18 GiB covers potential overlap of the other two workers.
+          # This retains at least the original 50 GiB free-space reserve.
+          python -u dropbox_import.py --mode import \
+            --source-label "$SOURCE_LABEL" --max-files "$MAX_FILES" \
+            --max-source-bytes 2200000000 --reserve-gib 68
+      - name: Show latest progress for this collection
         if: always()
         run: python -u dropbox_progress.py --summary
-      - name: Save progress report for troubleshooting
+      - name: Save source-specific progress report
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: dropbox-import-progress
+          name: dropbox-import-progress-${{ matrix.source_key }}
           path: /tmp/dropbox-import-progress/
           if-no-files-found: ignore
           retention-days: 14
