@@ -6,6 +6,7 @@ on:
     paths:
       - .github/workflows/dropbox-oversized.yml
   schedule:
+    # Up to 5 recordings for each of the 3 sources, every 2 hours.
     - cron: '43 */2 * * *'
   workflow_dispatch:
     inputs:
@@ -90,7 +91,9 @@ jobs:
           python -m py_compile dropbox_import.py dropbox_large.py dropbox_progress.py
           python -m unittest discover -s tests -p 'test_dropbox_large.py' -v
           python -m unittest discover -s tests -p 'test_dropbox_parallel.py' -v
-      - name: Import one 2.2-7 GB file; defer if disk insufficient
+      # Each recording completes and checkpoints separately before the next.
+      # The 350-minute runner limit and disk checks may reduce the actual count.
+      - name: Import up to five 2.2-7 GB files sequentially; defer if disk insufficient
         env:
           DROPBOX_APP_KEY: ${{ secrets.DROPBOX_APP_KEY }}
           DROPBOX_APP_SECRET: ${{ secrets.DROPBOX_APP_SECRET }}
@@ -103,7 +106,7 @@ jobs:
             exit 1
           fi
           python -u dropbox_import.py --mode import --large-mode \
-            --source-label "$SOURCE_LABEL" --max-files 1 \
+            --source-label "$SOURCE_LABEL" --max-files 5 \
             --min-source-bytes 2200000000 \
             --max-source-bytes "$((LARGE_LIMIT_GB * 1000000000))" \
             --reserve-gib 68
