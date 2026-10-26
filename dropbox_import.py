@@ -42,7 +42,7 @@ AUDIO_EXT = {".mp3", ".m4a", ".aac", ".ogg", ".opus", ".flac", ".wav",
 DRIVE_FOLDER = "application/vnd.google-apps.folder"
 CHUNK = 16 * 1024 * 1024
 RETRYABLE = {408, 425, 429, 500, 502, 503, 504}
-SHARD_MAP_PATTERN = re.compile(r"dropbox-private-map-dbx-[a-f0-9]{16}\\.json")
+SHARD_MAP_PATTERN = re.compile(r"dropbox-private-map-dbx-[a-f0-9]{16}\.json")
 
 
 def private_map_name(source_key):
