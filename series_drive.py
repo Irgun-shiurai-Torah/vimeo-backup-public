@@ -3,6 +3,7 @@ import io
 import json
 import os
 import pickle
+import re
 
 from google.auth.transport.requests import Request
 from series_catalog import speaker_names_from_folder_entries, choose_speaker_photo
@@ -13,6 +14,43 @@ SERIES_ROOT_ID = os.getenv("SERIES_DRIVE_ROOT_ID", "1B5myYj9rsqfoRO8Cjjr6CQOf-q2
 PRIVATE_MAP_NAME = "series-map-private.json"
 PUBLIC_MAP_NAME = "series-public-map.json"
 FOLDER_MIME = "application/vnd.google-apps.folder"
+DROPBOX_LEGACY_MAP = "dropbox-private-map.json"
+DROPBOX_SHARD_RE = re.compile(r"dropbox-private-map-(dbx-[a-f0-9]{16})\.json")
+
+
+def combine_private_dropbox_maps(named_maps):
+    """Use old completed records plus independent per-source checkpoints.
+
+    New per-source checkpoints take precedence over the legacy single map;
+    new workers never write the legacy map. All source IDs must match their
+    checkpoint filename so a mistaken upload cannot leak another collection.
+    """
+    if not named_maps:
+        return None
+    combined = {}
+    shard_owner = {}
+    names = ([DROPBOX_LEGACY_MAP] if DROPBOX_LEGACY_MAP in named_maps else [])
+    names += sorted(name for name in named_maps if name != DROPBOX_LEGACY_MAP)
+    for name in names:
+        parsed = named_maps[name]
+        if (not isinstance(parsed, dict) or parsed.get("version") != 1
+                or not isinstance(parsed.get("items"), dict)):
+            raise ValueError("Unexpected private Dropbox map content: " + name)
+        match = DROPBOX_SHARD_RE.fullmatch(name)
+        if name != DROPBOX_LEGACY_MAP and not match:
+            raise ValueError("Unexpected private Dropbox checkpoint name")
+        for mid, item in parsed["items"].items():
+            if not isinstance(item, dict):
+                raise ValueError("Invalid Dropbox recording entry")
+            if match:
+                if item.get("sourceId") != match.group(1):
+                    raise ValueError("Dropbox shard contains media from another source")
+                previous_owner = shard_owner.setdefault(mid, name)
+                if previous_owner != name:
+                    raise ValueError("Dropbox recording appears in two source shards")
+            combined[mid] = item
+    return {"version": 1, "items": combined}
+
 
 class SeriesDrive:
     def __init__(self, token_file="token.pickle"):
@@ -122,10 +160,11 @@ class SeriesDrive:
                                        media_body=media,fields="id").execute(num_retries=5)["id"]
 
     def read_dropbox_import_map(self):
-        """Find the private Dropbox staging map; never expose it as GitHub JSON.
+        """Read legacy and parallel per-source maps without exposing private IDs.
 
-        Absence means no Dropbox integration has been configured. Duplicate
-        staging folders are ambiguous and must not be guessed or merged.
+        Each source has its own checkpoint file. Read-only catalogue scans
+        combine those shards with the old map, with new shards taking
+        precedence. Never silently ignore missing or corrupt map content.
         """
         name = "IST Dropbox Imports (Private)"
         query = "name = '" + name.replace("'", "\\'") + "' and mimeType = '" + FOLDER_MIME + "' and trashed = false"
@@ -140,16 +179,21 @@ class SeriesDrive:
         maps = self.find(rows[0]["id"], "Maps")
         if not maps or maps.get("mimeType") != FOLDER_MIME:
             return None
-        file = self.find(maps["id"], "dropbox-private-map.json")
-        if not file:
+        files = [entry for entry in self.children(maps["id"]) if
+                 entry["name"] == DROPBOX_LEGACY_MAP or
+                 DROPBOX_SHARD_RE.fullmatch(entry["name"])]
+        if not files:
             return None
-        if file.get("mimeType") != "application/json":
-            raise RuntimeError("Private Dropbox staging map is not JSON")
-        raw = self.api.files().get_media(fileId=file["id"]).execute(num_retries=5)
-        parsed = json.loads(raw.decode("utf-8") if isinstance(raw, bytes) else raw)
-        if not isinstance(parsed, dict):
-            raise RuntimeError("Private Dropbox staging map is invalid")
-        return parsed
+        named = {}
+        for entry in files:
+            filename = entry["name"]
+            if filename in named:
+                raise RuntimeError("Duplicate private Dropbox map: " + filename)
+            if entry.get("mimeType") != "application/json":
+                raise RuntimeError("Private Dropbox map is not JSON: " + filename)
+            raw = self.api.files().get_media(fileId=entry["id"]).execute(num_retries=5)
+            named[filename] = json.loads(raw.decode("utf-8") if isinstance(raw, bytes) else raw)
+        return combine_private_dropbox_maps(named)
 
     def download(self, file_id, path):
         req = self.api.files().get_media(fileId=file_id)

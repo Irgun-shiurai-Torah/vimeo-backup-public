@@ -12,6 +12,7 @@ on:
       - series_visibility.py
       - tests/test_series_visibility.py
       - tests/test_dropbox_series_bridge.py
+      - tests/test_dropbox_parallel.py
       - tests/test_series_catalog.py
       - .github/workflows/series-map-hourly.yml
   schedule:
@@ -39,7 +40,9 @@ jobs:
       - name: Verify scanner logic
         run: python -m unittest discover -s tests -p 'test_series_catalog.py' -v
       - name: Verify Dropbox approval safety
-        run: python -m unittest discover -s tests -p 'test_dropbox_series_bridge.py' -v
+        run: |
+          python -m unittest discover -s tests -p 'test_dropbox_series_bridge.py' -v
+          python -m unittest discover -s tests -p 'test_dropbox_parallel.py' -v
       - name: Verify the two-speaker visibility restriction
         run: python -m unittest discover -s tests -p 'test_series_visibility.py' -v
       - name: Install existing Drive OAuth dependencies
