@@ -9,6 +9,7 @@ import argparse
 import concurrent.futures
 import http.client
 import random
+import re
 import ssl
 import base64
 import hashlib
@@ -41,6 +42,27 @@ AUDIO_EXT = {".mp3", ".m4a", ".aac", ".ogg", ".opus", ".flac", ".wav",
 DRIVE_FOLDER = "application/vnd.google-apps.folder"
 CHUNK = 16 * 1024 * 1024
 RETRYABLE = {408, 425, 429, 500, 502, 503, 504}
+SHARD_MAP_PATTERN = re.compile(r"dropbox-private-map-dbx-[a-f0-9]{16}\\.json")
+
+
+def private_map_name(source_key):
+    """One private map per explicit Dropbox source, never a shared write target."""
+    if not re.fullmatch(r"dbx-[a-f0-9]{16}", source_key):
+        raise ValueError("Invalid stable Dropbox source ID")
+    return "dropbox-private-map-" + source_key + ".json"
+
+
+def combine_legacy_and_source_map(legacy, shard, source_key):
+    """Migrate existing completed items without allowing parallel map overwrites."""
+    historical = {
+        key: value for key, value in legacy["items"].items()
+        if isinstance(value, dict) and value.get("sourceId") == source_key
+    }
+    for value in shard["items"].values():
+        if not isinstance(value, dict) or value.get("sourceId") != source_key:
+            raise ValueError("Source-specific Dropbox map contains a foreign recording")
+    return {"version": 1, "items": {**historical, **shard["items"]}}
+
 
 
 def timestamp():
@@ -264,8 +286,10 @@ class DriveStore:
         self.cache[cache_key] = folder_id
         return folder_id
 
-    def read_map(self, maps_parent):
-        item = self.find(maps_parent, "dropbox-private-map.json")
+    def read_map(self, maps_parent, filename="dropbox-private-map.json"):
+        if filename != "dropbox-private-map.json" and not SHARD_MAP_PATTERN.fullmatch(filename):
+            raise ValueError("Invalid private Dropbox map name")
+        item = self.find(maps_parent, filename)
         if not item:
             return {"version": 1, "items": {}}
         data = self.api.files().get_media(fileId=item["id"]).execute(num_retries=5)
@@ -308,12 +332,14 @@ class DriveStore:
                           f"{100 * uploaded // media.size()}% of bytes read", flush=True)
         return response["id"]
 
-    def write_map(self, parent, data):
+    def write_map(self, parent, data, filename="dropbox-private-map.json"):
+        if filename != "dropbox-private-map.json" and not SHARD_MAP_PATTERN.fullmatch(filename):
+            raise ValueError("Invalid private Dropbox map name")
         with tempfile.TemporaryDirectory(prefix="dbx-map-") as tmp:
-            path = os.path.join(tmp, "dropbox-private-map.json")
+            path = os.path.join(tmp, filename)
             with open(path, "w", encoding="utf-8") as handle:
                 json.dump(data, handle, ensure_ascii=False, indent=2)
-            self.upload(path, parent, "dropbox-private-map.json", "application/json")
+            self.upload(path, parent, filename, "application/json")
 
 
 def save_original(store, original_root, sid, item, local_path):
@@ -420,6 +446,8 @@ def run(mode="scan", max_files=1, only_id="", source_label="", min_video_bytes=0
             raise ValueError("Dropbox import is limited to Gamliel and Biderman. "
                              "Unapproved source(s): " + ", ".join(denied))
     progress = ImportProgress(sources[0]["label"], max_files) if mode == "import" and len(sources) == 1 else None
+    if mode == "import" and len(sources) != 1:
+        raise ValueError("Import one approved source per worker to protect Drive maps")
     api = DropboxLinks(os.getenv("DROPBOX_APP_KEY"), os.getenv("DROPBOX_APP_SECRET"))
     scanned = []
     folders = 0
@@ -466,7 +494,14 @@ def run(mode="scan", max_files=1, only_id="", source_label="", min_video_bytes=0
     originals = store.folder(staging, "Originals")
     processed = store.folder(staging, "Processed")
     maps = store.folder(staging, "Maps")
-    record = store.read_map(maps)
+    # Old runs wrote one shared map. Migrate its entries into this source's
+    # isolated shard while preserving existing metadata and completed files.
+    # A worker for another source can now write its own map concurrently.
+    sid = sources[0]["id"]
+    map_filename = private_map_name(sid)
+    record = combine_legacy_and_source_map(
+        store.read_map(maps), store.read_map(maps, map_filename), sid
+    )
     items_by_id = record["items"]
     pending = []
     for source, item in scanned:
@@ -541,7 +576,7 @@ def run(mode="scan", max_files=1, only_id="", source_label="", min_video_bytes=0
                 # Checkpoint after each file; incomplete imports safely retry.
                 if progress:
                     progress.update("Saving private checkpoint")
-                store.write_map(maps, record)
+                store.write_map(maps, record, map_filename)
                 converted += 1
                 print(f"Saved original and processed outputs to Google Drive: {mid}", flush=True)
                 if progress:
