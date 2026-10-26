@@ -175,7 +175,7 @@ class DropboxLargeTest(unittest.TestCase):
         self.assertIn("2.2–5 GB", text)
         self.assertIn("5–7 GB", text)
         self.assertIn("Over 7 GB", text)
-        self.assertIn("**2** recordings", text)
+        self.assertIn("**Above 5 GB:** 2 recordings", text)
         self.assertNotIn("dropbox.com", text)
         with self.assertRaisesRegex(ValueError, "unapproved"):
             format_size_table([dict(SOURCE, label="Wrong person")],
