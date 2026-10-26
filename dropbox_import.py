@@ -179,6 +179,7 @@ class DropboxLinks:
         # Parallel directory enumeration reduces the very long metadata scan.
         # Each folder is still scanned exactly once, and the final list is
         # deterministically sorted for stable import order.
+        self.token()  # Refresh once before concurrent folder reads.
         queue = [""]
         files = []
         folders = 0
