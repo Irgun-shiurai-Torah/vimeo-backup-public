@@ -15,7 +15,7 @@ PRIVATE_MAP_NAME = "series-map-private.json"
 PUBLIC_MAP_NAME = "series-public-map.json"
 FOLDER_MIME = "application/vnd.google-apps.folder"
 DROPBOX_LEGACY_MAP = "dropbox-private-map.json"
-DROPBOX_SHARD_RE = re.compile(r"dropbox-private-map-(dbx-[a-f0-9]{16})\\.json")
+DROPBOX_SHARD_RE = re.compile(r"dropbox-private-map-(dbx-[a-f0-9]{16})\.json")
 
 
 def combine_private_dropbox_maps(named_maps):
