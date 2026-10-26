@@ -14,6 +14,8 @@ on:
   pull_request:
     paths:
       - dropbox_import.py
+      - series_drive.py
+      - tests/test_dropbox_parallel.py
       - dropbox_progress.py
       - tests/test_dropbox_progress.py
       - tests/test_dropbox_import.py
