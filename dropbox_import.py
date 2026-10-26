@@ -30,6 +30,10 @@ from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 from dropbox_progress import ImportProgress
+from dropbox_large import (
+    NORMAL_LIMIT, SEVEN_GB, InsufficientRunnerDisk, make_large_outputs,
+    require_large_source_space, size_buckets,
+)
 
 from series_media import make_hls, make_mp3, make_poster, probe, quality_ladder
 from dropbox_media_policy import is_excluded_nonlecture
@@ -430,7 +434,10 @@ def check_drive_headroom(store, media_size, reserve_gib):
 
 
 def run(mode="scan", max_files=1, only_id="", source_label="", min_video_bytes=0,
-        max_source_bytes=0, reserve_gib=0):
+        max_source_bytes=0, reserve_gib=0, min_source_bytes=0, large_mode=False):
+    if large_mode and (mode != "import" or min_source_bytes != NORMAL_LIMIT
+                       or not NORMAL_LIMIT < max_source_bytes <= SEVEN_GB):
+        raise ValueError("Large import must use the approved 2.2 to 7 GB range")
     sources = sources_from_env()
     if source_label:
         matches = [source for source in sources if source["label"] == source_label]
@@ -511,8 +518,21 @@ def run(mode="scan", max_files=1, only_id="", source_label="", min_video_bytes=0
                 item["kind"] == "audio" or previous.get("hls", {}).get("masterDriveId")):
             continue
         pending.append((source, item, mid))
-    # Start with a small video for the first test; large recordings can follow.
+    # Start with smaller videos to test available runner space safely.
     pending.sort(key=lambda pair: (pair[1]["kind"] != "video", pair[1]["size"], pair[2]))
+    if large_mode:
+        counts = size_buckets(pending)
+        print(
+            "PENDING DROPBOX SIZE REPORT | " + sources[0]["label"] +
+            f" | 2.2-5 GB: {counts['oversize2_2To5GB']}" +
+            f" | 5-7 GB: {counts['oversize5To7GB']}" +
+            f" | over 5 GB: {counts['above5GB']}" +
+            f" | over 7 GB: {counts['above7GB']}" +
+            f" | largest: {counts['largestGB']} GB", flush=True,
+        )
+        if progress:
+            progress.update("Counted unimported recordings by size",
+                            **counts)
     if max_source_bytes:
         before_size_limit = len(pending)
         pending = [entry for entry in pending if entry[1]["size"] <= max_source_bytes]
@@ -520,6 +540,10 @@ def run(mode="scan", max_files=1, only_id="", source_label="", min_video_bytes=0
         if deferred:
             print(f"Deferred {deferred} oversized recordings for a separate "
                   f"high-capacity import (limit {max_source_bytes} bytes).", flush=True)
+    if min_source_bytes:
+        # The large workflow must never re-import the normal 2.2 GB tier.
+        pending = [entry for entry in pending
+                   if entry[1]["size"] > min_source_bytes]
     if min_video_bytes:
         # A first test should be a real recording, not a tiny/empty clip.
         # Only explicit preview runs use this limit. Production remains
@@ -538,14 +562,22 @@ def run(mode="scan", max_files=1, only_id="", source_label="", min_video_bytes=0
                         oversizedDeferred=deferred if max_source_bytes else 0)
     converted = 0
     failures = []
-    for ordinal, (source, item, mid) in enumerate(pending[:max_files], 1):
+    disk_deferred = 0
+    # A disk-deferral must not block trying the next eligible large recording.
+    candidates = pending[:max_files * 4] if large_mode else pending[:max_files]
+    for ordinal, (source, item, mid) in enumerate(candidates, 1):
+        if converted >= max_files:
+            break
         try:
             if progress:
                 progress.update(f"Checking storage (file {ordinal}/{min(len(pending), max_files)})",
                                 attempted=ordinal, currentRecording=item["name"],
                                 currentMediaId=mid)
+            if large_mode:
+                require_large_source_space(item["size"])
+            else:
+                check_disk(item["size"])
             check_drive_headroom(store, item["size"], reserve_gib)
-            check_disk(item["size"])
             with tempfile.TemporaryDirectory(prefix="irgun-dropbox-") as tmp:
                 source_name = "source" + (Path(item["name"]).suffix.lower() or ".mp4")
                 media = os.path.join(tmp, source_name)
@@ -562,7 +594,8 @@ def run(mode="scan", max_files=1, only_id="", source_label="", min_video_bytes=0
                 dest = store.folder(store.folder(processed, source["id"]), mid)
                 if progress:
                     progress.update("Encoding MP3, poster and HLS; uploading outputs")
-                generated = make_outputs(store, dest, item, media, tmp)
+                generated = (make_large_outputs(store, dest, item, media, tmp, progress)
+                             if large_mode else make_outputs(store, dest, item, media, tmp))
                 if item["kind"] == "audio" and not generated.get("audioDriveId"):
                     generated["audioDriveId"] = orig_id
                 items_by_id[mid] = {
@@ -582,6 +615,13 @@ def run(mode="scan", max_files=1, only_id="", source_label="", min_video_bytes=0
                 if progress:
                     progress.update("Recording complete", completed=converted, currentRecording=None,
                                     currentMediaId=None)
+        except InsufficientRunnerDisk as exc:
+            disk_deferred += 1
+            print(f"::warning::Deferred large recording {mid}: {exc}", flush=True)
+            if progress:
+                progress.update("Deferred recording: insufficient runner disk",
+                                diskDeferred=disk_deferred, currentRecording=None,
+                                currentMediaId=None)
         except Exception as exc:
             failures.append(mid)
             print(f"::error::Dropbox recording {mid} failed ({type(exc).__name__}); "
@@ -593,7 +633,12 @@ def run(mode="scan", max_files=1, only_id="", source_label="", min_video_bytes=0
     if progress:
         progress.update("Completed batch" if not failures else "Completed with recording errors",
                         status="completed" if not failures else "failed",
+                        diskDeferred=disk_deferred,
                         currentRecording=None, currentMediaId=None)
+    if large_mode:
+        print(f"Large Dropbox import: {converted} completed, {disk_deferred} "
+              f"disk-deferred, {len(failures)} failed; remaining over 7 GB: "
+              f"{counts['above7GB']}", flush=True)
     if failures:
         raise RuntimeError(f"{len(failures)} recording(s) failed, see the per-file errors above")
     print(f"Dropbox import completed: {converted} recording(s). "
@@ -609,7 +654,11 @@ if __name__ == "__main__":
     parser.add_argument("--min-video-bytes", type=int, default=0,
                         help="For sample imports, skip tiny videos and audio-only files")
     parser.add_argument("--max-source-bytes", type=int, default=0,
-                        help="For automatic imports, defer oversized recordings for manual review")
+                        help="Maximum individual Dropbox file size in bytes")
+    parser.add_argument("--min-source-bytes", type=int, default=0,
+                        help="Exclusive lower bound for separate large-file imports")
+    parser.add_argument("--large-mode", action="store_true",
+                        help="Use bounded-disk, sequential-quality import for 2.2 to 7 GB files")
     parser.add_argument("--reserve-gib", type=int, default=0,
                         help="Minimum free Drive GiB plus a 4x recording allowance")
     args = parser.parse_args()
@@ -619,8 +668,11 @@ if __name__ == "__main__":
         parser.error("--min-video-bytes must be between 0 and 1 GiB")
     if not 0 <= args.max_source_bytes <= 200 * 1024**3:
         parser.error("--max-source-bytes must be between 0 and 200 GiB")
+    if not 0 <= args.min_source_bytes <= SEVEN_GB:
+        parser.error("--min-source-bytes must be between 0 and 7 GB")
     if not 0 <= args.reserve_gib <= 1000:
         parser.error("--reserve-gib must be between 0 and 1000")
     run(mode=args.mode, max_files=args.max_files, only_id=args.only_id,
         source_label=args.source_label, min_video_bytes=args.min_video_bytes,
-        max_source_bytes=args.max_source_bytes, reserve_gib=args.reserve_gib)
+        max_source_bytes=args.max_source_bytes, reserve_gib=args.reserve_gib,
+        min_source_bytes=args.min_source_bytes, large_mode=args.large_mode)
