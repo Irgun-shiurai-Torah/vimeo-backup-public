@@ -32,6 +32,20 @@ def media(name, size, index):
 
 
 class DropboxLargeTest(unittest.TestCase):
+    def test_large_import_schedules_five_per_source_sequentially(self):
+        from pathlib import Path
+        workflow = Path(".github/workflows/dropbox-oversized.yml").read_text(
+            encoding="utf-8")
+        self.assertIn("cron: '43 */2 * * *'", workflow)
+        self.assertEqual(workflow.count("source_key:"), 3)
+        self.assertIn("max-parallel: 3", workflow)
+        self.assertIn("irgun-dropbox-source-${{ matrix.source_key }}", workflow)
+        self.assertIn('--source-label "$SOURCE_LABEL" --max-files 5', workflow)
+        self.assertIn("--min-source-bytes 2200000000", workflow)
+        self.assertIn('LARGE_LIMIT_GB: ${{ inputs.max_gb || \'7\' }}', workflow)
+        self.assertIn("--reserve-gib 68", workflow)
+        self.assertIn("timeout-minutes: 350", workflow)
+
     def test_tier_counts_use_decimal_5_and_7_gb_thresholds(self):
         sizes = [1_000_000, 2_200_000_000, 2_200_000_001,
                  FIVE_GB, FIVE_GB + 1, SEVEN_GB, SEVEN_GB + 1]
