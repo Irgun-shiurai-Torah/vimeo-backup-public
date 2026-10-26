@@ -504,8 +504,8 @@ if __name__ == "__main__":
     parser.add_argument("--reserve-gib", type=int, default=0,
                         help="Minimum free Drive GiB plus a 4x recording allowance")
     args = parser.parse_args()
-    if not 1 <= args.max_files <= 4:
-        parser.error("--max-files must be between 1 and 4")
+    if not 1 <= args.max_files <= 7:
+        parser.error("--max-files must be between 1 and 7")
     if not 0 <= args.min_video_bytes <= 1000 * 1024**2:
         parser.error("--min-video-bytes must be between 0 and 1 GiB")
     if not 0 <= args.max_source_bytes <= 200 * 1024**3:
