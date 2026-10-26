@@ -9,6 +9,12 @@ on:
 permissions:
   contents: read
 
+# Keep an older single-worker import from overlapping the first new run.
+# The three jobs inside this run are still allowed to execute in parallel.
+concurrency:
+  group: irgun-dropbox-shared-link-import
+  cancel-in-progress: false
+
 jobs:
   import:
     name: Import ${{ matrix.source_key }}
