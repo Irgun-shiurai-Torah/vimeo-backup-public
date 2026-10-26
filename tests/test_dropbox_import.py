@@ -121,18 +121,21 @@ class SharedLinksTest(unittest.TestCase):
         for label in ("Reb Nachum Cohen", "Reb Yitzchok Ahron Goldhirsch"):
             self.assertNotIn("'" + label + "'", workflow)
         self.assertEqual(workflow.count("    runs-on:"), 1,
-                         "Keep import writes serial to protect the private Drive map")
+                         "Only a single matrix job definition should be present")
         self.assertIn('cron: "17 * * * *"', workflow)
-        self.assertIn('slot=$(( 10#$(date -u +%H) % ${#sources[@]} ))', workflow)
-        # One run is capped at 20 across three sources, never 20 per source.
-        allocations = re.search(r"batch_sizes=\(([0-9 ]+)\)", workflow)
-        self.assertIsNotNone(allocations)
-        self.assertEqual([int(n) for n in allocations.group(1).split()], [7, 7, 6])
-        self.assertEqual(sum(int(n) for n in allocations.group(1).split()), 20)
-        self.assertIn('max_files="${batch_sizes[i]}"', workflow)
-        self.assertIn('--max-files "$max_files"', workflow)
-        self.assertNotIn("--max-files 1", workflow)
-        self.assertIn("--reserve-gib 50", workflow)
+        self.assertIn("max-parallel: 3", workflow)
+        self.assertIn("fail-fast: false", workflow)
+        self.assertIn("irgun-dropbox-source-${{ matrix.source_key }}", workflow)
+        self.assertIn("source_label: 'Reb Gamliel Rabinowitz'", workflow)
+        self.assertIn("source_label: 'Reb Mielech - Leil Shishi'", workflow)
+        self.assertIn("source_label: 'Reb Mielech - Short Word for Shabbos'", workflow)
+        self.assertEqual(workflow.count("max_files: 7"), 2)
+        self.assertEqual(workflow.count("max_files: 6"), 1)
+        self.assertEqual(7 + 7 + 6, 20)
+        self.assertIn('SOURCE_LABEL: ${{ matrix.source_label }}', workflow)
+        self.assertIn('MAX_FILES: ${{ matrix.max_files }}', workflow)
+        self.assertIn('--max-files "$MAX_FILES"', workflow)
+        self.assertIn("--reserve-gib 68", workflow)
         self.assertIn("--max-source-bytes 2200000000", workflow)
         self.assertIn("secrets.DROPBOX_SOURCES_JSON", workflow)
         self.assertNotIn("secrets.DROPBOX_SHARED_LINK", workflow)
@@ -140,7 +143,7 @@ class SharedLinksTest(unittest.TestCase):
     def test_seven_file_batch_checkpoint_and_limit(self):
         from pathlib import Path
         from dropbox_import import run
-        source = {"id": "dbx-approved", "url": self.URL,
+        source = {"id": "dbx-" + "a" * 16, "url": self.URL,
                   "label": "Reb Gamliel Rabinowitz", "password": ""}
         videos = [
             {"id": "id:lecture-" + str(i), "path": "/5786/lecture-" + str(i) + ".mp4",
@@ -165,8 +168,13 @@ class SharedLinksTest(unittest.TestCase):
             self.assertEqual(dropbox.return_value.download.call_count, 7)
             self.assertEqual(drive.return_value.write_map.call_count, 7)
             self.assertEqual(
-                len(drive.return_value.read_map.return_value["items"]), 7,
+                len(drive.return_value.write_map.call_args.args[1]["items"]), 7,
                 "Checkpoint only the seven completed recordings")
+            from dropbox_import import private_map_name
+            self.assertEqual(
+                drive.return_value.write_map.call_args.args[2],
+                private_map_name(source["id"]),
+                "Never overwrite the legacy shared map")
 
     def test_unapproved_source_cannot_import_even_manually(self):
         from dropbox_import import run
