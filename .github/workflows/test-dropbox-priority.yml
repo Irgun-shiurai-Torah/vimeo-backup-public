@@ -5,6 +5,10 @@ on:
     branches: [feature/dropbox-samples-biderman-priority]
     paths:
       - dropbox_import.py
+      - dropbox_large.py
+      - dropbox_size_report.py
+      - tests/test_dropbox_large.py
+      - .github/workflows/dropbox-oversized.yml
       - dropbox_progress.py
       - tests/test_dropbox_progress.py
       - tests/test_dropbox_import.py
@@ -14,6 +18,10 @@ on:
   pull_request:
     paths:
       - dropbox_import.py
+      - dropbox_large.py
+      - dropbox_size_report.py
+      - tests/test_dropbox_large.py
+      - .github/workflows/dropbox-oversized.yml
       - series_drive.py
       - tests/test_dropbox_parallel.py
       - dropbox_progress.py
@@ -38,8 +46,9 @@ jobs:
         run: python -m pip install google-api-python-client google-auth google-auth-httplib2
       - name: Verify importer, source filtering and storage quota safeguards
         run: |
-          python -m py_compile dropbox_import.py dropbox_progress.py series_drive.py
+          python -m py_compile dropbox_import.py dropbox_progress.py series_drive.py dropbox_large.py dropbox_size_report.py
           python -m unittest discover -s tests -p 'test_dropbox_import.py' -v
+          python -m unittest discover -s tests -p 'test_dropbox_large.py' -v
           python -m unittest discover -s tests -p 'test_dropbox_parallel.py' -v
           python -m unittest discover -s tests -p 'test_dropbox_progress.py' -v
           python -m unittest discover -s tests -p 'test_dropbox_series_bridge.py' -v
