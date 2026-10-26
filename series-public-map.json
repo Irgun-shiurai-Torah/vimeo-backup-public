@@ -2,7 +2,7 @@
   "version": 1,
   "library": "series",
   "mode": "staging",
-  "generatedAt": "2026-10-26T16:27:27.782175Z",
+  "generatedAt": "2026-10-26T16:42:02.271872Z",
   "items": [
     {
       "id": "series-cf5cca1156bd9f672f89f3a7",
@@ -2259,6 +2259,34 @@
       "public": true,
       "autoImported": true,
       "series": "Short Word for Shabbos"
+    },
+    {
+      "id": "series-02bcf47bb0ca4bd4bf32225f",
+      "library": "series",
+      "speaker": "Rabbi Meilech Biderman",
+      "title": "2-18-21",
+      "year": null,
+      "parsha": null,
+      "parshas": [],
+      "holiday": null,
+      "hidden": false,
+      "hasAudio": true,
+      "hasVideo": true,
+      "audioReady": true,
+      "videoReady": true,
+      "hlsReady": true,
+      "previewReady": false,
+      "posterReady": true,
+      "audioFormat": "mp3",
+      "mediaType": "video",
+      "status": "ready",
+      "created": "2026-10-26T16:30:46Z",
+      "sourceModified": "2022-04-06T18:22:59Z",
+      "originalFilename": "2-18-21.MTS",
+      "originalFormat": "mts",
+      "public": true,
+      "autoImported": true,
+      "series": "Leil Shishi"
     },
     {
       "id": "series-2736f5e295a263577b6f18ce",
