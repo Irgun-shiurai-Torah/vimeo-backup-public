@@ -6,6 +6,10 @@ is joined, copied into, or modified. Media is NOT published to the website;
 this importer has its own private Google Drive map and output folders.
 """
 import argparse
+import concurrent.futures
+import http.client
+import random
+import ssl
 import base64
 import hashlib
 import json
@@ -24,6 +28,7 @@ from google.auth.transport.requests import Request as GoogleRequest
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
+from dropbox_progress import ImportProgress
 
 from series_media import make_hls, make_mp3, make_poster, probe, quality_ladder
 from dropbox_media_policy import is_excluded_nonlecture
@@ -171,28 +176,39 @@ class DropboxLinks:
             result = self._request("/2/files/list_folder/continue", {"cursor": result["cursor"]})
 
     def list_tree(self, source):
-        folders = 0
+        # Parallel directory enumeration reduces the very long metadata scan.
+        # Each folder is still scanned exactly once, and the final list is
+        # deterministically sorted for stable import order.
         queue = [""]
         files = []
-        while queue:
-            parent = queue.pop(0)
-            for entry in self.list_dir(source, parent):
-                name = entry.get("name", "")
-                if not name or "/" in name or name in (".", ".."):
-                    continue
-                path = parent + "/" + name
-                if entry.get(".tag") == "folder":
-                    folders += 1
-                    queue.append(path)
-                elif entry.get(".tag") == "file":
-                    ext = Path(name).suffix.casefold()
-                    if ext in VIDEO_EXT | AUDIO_EXT and not name.startswith("._"):
-                        files.append({"id": entry.get("id"), "path": path, "name": name,
-                                      "size": int(entry.get("size") or 0),
-                                      "rev": entry.get("rev") or entry.get("server_modified") or "",
-                                      "modified": entry.get("server_modified") or "",
-                                      "kind": "video" if ext in VIDEO_EXT else "audio"})
-        return folders, files
+        folders = 0
+        scanned = 0
+        with concurrent.futures.ThreadPoolExecutor(max_workers=6) as pool:
+            while queue:
+                results = list(pool.map(lambda path: (path, list(self.list_dir(source, path))), queue))
+                queue = []
+                for parent, entries in results:
+                    scanned += 1
+                    for entry in entries:
+                        name = entry.get("name", "")
+                        if not name or "/" in name or name in (".", ".."):
+                            continue
+                        path = parent + "/" + name
+                        if entry.get(".tag") == "folder":
+                            folders += 1
+                            queue.append(path)
+                        elif entry.get(".tag") == "file":
+                            ext = Path(name).suffix.casefold()
+                            if ext in VIDEO_EXT | AUDIO_EXT and not name.startswith("._"):
+                                files.append({"id": entry.get("id"), "path": path, "name": name,
+                                              "size": int(entry.get("size") or 0),
+                                              "rev": entry.get("rev") or entry.get("server_modified") or "",
+                                              "modified": entry.get("server_modified") or "",
+                                              "kind": "video" if ext in VIDEO_EXT else "audio"})
+                if scanned % 30 == 0 or queue:
+                    print(f"Dropbox scanning: {source['label']} | {scanned} folders checked, "
+                          f"{len(files)} recordings found, {len(queue)} folders remaining", flush=True)
+        return folders, sorted(files, key=lambda item: item["path"])
 
     def download(self, source, relative_path, destination):
         params = {"url": source["url"], "path": relative_path}
@@ -268,8 +284,27 @@ class DriveStore:
             req = self.api.files().create(body={"name": name, "parents": [parent]},
                                           media_body=media, fields="id")
         response = None
+        failures = 0
         while response is None:
-            _, response = req.next_chunk(num_retries=5)
+            try:
+                _, response = req.next_chunk(num_retries=5)
+                failures = 0
+            except (ssl.SSLError, http.client.HTTPException, ConnectionError,
+                    TimeoutError, OSError) as exc:
+                failures += 1
+                if failures > 6:
+                    raise RuntimeError("Google Drive resumable upload failed after six retries") from exc
+                delay = min(30, 2 ** failures) + random.random()
+                print(f"Google Drive connection interrupted; resuming upload "
+                      f"(retry {failures}/6, {delay:.0f}s)", flush=True)
+                time.sleep(delay)
+                # The resumable request remembers the session URI and offset.
+            if response is None and hasattr(media, "size") and media.size():
+                uploaded = min(media.size(), getattr(media, "_fd", None).tell() if
+                               getattr(media, "_fd", None) else 0)
+                if uploaded:
+                    print(f"Google Drive uploading {name}: "
+                          f"{100 * uploaded // media.size()}% of bytes read", flush=True)
         return response["id"]
 
     def write_map(self, parent, data):
@@ -383,10 +418,13 @@ def run(mode="scan", max_files=1, only_id="", source_label="", min_video_bytes=0
             # source links, even if an operator manually starts the workflow.
             raise ValueError("Dropbox import is limited to Gamliel and Biderman. "
                              "Unapproved source(s): " + ", ".join(denied))
+    progress = ImportProgress(sources[0]["label"], max_files) if mode == "import" and len(sources) == 1 else None
     api = DropboxLinks(os.getenv("DROPBOX_APP_KEY"), os.getenv("DROPBOX_APP_SECRET"))
     scanned = []
     folders = 0
     for source in sources:
+        if progress:
+            progress.update("Scanning Dropbox folders")
         count, items = api.list_tree(source)
         folders += count
         excluded = [item for item in items if is_excluded_nonlecture(source, item)]
@@ -418,6 +456,8 @@ def run(mode="scan", max_files=1, only_id="", source_label="", min_video_bytes=0
         print("Read-only scan finished. No media downloaded or Drive files changed.")
         return
 
+    if progress:
+        progress.update("Connecting to private Google Drive")
     store = DriveStore(os.getenv("GOOGLE_TOKEN_JSON"))
     # Isolated top-level staging, not under a potentially shared Vimeo Backup root.
     # Originals and private source identifiers must not inherit public sharing.
@@ -456,37 +496,70 @@ def run(mode="scan", max_files=1, only_id="", source_label="", min_video_bytes=0
         if only_id not in {file_id(s["id"], item) for s, item in scanned}:
             raise ValueError("Requested test file ID is not among the approved Dropbox sources")
         pending = [entry for entry in pending if entry[2] == only_id]
-    print(f"Pending for this run: {len(pending)}; "
-          f"processing up to {max_files}.")
+    print(f"Pending for this run: {len(pending)}; processing up to {max_files}.", flush=True)
+    if progress:
+        progress.update("Selected pending recordings", eligibleRemaining=len(pending),
+                        oversizedDeferred=deferred if max_source_bytes else 0)
     converted = 0
-    for source, item, mid in pending[:max_files]:
-        check_drive_headroom(store, item["size"], reserve_gib)
-        check_disk(item["size"])
-        with tempfile.TemporaryDirectory(prefix="irgun-dropbox-") as tmp:
-            source_name = "source" + (Path(item["name"]).suffix.lower() or ".mp4")
-            media = os.path.join(tmp, source_name)
-            print(f"Importing {mid} ({item['size']} bytes; {item['kind']}); source: "
-                  f"{source['label']}; path: {item['path']}", flush=True)
-            api.download(source, item["path"], media)
-            if item["size"] and os.path.getsize(media) != item["size"]:
-                raise RuntimeError("Dropbox download size did not match folder metadata")
-            orig_id = save_original(store, originals, source["id"], item, media)
-            dest = store.folder(store.folder(processed, source["id"]), mid)
-            generated = make_outputs(store, dest, item, media, tmp)
-            if item["kind"] == "audio" and not generated.get("audioDriveId"):
-                generated["audioDriveId"] = orig_id
-            items_by_id[mid] = {
-                "id": mid, "sourceId": source["id"], "sourceLabel": source["label"],
-                "sourcePath": item["path"],
-                "dropboxFileId": item.get("id"), "rev": item["rev"],
-                "sourceModified": item["modified"], "size": item["size"],
-                "kind": item["kind"], "originalDriveId": orig_id,
-                "generatedAt": timestamp(), **generated
-            }
-            # Checkpoint after each file; incomplete imports safely retry.
-            store.write_map(maps, record)
-            converted += 1
-            print(f"Saved original and processed outputs to Google Drive: {mid}")
+    failures = []
+    for ordinal, (source, item, mid) in enumerate(pending[:max_files], 1):
+        try:
+            if progress:
+                progress.update(f"Checking storage (file {ordinal}/{min(len(pending), max_files)})",
+                                attempted=ordinal, currentRecording=item["name"],
+                                currentMediaId=mid)
+            check_drive_headroom(store, item["size"], reserve_gib)
+            check_disk(item["size"])
+            with tempfile.TemporaryDirectory(prefix="irgun-dropbox-") as tmp:
+                source_name = "source" + (Path(item["name"]).suffix.lower() or ".mp4")
+                media = os.path.join(tmp, source_name)
+                print(f"Importing {mid} ({item['size']} bytes; {item['kind']}); source: "
+                      f"{source['label']}; path: {item['path']}", flush=True)
+                if progress:
+                    progress.update("Downloading original from Dropbox")
+                api.download(source, item["path"], media)
+                if item["size"] and os.path.getsize(media) != item["size"]:
+                    raise RuntimeError("Dropbox download size did not match folder metadata")
+                if progress:
+                    progress.update("Uploading original to private Google Drive")
+                orig_id = save_original(store, originals, source["id"], item, media)
+                dest = store.folder(store.folder(processed, source["id"]), mid)
+                if progress:
+                    progress.update("Encoding MP3, poster and HLS; uploading outputs")
+                generated = make_outputs(store, dest, item, media, tmp)
+                if item["kind"] == "audio" and not generated.get("audioDriveId"):
+                    generated["audioDriveId"] = orig_id
+                items_by_id[mid] = {
+                    "id": mid, "sourceId": source["id"], "sourceLabel": source["label"],
+                    "sourcePath": item["path"],
+                    "dropboxFileId": item.get("id"), "rev": item["rev"],
+                    "sourceModified": item["modified"], "size": item["size"],
+                    "kind": item["kind"], "originalDriveId": orig_id,
+                    "generatedAt": timestamp(), **generated
+                }
+                # Checkpoint after each file; incomplete imports safely retry.
+                if progress:
+                    progress.update("Saving private checkpoint")
+                store.write_map(maps, record)
+                converted += 1
+                print(f"Saved original and processed outputs to Google Drive: {mid}", flush=True)
+                if progress:
+                    progress.update("Recording complete", completed=converted, currentRecording=None,
+                                    currentMediaId=None)
+        except Exception as exc:
+            failures.append(mid)
+            print(f"::error::Dropbox recording {mid} failed ({type(exc).__name__}); "
+                  "continuing with remaining recordings.", flush=True)
+            if progress:
+                progress.update("Recording failed; continuing", failed=len(failures),
+                                lastErrorType=type(exc).__name__, currentRecording=None,
+                                currentMediaId=None)
+    if progress:
+        progress.update("Completed batch" if not failures else "Completed with recording errors",
+                        status="completed" if not failures else "failed",
+                        currentRecording=None, currentMediaId=None)
+    if failures:
+        raise RuntimeError(f"{len(failures)} recording(s) failed, see the per-file errors above")
     print(f"Dropbox import completed: {converted} recording(s). "
           "Recordings are staged in Drive, NOT published to the website.")
 
