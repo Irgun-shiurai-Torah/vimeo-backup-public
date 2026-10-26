@@ -2,7 +2,7 @@
   "version": 1,
   "library": "series",
   "mode": "staging",
-  "generatedAt": "2026-10-25T23:39:27.463853Z",
+  "generatedAt": "2026-10-26T00:56:17.577096Z",
   "items": [
     {
       "id": "series-cf5cca1156bd9f672f89f3a7",
@@ -147,6 +147,34 @@
       "public": true,
       "autoImported": true,
       "series": "Short Word for Shabbos"
+    },
+    {
+      "id": "series-e0329259836269a3609fa73b",
+      "library": "series",
+      "speaker": "Reb Gamliel Rabinowitz",
+      "title": "English subtitles",
+      "year": 5784,
+      "parsha": null,
+      "parshas": [],
+      "holiday": null,
+      "hidden": false,
+      "hasAudio": true,
+      "hasVideo": true,
+      "audioReady": true,
+      "videoReady": true,
+      "hlsReady": true,
+      "previewReady": false,
+      "posterReady": true,
+      "audioFormat": "mp3",
+      "mediaType": "video",
+      "status": "ready",
+      "created": "2026-10-25T23:39:30Z",
+      "sourceModified": "2023-09-14T15:36:53Z",
+      "originalFilename": "English subtitles.mp4",
+      "originalFormat": "mp4",
+      "public": true,
+      "autoImported": true,
+      "series": "Parsha Shiurim"
     },
     {
       "id": "series-1a50fdc8131e7720802df3c4",
