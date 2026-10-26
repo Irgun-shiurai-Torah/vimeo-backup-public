@@ -16,6 +16,37 @@ def source(name="Lecture.wav", file_id="audio-original", modified="2026-10-25T00
 
 
 class SeriesMediaTests(unittest.TestCase):
+    def test_20_item_conversion_limit_preserves_checkpointing(self):
+        from unittest.mock import patch
+        from series_media import main
+
+        for requested_limit, expected in ((20, 20), (200, 20), (3, 3)):
+            with self.subTest(requested_limit=requested_limit):
+                private = {"library": "series", "items": [
+                    {"id": f"series-{n:024x}", "audioDriveId": f"source-{n}",
+                     "audioFilename": "lecture.wav", "generated": {}}
+                    for n in range(24)
+                ]}
+                with patch("series_media.SeriesDrive") as mock_drive, \
+                     patch("series_media.encode_audio_only",
+                           return_value={"audioDriveId": "converted-mp3"}) as convert:
+                    drive = mock_drive.return_value
+                    drive.read_json.return_value = private
+                    self.assertEqual(main(limit=requested_limit), 0)
+                    self.assertEqual(convert.call_count, expected)
+                    self.assertEqual(drive.write_json.call_count, expected)
+                    self.assertEqual(
+                        sum(bool(item["generated"]) for item in private["items"]),
+                        expected)
+                    self.assertTrue(all(not item["generated"]
+                                        for item in private["items"][expected:]))
+
+    def test_conversion_workflow_defaults_to_twenty(self):
+        workflow = pathlib.Path(".github/workflows/series-media.yml").read_text()
+        self.assertIn("cron: '31 */2 * * *'", workflow)
+        self.assertIn('default: "20"', workflow)
+        self.assertIn('--limit "${MAX_ITEMS_INPUT:-20}"', workflow)
+
     def test_audio_only_conversion_survives_catalog_rescan(self):
         files=[source()]
         public,private=build_maps(files)

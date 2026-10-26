@@ -13,9 +13,9 @@ on:
   workflow_dispatch:
     inputs:
       max_items:
-        description: "Maximum Series media files to convert in this run (1–4)"
+        description: "Maximum Series media files to convert in this run (1–20)"
         required: false
-        default: "1"
+        default: "20"
 
 permissions:
   contents: write
@@ -62,7 +62,7 @@ jobs:
         env:
           SERIES_DRIVE_ROOT_ID: 1B5myYj9rsqfoRO8Cjjr6CQOf-q2Q71Ft
           MAX_ITEMS_INPUT: ${{ github.event.inputs.max_items }}
-        run: python -u series_media.py --limit "${MAX_ITEMS_INPUT:-1}"
+        run: python -u series_media.py --limit "${MAX_ITEMS_INPUT:-20}"
       - name: Refresh safe public Series map after conversion
         env:
           SERIES_DRIVE_ROOT_ID: 1B5myYj9rsqfoRO8Cjjr6CQOf-q2Q71Ft

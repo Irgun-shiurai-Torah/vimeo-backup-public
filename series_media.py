@@ -293,8 +293,10 @@ def needs_series_work(item):
     return bool(item.get("audioDriveId") and ext!=".mp3" and not generated.get("audioDriveId")), False
 
 
-def main(limit=1):
-    limit=max(1,min(int(limit),4))
+def main(limit=20):
+    # Cap each scheduled/manual run at 20; per-recording Drive map checkpoints
+    # preserve completed work if the job hits its runner timeout.
+    limit=max(1,min(int(limit),20))
     drive=SeriesDrive()
     maps=drive.backup_maps_folder()
     private=drive.read_json(maps,PRIVATE_MAP_NAME)
@@ -333,6 +335,6 @@ def main(limit=1):
 
 if __name__=="__main__":
     parser=argparse.ArgumentParser()
-    parser.add_argument("--limit",type=int,default=1)
+    parser.add_argument("--limit",type=int,default=20)
     args=parser.parse_args()
     raise SystemExit(main(args.limit))
