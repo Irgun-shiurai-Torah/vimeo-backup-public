@@ -1,5 +1,6 @@
 """Offline guardrails for Dropbox shared link importer."""
 import os
+import re
 import unittest
 from unittest.mock import patch
 
@@ -123,11 +124,49 @@ class SharedLinksTest(unittest.TestCase):
                          "Keep import writes serial to protect the private Drive map")
         self.assertIn('cron: "17 * * * *"', workflow)
         self.assertIn('slot=$(( 10#$(date -u +%H) % ${#sources[@]} ))', workflow)
-        self.assertIn("--max-files 1", workflow)
+        # One run is capped at 20 across three sources, never 20 per source.
+        allocations = re.search(r"batch_sizes=\(([0-9 ]+)\)", workflow)
+        self.assertIsNotNone(allocations)
+        self.assertEqual([int(n) for n in allocations.group(1).split()], [7, 7, 6])
+        self.assertEqual(sum(int(n) for n in allocations.group(1).split()), 20)
+        self.assertIn('max_files="${batch_sizes[i]}"', workflow)
+        self.assertIn('--max-files "$max_files"', workflow)
+        self.assertNotIn("--max-files 1", workflow)
         self.assertIn("--reserve-gib 50", workflow)
         self.assertIn("--max-source-bytes 2200000000", workflow)
         self.assertIn("secrets.DROPBOX_SOURCES_JSON", workflow)
         self.assertNotIn("secrets.DROPBOX_SHARED_LINK", workflow)
+
+    def test_seven_file_batch_checkpoint_and_limit(self):
+        from pathlib import Path
+        from dropbox_import import run
+        source = {"id": "dbx-approved", "url": self.URL,
+                  "label": "Reb Gamliel Rabinowitz", "password": ""}
+        videos = [
+            {"id": "id:lecture-" + str(i), "path": "/5786/lecture-" + str(i) + ".mp4",
+             "name": "lecture-" + str(i) + ".mp4", "size": 5,
+             "rev": "revision-" + str(i), "kind": "video", "modified": ""}
+            for i in range(9)
+        ]
+        with patch("dropbox_import.sources_from_env", return_value=[source]), \
+             patch("dropbox_import.DropboxLinks") as dropbox, \
+             patch("dropbox_import.DriveStore") as drive, \
+             patch("dropbox_import.save_original", return_value="private-original"), \
+             patch("dropbox_import.make_outputs", return_value={"audioDriveId": "private-audio"}), \
+             patch("dropbox_import.check_drive_headroom"), \
+             patch("dropbox_import.check_disk"):
+            dropbox.return_value.list_tree.return_value = (1, videos)
+            dropbox.return_value.download.side_effect = (
+                lambda src, name, dest: Path(dest).write_bytes(b"media"))
+            drive.return_value.folder.return_value = "private-folder"
+            drive.return_value.read_map.return_value = {"version": 1, "items": {}}
+            run(mode="import", source_label=source["label"], max_files=7,
+                max_source_bytes=2200000000, reserve_gib=50)
+            self.assertEqual(dropbox.return_value.download.call_count, 7)
+            self.assertEqual(drive.return_value.write_map.call_count, 7)
+            self.assertEqual(
+                len(drive.return_value.read_map.return_value["items"]), 7,
+                "Checkpoint only the seven completed recordings")
 
     def test_unapproved_source_cannot_import_even_manually(self):
         from dropbox_import import run

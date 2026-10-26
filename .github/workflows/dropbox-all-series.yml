@@ -2,7 +2,7 @@ name: Dropbox shiurim import for test Series
 
 on:
   schedule:
-    # Process completed new files in small, renewable batches.
+    # Process up to 20 completed recordings hourly (7 + 7 + 6 across approved sources).
     - cron: "17 * * * *"
   workflow_dispatch:
 
@@ -39,7 +39,7 @@ jobs:
           python -m unittest discover -s tests -p 'test_dropbox_import.py' -v
           python -m unittest discover -s tests -p 'test_dropbox_series_bridge.py' -v
           python -m unittest discover -s tests -p 'test_series_visibility.py' -v
-      - name: Import one pending file from the approved Gamliel/Biderman collections
+      - name: Import up to 20 recordings across approved Gamliel/Biderman collections
         env:
           DROPBOX_APP_KEY: ${{ secrets.DROPBOX_APP_KEY }}
           DROPBOX_APP_SECRET: ${{ secrets.DROPBOX_APP_SECRET }}
@@ -48,8 +48,9 @@ jobs:
         shell: bash
         run: |
           set -uo pipefail
-          # Order rotates to give every collection a chance if a very long
-          # conversion approaches the GitHub runner execution limit.
+          # Keep each collection isolated so one failure does not stop the others.
+          # Rotate source order and the six-file share each hour. The total
+          # limit is 7 + 7 + 6 = 20 files, not 20 files per source.
           # Only the two approved speakers are allowed in the Series importer.
           # Other shared folders remain available privately but are NOT
           # downloaded or published by this scheduled workflow.
@@ -59,13 +60,15 @@ jobs:
             'Reb Mielech - Short Word for Shabbos'
           )
           slot=$(( 10#$(date -u +%H) % ${#sources[@]} ))
+          batch_sizes=(7 7 6)
           failed=0
           for ((i=0;i<${#sources[@]};i++)); do
             index=$(( (slot + i) % ${#sources[@]} ))
             label="${sources[index]}"
-            echo "::group::Dropbox import: $label"
+            max_files="${batch_sizes[i]}"
+            echo "::group::Dropbox import: $label (up to $max_files recordings)"
             if python -u dropbox_import.py --mode import \
-              --source-label "$label" --max-files 1 \
+              --source-label "$label" --max-files "$max_files" \
               --max-source-bytes 2200000000 --reserve-gib 50; then
               echo "::notice::Completed a safe Dropbox batch for $label."
             else
