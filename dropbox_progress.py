@@ -112,6 +112,20 @@ def summary(directory):
                     _cell(item.get("updatedAt")),
                 )
             )
+    for item in statuses:
+        if "oversize2_2To5GB" in item:
+            lines.extend([
+                "",
+                "**{} — remaining size tiers:** 2.2–5 GB: **{}**; "
+                "5–7 GB: **{}**; over 7 GB: **{}**; "
+                "unable to fit runner disk this batch: **{}**.".format(
+                    _cell(item["source"]),
+                    item.get("oversize2_2To5GB", 0),
+                    item.get("oversize5To7GB", 0),
+                    item.get("above7GB", 0),
+                    item.get("diskDeferred", 0),
+                ),
+            ])
     if not statuses:
         lines.append("| No progress report | - | - | - | - | - | Job did not reach the importer |")
     lines.append("")
