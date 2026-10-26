@@ -17,6 +17,10 @@ jobs:
   import:
     runs-on: ubuntu-latest
     timeout-minutes: 350
+    env:
+      DROPBOX_PROGRESS_DIR: ${{ runner.temp }}/dropbox-import-progress
+      # Faster encoding, with the same bitrate and available HLS quality ladder.
+      SERIES_HLS_PRESET: ultrafast
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -37,6 +41,7 @@ jobs:
           }
           python -m py_compile dropbox_import.py dropbox_series_bridge.py
           python -m unittest discover -s tests -p 'test_dropbox_import.py' -v
+          python -m unittest discover -s tests -p 'test_dropbox_progress.py' -v
           python -m unittest discover -s tests -p 'test_dropbox_series_bridge.py' -v
           python -m unittest discover -s tests -p 'test_series_visibility.py' -v
       - name: Import up to 20 recordings across approved Gamliel/Biderman collections
@@ -83,3 +88,14 @@ jobs:
           fi
           echo "Finished private Drive imports. The hourly TEST Series scanner will"
           echo "automatically publish complete eligible shiurim; admins can hide any item."
+      - name: Show final import progress and unfinished recording
+        if: always()
+        run: python -u dropbox_progress.py --summary
+      - name: Save progress report for troubleshooting
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dropbox-import-progress
+          path: ${{ runner.temp }}/dropbox-import-progress/
+          if-no-files-found: ignore
+          retention-days: 14
