@@ -2,7 +2,7 @@
   "version": 1,
   "library": "series",
   "mode": "staging",
-  "generatedAt": "2026-10-27T02:31:53.025620Z",
+  "generatedAt": "2026-10-27T02:45:25.277137Z",
   "items": [
     {
       "id": "series-f15425d6c4a5ccaa29bf98c7",
@@ -1590,6 +1590,36 @@
       "public": true,
       "autoImported": true,
       "series": "Short Word for Shabbos"
+    },
+    {
+      "id": "series-56984a7488d4ec01aa0c4960",
+      "library": "series",
+      "speaker": "Reb Gamliel Rabinowitz",
+      "title": "כי תבוא תשפ-ה (לשון הקודש)",
+      "year": 5785,
+      "parsha": "Ki Tavo",
+      "parshas": [
+        "Ki Tavo"
+      ],
+      "holiday": null,
+      "hidden": false,
+      "hasAudio": true,
+      "hasVideo": true,
+      "audioReady": true,
+      "videoReady": true,
+      "hlsReady": true,
+      "previewReady": false,
+      "posterReady": true,
+      "audioFormat": "mp3",
+      "mediaType": "video",
+      "status": "ready",
+      "created": "2026-10-27T02:32:23Z",
+      "sourceModified": "2025-09-09T11:04:58Z",
+      "originalFilename": "לשון הקודש.mp4",
+      "originalFormat": "mp4",
+      "public": true,
+      "autoImported": true,
+      "series": "Parsha Shiurim"
     },
     {
       "id": "series-196eb0682e7eea03fa5fd4d9",
