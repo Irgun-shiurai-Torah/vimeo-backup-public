@@ -2,7 +2,7 @@
   "version": 1,
   "library": "series",
   "mode": "staging",
-  "generatedAt": "2026-10-27T20:17:21.546000Z",
+  "generatedAt": "2026-10-27T20:26:00.434619Z",
   "items": [
     {
       "id": "series-f15425d6c4a5ccaa29bf98c7",
@@ -3561,6 +3561,36 @@
       "series": "Short Word for Shabbos"
     },
     {
+      "id": "series-e30f99a660a1f75dbaec01f3",
+      "library": "series",
+      "speaker": "Reb Gamliel Rabinowitz",
+      "title": "קרח תשפ-ה (לשון הקודש)",
+      "year": 5785,
+      "parsha": "Korach",
+      "parshas": [
+        "Korach"
+      ],
+      "holiday": null,
+      "hidden": false,
+      "hasAudio": true,
+      "hasVideo": true,
+      "audioReady": true,
+      "videoReady": true,
+      "hlsReady": true,
+      "previewReady": false,
+      "posterReady": true,
+      "audioFormat": "mp3",
+      "mediaType": "video",
+      "status": "ready",
+      "created": "2026-10-27T20:22:58Z",
+      "sourceModified": "2025-06-24T13:44:19Z",
+      "originalFilename": "לשון הקודש.MTS",
+      "originalFormat": "mts",
+      "public": true,
+      "autoImported": true,
+      "series": "Parsha Shiurim"
+    },
+    {
       "id": "series-970b6d36e388377dd0469725",
       "library": "series",
       "speaker": "Rabbi Meilech Biderman",
@@ -7054,6 +7084,36 @@
       "public": true,
       "autoImported": true,
       "series": "Parsha Shiurim"
+    },
+    {
+      "id": "series-4fa24789d9f58bd52207176b",
+      "library": "series",
+      "speaker": "Rabbi Meilech Biderman",
+      "title": "ר' מיילך בידרמן ליל שישי, ויקרא תשפ-ג",
+      "year": 5783,
+      "parsha": "Vayikra",
+      "parshas": [
+        "Vayikra"
+      ],
+      "holiday": null,
+      "hidden": false,
+      "hasAudio": true,
+      "hasVideo": true,
+      "audioReady": true,
+      "videoReady": true,
+      "hlsReady": true,
+      "previewReady": false,
+      "posterReady": true,
+      "audioFormat": "mp3",
+      "mediaType": "video",
+      "status": "ready",
+      "created": "2026-10-27T20:23:40Z",
+      "sourceModified": "2023-03-23T23:47:47Z",
+      "originalFilename": "ר' מיילך בידרמן ליל שישי, ויקרא תשפ-ג.MTS",
+      "originalFormat": "mts",
+      "public": true,
+      "autoImported": true,
+      "series": "Leil Shishi"
     },
     {
       "id": "series-e34f04f568f964520a129597",
