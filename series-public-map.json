@@ -2,7 +2,7 @@
   "version": 1,
   "library": "series",
   "mode": "staging",
-  "generatedAt": "2026-10-27T13:49:59.411497Z",
+  "generatedAt": "2026-10-27T13:59:32.930671Z",
   "items": [
     {
       "id": "series-f15425d6c4a5ccaa29bf98c7",
@@ -374,6 +374,36 @@
       "sourceModified": "2025-12-09T10:04:36Z",
       "originalFilename": "אידיש.mp4",
       "originalFormat": "mp4",
+      "public": true,
+      "autoImported": true,
+      "series": "Parsha Shiurim"
+    },
+    {
+      "id": "series-b2df543434e368b6d0ec253c",
+      "library": "series",
+      "speaker": "Reb Gamliel Rabinowitz",
+      "title": "חנוכה מקץ תשפ-ו (לשון הקודש)",
+      "year": 5786,
+      "parsha": "Miketz",
+      "parshas": [
+        "Miketz"
+      ],
+      "holiday": "Chanukah",
+      "hidden": false,
+      "hasAudio": true,
+      "hasVideo": true,
+      "audioReady": true,
+      "videoReady": true,
+      "hlsReady": true,
+      "previewReady": false,
+      "posterReady": true,
+      "audioFormat": "mp3",
+      "mediaType": "video",
+      "status": "ready",
+      "created": "2026-10-27T13:58:38Z",
+      "sourceModified": "2025-12-15T13:21:17Z",
+      "originalFilename": "לשון הקודש.MTS",
+      "originalFormat": "mts",
       "public": true,
       "autoImported": true,
       "series": "Parsha Shiurim"
@@ -5911,6 +5941,36 @@
       "public": true,
       "autoImported": true,
       "series": "Parsha Shiurim"
+    },
+    {
+      "id": "series-bd62b92fa4de5d155d1ae556",
+      "library": "series",
+      "speaker": "Rabbi Meilech Biderman",
+      "title": "ר' מיילך בידרמן ליל שישי, שמיני תשפ-ג",
+      "year": 5783,
+      "parsha": "Shmini",
+      "parshas": [
+        "Shmini"
+      ],
+      "holiday": null,
+      "hidden": false,
+      "hasAudio": true,
+      "hasVideo": true,
+      "audioReady": true,
+      "videoReady": true,
+      "hlsReady": true,
+      "previewReady": false,
+      "posterReady": true,
+      "audioFormat": "mp3",
+      "mediaType": "video",
+      "status": "ready",
+      "created": "2026-10-27T13:50:24Z",
+      "sourceModified": "2023-04-13T23:05:11Z",
+      "originalFilename": "ר' מיילך בידרמן ליל שישי, שמיני תשפ-ג.MTS",
+      "originalFormat": "mts",
+      "public": true,
+      "autoImported": true,
+      "series": "Leil Shishi"
     },
     {
       "id": "series-87e5cf5b7e612260519ba3c4",
