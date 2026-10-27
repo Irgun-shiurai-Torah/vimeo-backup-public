@@ -2,7 +2,7 @@
   "version": 1,
   "library": "series",
   "mode": "staging",
-  "generatedAt": "2026-10-27T23:14:02.555356Z",
+  "generatedAt": "2026-10-27T23:24:47.290555Z",
   "items": [
     {
       "id": "series-f15425d6c4a5ccaa29bf98c7",
@@ -5260,6 +5260,36 @@
       "series": "Parsha Shiurim"
     },
     {
+      "id": "series-9d9c6a93efbff54834807817",
+      "library": "series",
+      "speaker": "Reb Gamliel Rabinowitz",
+      "title": "משפטים תשפ-ד (אידיש)",
+      "year": 5784,
+      "parsha": "Mishpatim",
+      "parshas": [
+        "Mishpatim"
+      ],
+      "holiday": null,
+      "hidden": false,
+      "hasAudio": true,
+      "hasVideo": true,
+      "audioReady": true,
+      "videoReady": true,
+      "hlsReady": true,
+      "previewReady": false,
+      "posterReady": true,
+      "audioFormat": "mp3",
+      "mediaType": "video",
+      "status": "ready",
+      "created": "2026-10-27T23:15:31Z",
+      "sourceModified": "2024-03-11T19:45:32Z",
+      "originalFilename": "אידיש.MTS",
+      "originalFormat": "mts",
+      "public": true,
+      "autoImported": true,
+      "series": "Parsha Shiurim"
+    },
+    {
       "id": "series-8d29ac5267be83469b80e913",
       "library": "series",
       "speaker": "Reb Gamliel Rabinowitz",
@@ -7382,6 +7412,36 @@
       "sourceModified": "2023-01-13T02:55:39Z",
       "originalFilename": "with subtitles.mp4",
       "originalFormat": "mp4",
+      "public": true,
+      "autoImported": true,
+      "series": "Parsha Shiurim"
+    },
+    {
+      "id": "series-3e2e52a58e8f3d4f8e46c5f1",
+      "library": "series",
+      "speaker": "Reb Gamliel Rabinowitz",
+      "title": "וארא תשפ-ג (אידיש)",
+      "year": 5783,
+      "parsha": "Vaera",
+      "parshas": [
+        "Vaera"
+      ],
+      "holiday": null,
+      "hidden": false,
+      "hasAudio": true,
+      "hasVideo": true,
+      "audioReady": true,
+      "videoReady": true,
+      "hlsReady": true,
+      "previewReady": false,
+      "posterReady": true,
+      "audioFormat": "mp3",
+      "mediaType": "video",
+      "status": "ready",
+      "created": "2026-10-27T23:24:10Z",
+      "sourceModified": "2023-01-18T16:16:22Z",
+      "originalFilename": "אידיש.MTS",
+      "originalFormat": "mts",
       "public": true,
       "autoImported": true,
       "series": "Parsha Shiurim"
