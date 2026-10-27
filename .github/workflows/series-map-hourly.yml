@@ -1,4 +1,4 @@
-name: Series test-only Drive map (hourly)
+name: Series test-only Drive map (every 15 minutes)
 
 on:
   push:
@@ -16,7 +16,8 @@ on:
       - tests/test_series_catalog.py
       - .github/workflows/series-map-hourly.yml
   schedule:
-    - cron: '8 * * * *'
+    # Scan at 08, 23, 38 and 53 minutes past each hour (UTC).
+    - cron: '8,23,38,53 * * * *'
   workflow_dispatch:
 
 permissions:
@@ -65,7 +66,7 @@ jobs:
           if not creds.valid: raise SystemExit("Drive OAuth credentials are not valid")
           with open("token.pickle","wb") as handle: pickle.dump(creds,handle)
           PY
-      # This scan also indexes empty speaker folders for the website dropdown.
+      # Every 15-minute scan also indexes empty speaker folders for the website dropdown.
       - name: Scan the separate Series speaker folders
         env:
           SERIES_DRIVE_ROOT_ID: 1B5myYj9rsqfoRO8Cjjr6CQOf-q2Q71Ft
