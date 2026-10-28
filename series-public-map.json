@@ -2,7 +2,7 @@
   "version": 1,
   "library": "series",
   "mode": "staging",
-  "generatedAt": "2026-10-28T18:41:23.795526Z",
+  "generatedAt": "2026-10-28T18:54:23.701620Z",
   "items": [
     {
       "id": "series-f15425d6c4a5ccaa29bf98c7",
@@ -4656,6 +4656,34 @@
       "public": true,
       "autoImported": true,
       "series": "Parsha Shiurim"
+    },
+    {
+      "id": "series-7a9aa8f86c062c2d5b2bb940",
+      "library": "series",
+      "speaker": "Rabbi Meilech Biderman",
+      "title": "ר' מיילך בידרמן הכנה לפסח תשפ-ה",
+      "year": 5785,
+      "parsha": null,
+      "parshas": [],
+      "holiday": "Pesach",
+      "hidden": false,
+      "hasAudio": true,
+      "hasVideo": true,
+      "audioReady": true,
+      "videoReady": true,
+      "hlsReady": true,
+      "previewReady": false,
+      "posterReady": true,
+      "audioFormat": "mp3",
+      "mediaType": "video",
+      "status": "ready",
+      "created": "2026-10-28T18:52:41Z",
+      "sourceModified": "2025-03-31T20:13:47Z",
+      "originalFilename": "ר' מיילך בידרמן הכנה לפסח תשפ-ה.MTS",
+      "originalFormat": "mts",
+      "public": true,
+      "autoImported": true,
+      "series": "Leil Shishi"
     },
     {
       "id": "series-0957b929d9d47d705e68971d",
