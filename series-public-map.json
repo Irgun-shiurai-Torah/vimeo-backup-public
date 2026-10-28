@@ -2,7 +2,7 @@
   "version": 1,
   "library": "series",
   "mode": "staging",
-  "generatedAt": "2026-10-28T08:22:10.399351Z",
+  "generatedAt": "2026-10-28T08:32:19.072807Z",
   "items": [
     {
       "id": "series-f15425d6c4a5ccaa29bf98c7",
@@ -8369,6 +8369,37 @@
       "series": "Parsha Shiurim"
     },
     {
+      "id": "series-01e37c9b8165141c7fdb237a",
+      "library": "series",
+      "speaker": "Reb Gamliel Rabinowitz",
+      "title": "נצבים - וילך תשפ-ד (לשון הקודש)",
+      "year": 5784,
+      "parsha": "Nitzavim",
+      "parshas": [
+        "Nitzavim",
+        "Vayeilech"
+      ],
+      "holiday": null,
+      "hidden": false,
+      "hasAudio": true,
+      "hasVideo": true,
+      "audioReady": true,
+      "videoReady": true,
+      "hlsReady": true,
+      "previewReady": false,
+      "posterReady": true,
+      "audioFormat": "mp3",
+      "mediaType": "video",
+      "status": "ready",
+      "created": "2026-10-28T08:28:49Z",
+      "sourceModified": "2024-09-25T12:18:13Z",
+      "originalFilename": "לשון הקודש.MTS",
+      "originalFormat": "mts",
+      "public": true,
+      "autoImported": true,
+      "series": "Parsha Shiurim"
+    },
+    {
       "id": "series-cf0d044838c58e850a2e5a0d",
       "library": "series",
       "speaker": "Rabbi Meilech Biderman",
@@ -13363,6 +13394,36 @@
       "public": true,
       "autoImported": true,
       "series": "Leil Shishi"
+    },
+    {
+      "id": "series-00a0636d67eae19306cdf26c",
+      "library": "series",
+      "speaker": "Rabbi Meilech Biderman",
+      "title": "ואתחנן (נחמו) תשפ-א (אידיש)",
+      "year": 5781,
+      "parsha": "Vaetchanan",
+      "parshas": [
+        "Vaetchanan"
+      ],
+      "holiday": null,
+      "hidden": false,
+      "hasAudio": true,
+      "hasVideo": true,
+      "audioReady": true,
+      "videoReady": true,
+      "hlsReady": true,
+      "previewReady": false,
+      "posterReady": true,
+      "audioFormat": "mp3",
+      "mediaType": "video",
+      "status": "ready",
+      "created": "2026-10-28T08:22:14Z",
+      "sourceModified": "2022-09-23T08:33:06Z",
+      "originalFilename": "אידיש.MTS",
+      "originalFormat": "mts",
+      "public": true,
+      "autoImported": true,
+      "series": "Short Word for Shabbos"
     },
     {
       "id": "series-01d13db3c13fb94328b5cee8",
