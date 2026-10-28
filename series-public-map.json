@@ -2,7 +2,7 @@
   "version": 1,
   "library": "series",
   "mode": "staging",
-  "generatedAt": "2026-10-28T01:26:01.711765Z",
+  "generatedAt": "2026-10-28T01:43:17.766409Z",
   "items": [
     {
       "id": "series-f15425d6c4a5ccaa29bf98c7",
@@ -4802,6 +4802,36 @@
       "series": "Leil Shishi"
     },
     {
+      "id": "series-75e285e17dfde5c1ac7f6874",
+      "library": "series",
+      "speaker": "Rabbi Meilech Biderman",
+      "title": "ר' מיילך בידרמן כי תצא תשפ-ה",
+      "year": 5785,
+      "parsha": "Ki Teitzei",
+      "parshas": [
+        "Ki Teitzei"
+      ],
+      "holiday": null,
+      "hidden": false,
+      "hasAudio": true,
+      "hasVideo": true,
+      "audioReady": true,
+      "videoReady": true,
+      "hlsReady": true,
+      "previewReady": false,
+      "posterReady": true,
+      "audioFormat": "mp3",
+      "mediaType": "video",
+      "status": "ready",
+      "created": "2026-10-28T01:32:47Z",
+      "sourceModified": "2025-09-04T21:10:03Z",
+      "originalFilename": "ר' מיילך בידרמן כי תצא תשפ-ה.MTS",
+      "originalFormat": "mts",
+      "public": true,
+      "autoImported": true,
+      "series": "Leil Shishi"
+    },
+    {
       "id": "series-d192aca08e74bf61ee3663e6",
       "library": "series",
       "speaker": "Reb Gamliel Rabinowitz",
@@ -6746,6 +6776,36 @@
       "public": true,
       "autoImported": true,
       "series": "Short Word for Shabbos"
+    },
+    {
+      "id": "series-38d62f3a8aeba9b12d33cb45",
+      "library": "series",
+      "speaker": "Reb Gamliel Rabinowitz",
+      "title": "בלק תשפ-ד (לשון הקודש)",
+      "year": 5784,
+      "parsha": "Balak",
+      "parshas": [
+        "Balak"
+      ],
+      "holiday": null,
+      "hidden": false,
+      "hasAudio": true,
+      "hasVideo": true,
+      "audioReady": true,
+      "videoReady": true,
+      "hlsReady": true,
+      "previewReady": false,
+      "posterReady": true,
+      "audioFormat": "mp3",
+      "mediaType": "video",
+      "status": "ready",
+      "created": "2026-10-28T01:38:44Z",
+      "sourceModified": "2024-07-17T13:31:05Z",
+      "originalFilename": "לשון הקודש.MTS",
+      "originalFormat": "mts",
+      "public": true,
+      "autoImported": true,
+      "series": "Parsha Shiurim"
     },
     {
       "id": "series-40331f22c635d87a6cec3442",
@@ -9569,6 +9629,37 @@
       "public": true,
       "autoImported": false,
       "series": "Parsha"
+    },
+    {
+      "id": "series-7dd557628588bfd014371685",
+      "library": "series",
+      "speaker": "Reb Gamliel Rabinowitz",
+      "title": "חוקת-בלק (חול) - בלק תשפ-ג (אידיש)",
+      "year": 5783,
+      "parsha": "Chukat",
+      "parshas": [
+        "Chukat",
+        "Balak"
+      ],
+      "holiday": null,
+      "hidden": false,
+      "hasAudio": true,
+      "hasVideo": true,
+      "audioReady": true,
+      "videoReady": true,
+      "hlsReady": true,
+      "previewReady": false,
+      "posterReady": true,
+      "audioFormat": "mp3",
+      "mediaType": "video",
+      "status": "ready",
+      "created": "2026-10-28T01:29:52Z",
+      "sourceModified": "2024-03-11T19:46:43Z",
+      "originalFilename": "אידיש.MTS",
+      "originalFormat": "mts",
+      "public": true,
+      "autoImported": true,
+      "series": "Parsha Shiurim"
     },
     {
       "id": "series-7d5ed257c0f7d3713325b7eb",
