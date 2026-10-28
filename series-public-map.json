@@ -2,7 +2,7 @@
   "version": 1,
   "library": "series",
   "mode": "staging",
-  "generatedAt": "2026-10-28T07:40:12.598388Z",
+  "generatedAt": "2026-10-28T07:53:58.233298Z",
   "items": [
     {
       "id": "series-f15425d6c4a5ccaa29bf98c7",
@@ -1409,6 +1409,37 @@
       "series": "Short Word for Shabbos"
     },
     {
+      "id": "series-a3113b3b0932a3227d1fbc1f",
+      "library": "series",
+      "speaker": "Reb Gamliel Rabinowitz",
+      "title": "תזריע - מצורע תשפ-ו (לשון הקודש)",
+      "year": 5786,
+      "parsha": "Tazria",
+      "parshas": [
+        "Tazria",
+        "Metzora"
+      ],
+      "holiday": null,
+      "hidden": false,
+      "hasAudio": true,
+      "hasVideo": true,
+      "audioReady": true,
+      "videoReady": true,
+      "hlsReady": true,
+      "previewReady": false,
+      "posterReady": true,
+      "audioFormat": "mp3",
+      "mediaType": "video",
+      "status": "ready",
+      "created": "2026-10-28T07:41:51Z",
+      "sourceModified": "2026-04-14T20:11:30Z",
+      "originalFilename": "לשון הקודש.MTS",
+      "originalFormat": "mts",
+      "public": true,
+      "autoImported": true,
+      "series": "Parsha Shiurim"
+    },
+    {
       "id": "series-7dd6734b75917b48b12d6be3",
       "library": "series",
       "speaker": "Rabbi Meilech Biderman",
@@ -2606,6 +2637,36 @@
       "public": true,
       "autoImported": true,
       "series": "Leil Shishi"
+    },
+    {
+      "id": "series-6a78a9191ec496271946ed07",
+      "library": "series",
+      "speaker": "Reb Gamliel Rabinowitz",
+      "title": "כי תצא תשפ-ו (אידיש)",
+      "year": 5786,
+      "parsha": "Ki Teitzei",
+      "parshas": [
+        "Ki Teitzei"
+      ],
+      "holiday": null,
+      "hidden": false,
+      "hasAudio": true,
+      "hasVideo": true,
+      "audioReady": true,
+      "videoReady": true,
+      "hlsReady": true,
+      "previewReady": false,
+      "posterReady": true,
+      "audioFormat": "mp3",
+      "mediaType": "video",
+      "status": "ready",
+      "created": "2026-10-28T07:50:52Z",
+      "sourceModified": "2026-08-18T11:32:14Z",
+      "originalFilename": "אידיש.MTS",
+      "originalFormat": "mts",
+      "public": true,
+      "autoImported": true,
+      "series": "Parsha Shiurim"
     },
     {
       "id": "series-a9ab0c6162b2be136d3ee786",
