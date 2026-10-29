@@ -2,7 +2,7 @@
   "version": 1,
   "library": "series",
   "mode": "staging",
-  "generatedAt": "2026-10-29T01:26:14.888512Z",
+  "generatedAt": "2026-10-29T01:43:17.372677Z",
   "items": [
     {
       "id": "series-f15425d6c4a5ccaa29bf98c7",
@@ -10727,6 +10727,36 @@
       "public": true,
       "autoImported": true,
       "series": "Short Word for Shabbos"
+    },
+    {
+      "id": "series-34f0f5b414a5201595960857",
+      "library": "series",
+      "speaker": "Reb Gamliel Rabinowitz",
+      "title": "פנחס תשפ-ד (אידיש)",
+      "year": 5784,
+      "parsha": "Pinchas",
+      "parshas": [
+        "Pinchas"
+      ],
+      "holiday": null,
+      "hidden": false,
+      "hasAudio": true,
+      "hasVideo": true,
+      "audioReady": true,
+      "videoReady": true,
+      "hlsReady": true,
+      "previewReady": false,
+      "posterReady": true,
+      "audioFormat": "mp3",
+      "mediaType": "video",
+      "status": "ready",
+      "created": "2026-10-29T01:32:05Z",
+      "sourceModified": "2024-07-24T15:44:16Z",
+      "originalFilename": "אידיש.MTS",
+      "originalFormat": "mts",
+      "public": true,
+      "autoImported": true,
+      "series": "Parsha Shiurim"
     },
     {
       "id": "series-aa4fc2c5f44f5fd4182f0e8f",
