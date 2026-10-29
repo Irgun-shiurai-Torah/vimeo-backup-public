@@ -2,7 +2,7 @@
   "version": 1,
   "library": "series",
   "mode": "staging",
-  "generatedAt": "2026-10-29T06:41:01.392769Z",
+  "generatedAt": "2026-10-29T06:47:20.630670Z",
   "items": [
     {
       "id": "series-f15425d6c4a5ccaa29bf98c7",
@@ -19166,6 +19166,37 @@
       "sourceModified": "2024-03-11T19:45:41Z",
       "originalFilename": "לשון הקודש - קרח (חול) - חוקת תשפ-ב.mp4",
       "originalFormat": "mp4",
+      "public": true,
+      "autoImported": true,
+      "series": "Parsha Shiurim"
+    },
+    {
+      "id": "series-8ebb0137e7867dfa302742a2",
+      "library": "series",
+      "speaker": "Reb Gamliel Rabinowitz",
+      "title": "לשון הקודש - בלק (חול) - פינחס תשפ-ב",
+      "year": 5782,
+      "parsha": "Balak",
+      "parshas": [
+        "Balak",
+        "Pinchas"
+      ],
+      "holiday": null,
+      "hidden": false,
+      "hasAudio": true,
+      "hasVideo": true,
+      "audioReady": true,
+      "videoReady": true,
+      "hlsReady": true,
+      "previewReady": false,
+      "posterReady": true,
+      "audioFormat": "mp3",
+      "mediaType": "video",
+      "status": "ready",
+      "created": "2026-10-29T06:44:18Z",
+      "sourceModified": "2024-03-11T19:45:42Z",
+      "originalFilename": "לשון הקודש - בלק (חול) - פינחס תשפ-ב.MTS",
+      "originalFormat": "mts",
       "public": true,
       "autoImported": true,
       "series": "Parsha Shiurim"
