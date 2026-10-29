@@ -2,7 +2,7 @@
   "version": 1,
   "library": "series",
   "mode": "staging",
-  "generatedAt": "2026-10-29T06:47:20.630670Z",
+  "generatedAt": "2026-10-29T06:55:01.545703Z",
   "items": [
     {
       "id": "series-f15425d6c4a5ccaa29bf98c7",
@@ -8773,6 +8773,36 @@
       "sourceModified": "2023-12-21T15:59:53Z",
       "originalFilename": "Final for English Subtitles.mp4",
       "originalFormat": "mp4",
+      "public": true,
+      "autoImported": true,
+      "series": "Parsha Shiurim"
+    },
+    {
+      "id": "series-fd8cc25bb8e769667e07a381",
+      "library": "series",
+      "speaker": "Reb Gamliel Rabinowitz",
+      "title": "שמות תשפ-ד (אידיש)",
+      "year": 5784,
+      "parsha": "Shemot",
+      "parshas": [
+        "Shemot"
+      ],
+      "holiday": null,
+      "hidden": false,
+      "hasAudio": true,
+      "hasVideo": true,
+      "audioReady": true,
+      "videoReady": true,
+      "hlsReady": true,
+      "previewReady": false,
+      "posterReady": true,
+      "audioFormat": "mp3",
+      "mediaType": "video",
+      "status": "ready",
+      "created": "2026-10-29T06:54:35Z",
+      "sourceModified": "2024-01-03T13:39:29Z",
+      "originalFilename": "אידיש.MTS",
+      "originalFormat": "mts",
       "public": true,
       "autoImported": true,
       "series": "Parsha Shiurim"
