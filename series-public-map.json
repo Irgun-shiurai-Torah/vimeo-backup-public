@@ -2,7 +2,7 @@
   "version": 1,
   "library": "series",
   "mode": "staging",
-  "generatedAt": "2026-10-29T05:26:25.939813Z",
+  "generatedAt": "2026-10-29T05:40:08.476646Z",
   "items": [
     {
       "id": "series-f15425d6c4a5ccaa29bf98c7",
@@ -2857,6 +2857,37 @@
       "public": true,
       "autoImported": true,
       "series": "Leil Shishi"
+    },
+    {
+      "id": "series-a9a2a78cefb679d4f64a2a85",
+      "library": "series",
+      "speaker": "Reb Gamliel Rabinowitz",
+      "title": "בהעלותך - בחו-ל נשא תשפ-ו (לשון הקודש)",
+      "year": 5786,
+      "parsha": "Beha'alotcha",
+      "parshas": [
+        "Beha'alotcha",
+        "Nasso"
+      ],
+      "holiday": null,
+      "hidden": false,
+      "hasAudio": true,
+      "hasVideo": true,
+      "audioReady": true,
+      "videoReady": true,
+      "hlsReady": true,
+      "previewReady": false,
+      "posterReady": true,
+      "audioFormat": "mp3",
+      "mediaType": "video",
+      "status": "ready",
+      "created": "2026-10-29T05:37:41Z",
+      "sourceModified": "2026-05-27T11:22:17Z",
+      "originalFilename": "לשון הקודש.MTS",
+      "originalFormat": "mts",
+      "public": true,
+      "autoImported": true,
+      "series": "Parsha Shiurim"
     },
     {
       "id": "series-4dff3bc251fe67d27db021ef",
@@ -14913,6 +14944,37 @@
       "public": true,
       "autoImported": true,
       "series": "Short Word for Shabbos"
+    },
+    {
+      "id": "series-96d24695a38990f601824058",
+      "library": "series",
+      "speaker": "Reb Gamliel Rabinowitz",
+      "title": "בהעלותך (חול) - שלח תשפ-ג (לשון הקודש)",
+      "year": 5783,
+      "parsha": "Beha'alotcha",
+      "parshas": [
+        "Beha'alotcha",
+        "Sh'lach"
+      ],
+      "holiday": null,
+      "hidden": false,
+      "hasAudio": true,
+      "hasVideo": true,
+      "audioReady": true,
+      "videoReady": true,
+      "hlsReady": true,
+      "previewReady": false,
+      "posterReady": true,
+      "audioFormat": "mp3",
+      "mediaType": "video",
+      "status": "ready",
+      "created": "2026-10-29T05:29:08Z",
+      "sourceModified": "2023-06-07T09:56:49Z",
+      "originalFilename": "לשון הקודש.MTS",
+      "originalFormat": "mts",
+      "public": true,
+      "autoImported": true,
+      "series": "Parsha Shiurim"
     },
     {
       "id": "series-210d902d2219eae0d6b26f20",
