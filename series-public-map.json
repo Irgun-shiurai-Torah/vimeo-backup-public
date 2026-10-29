@@ -2,7 +2,7 @@
   "version": 1,
   "library": "series",
   "mode": "staging",
-  "generatedAt": "2026-10-29T21:39:33.978068Z",
+  "generatedAt": "2026-10-29T21:54:06.879655Z",
   "items": [
     {
       "id": "series-f15425d6c4a5ccaa29bf98c7",
@@ -10998,6 +10998,36 @@
       "public": true,
       "autoImported": true,
       "series": "Short Word for Shabbos"
+    },
+    {
+      "id": "series-b5ce0eb8328d173a314eb9a2",
+      "library": "series",
+      "speaker": "Reb Gamliel Rabinowitz",
+      "title": "שמות תשפ-ד (לשון הקודש)",
+      "year": 5784,
+      "parsha": "Shemot",
+      "parshas": [
+        "Shemot"
+      ],
+      "holiday": null,
+      "hidden": false,
+      "hasAudio": true,
+      "hasVideo": true,
+      "audioReady": true,
+      "videoReady": true,
+      "hlsReady": true,
+      "previewReady": false,
+      "posterReady": true,
+      "audioFormat": "mp3",
+      "mediaType": "video",
+      "status": "ready",
+      "created": "2026-10-29T21:50:38Z",
+      "sourceModified": "2024-01-03T13:39:29Z",
+      "originalFilename": "לשון הקודש.MTS",
+      "originalFormat": "mts",
+      "public": true,
+      "autoImported": true,
+      "series": "Parsha Shiurim"
     },
     {
       "id": "series-fd8cc25bb8e769667e07a381",
