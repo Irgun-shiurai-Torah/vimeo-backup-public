@@ -2,7 +2,7 @@
   "version": 1,
   "library": "series",
   "mode": "staging",
-  "generatedAt": "2026-10-30T15:15:25.456398Z",
+  "generatedAt": "2026-10-30T15:25:12.525274Z",
   "items": [
     {
       "id": "series-f15425d6c4a5ccaa29bf98c7",
@@ -25205,6 +25205,37 @@
       "series": "Leil Shishi"
     },
     {
+      "id": "series-5c1ee61edd04ddd5575cbe94",
+      "library": "series",
+      "speaker": "Rabbi Meilech Biderman",
+      "title": "שלח (חול) - קרח תשפ-ב",
+      "year": 5782,
+      "parsha": "Sh'lach",
+      "parshas": [
+        "Sh'lach",
+        "Korach"
+      ],
+      "holiday": null,
+      "hidden": false,
+      "hasAudio": true,
+      "hasVideo": true,
+      "audioReady": true,
+      "videoReady": true,
+      "hlsReady": true,
+      "previewReady": false,
+      "posterReady": true,
+      "audioFormat": "mp3",
+      "mediaType": "video",
+      "status": "ready",
+      "created": "2026-10-30T15:17:34Z",
+      "sourceModified": "2022-06-24T01:48:10Z",
+      "originalFilename": "שלח (חול) - קרח תשפ-ב.MTS",
+      "originalFormat": "mts",
+      "public": true,
+      "autoImported": true,
+      "series": "Leil Shishi"
+    },
+    {
       "id": "series-cf000beb0749c6b8187331c6",
       "library": "series",
       "speaker": "Rabbi Meilech Biderman",
@@ -25758,6 +25789,36 @@
       "public": true,
       "autoImported": true,
       "series": "Parsha Shiurim"
+    },
+    {
+      "id": "series-00d872824947e7600bee24ff",
+      "library": "series",
+      "speaker": "Rabbi Meilech Biderman",
+      "title": "כי תשא תשפ-ב (לשון הקודש)",
+      "year": 5782,
+      "parsha": "Ki Tisa",
+      "parshas": [
+        "Ki Tisa"
+      ],
+      "holiday": null,
+      "hidden": false,
+      "hasAudio": true,
+      "hasVideo": true,
+      "audioReady": true,
+      "videoReady": true,
+      "hlsReady": true,
+      "previewReady": false,
+      "posterReady": true,
+      "audioFormat": "mp3",
+      "mediaType": "video",
+      "status": "ready",
+      "created": "2026-10-30T15:16:12Z",
+      "sourceModified": "2022-09-23T08:33:06Z",
+      "originalFilename": "לשון הקודש.MTS",
+      "originalFormat": "mts",
+      "public": true,
+      "autoImported": true,
+      "series": "Short Word for Shabbos"
     },
     {
       "id": "series-053f8e4111bc71623054f848",
