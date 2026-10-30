@@ -2,7 +2,7 @@
   "version": 1,
   "library": "series",
   "mode": "staging",
-  "generatedAt": "2026-10-30T08:31:25.386040Z",
+  "generatedAt": "2026-10-30T08:35:17.044044Z",
   "items": [
     {
       "id": "series-f15425d6c4a5ccaa29bf98c7",
@@ -18667,6 +18667,36 @@
       "public": true,
       "autoImported": true,
       "series": "Leil Shishi"
+    },
+    {
+      "id": "series-6f9b5a6b35f3877701f966f0",
+      "library": "series",
+      "speaker": "Reb Gamliel Rabinowitz",
+      "title": "וישלח תשפ-ג (with subtitles)",
+      "year": 5783,
+      "parsha": "Vayishlach",
+      "parshas": [
+        "Vayishlach"
+      ],
+      "holiday": null,
+      "hidden": false,
+      "hasAudio": true,
+      "hasVideo": true,
+      "audioReady": true,
+      "videoReady": true,
+      "hlsReady": true,
+      "previewReady": false,
+      "posterReady": true,
+      "audioFormat": "mp3",
+      "mediaType": "video",
+      "status": "ready",
+      "created": "2026-10-30T08:33:01Z",
+      "sourceModified": "2022-12-09T04:18:12Z",
+      "originalFilename": "with subtitles.mp4",
+      "originalFormat": "mp4",
+      "public": true,
+      "autoImported": true,
+      "series": "Parsha Shiurim"
     },
     {
       "id": "series-d2a8e7c1553d91904f3d29e4",
