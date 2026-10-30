@@ -2,7 +2,7 @@
   "version": 1,
   "library": "series",
   "mode": "staging",
-  "generatedAt": "2026-10-30T20:13:18.064974Z",
+  "generatedAt": "2026-10-30T20:25:02.539231Z",
   "items": [
     {
       "id": "series-f15425d6c4a5ccaa29bf98c7",
@@ -9060,6 +9060,36 @@
       "public": true,
       "autoImported": true,
       "series": "Parsha Shiurim"
+    },
+    {
+      "id": "series-1b04e48a8444900f0324af00",
+      "library": "series",
+      "speaker": "Rabbi Meilech Biderman",
+      "title": "ר' מיילך בידרמן ליל שישי ויקהל - פרה תשפ-ה",
+      "year": 5785,
+      "parsha": "Vayakhel",
+      "parshas": [
+        "Vayakhel"
+      ],
+      "holiday": null,
+      "hidden": false,
+      "hasAudio": true,
+      "hasVideo": true,
+      "audioReady": true,
+      "videoReady": true,
+      "hlsReady": true,
+      "previewReady": false,
+      "posterReady": true,
+      "audioFormat": "mp3",
+      "mediaType": "video",
+      "status": "ready",
+      "created": "2026-10-30T20:19:54Z",
+      "sourceModified": "2025-03-21T00:07:50Z",
+      "originalFilename": "ר' מיילך בידרמן ליל שישי ויקהל - פרה תשפ-ה.MTS",
+      "originalFormat": "mts",
+      "public": true,
+      "autoImported": true,
+      "series": "Leil Shishi"
     },
     {
       "id": "series-270ad23ade4c042a3351f13d",
