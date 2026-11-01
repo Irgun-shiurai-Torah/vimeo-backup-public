@@ -2,7 +2,7 @@
   "version": 1,
   "library": "series",
   "mode": "staging",
-  "generatedAt": "2026-11-01T00:52:17.582636Z",
+  "generatedAt": "2026-11-01T00:58:44.641113Z",
   "items": [
     {
       "id": "series-f15425d6c4a5ccaa29bf98c7",
@@ -8080,6 +8080,34 @@
       "public": true,
       "autoImported": true,
       "series": "Parsha Shiurim"
+    },
+    {
+      "id": "series-416825aa8e0d80ed7f922829",
+      "library": "series",
+      "speaker": "Rabbi Meilech Biderman",
+      "title": "Spanish Subtitles",
+      "year": 5785,
+      "parsha": null,
+      "parshas": [],
+      "holiday": null,
+      "hidden": false,
+      "hasAudio": true,
+      "hasVideo": true,
+      "audioReady": true,
+      "videoReady": true,
+      "hlsReady": true,
+      "previewReady": false,
+      "posterReady": true,
+      "audioFormat": "mp3",
+      "mediaType": "video",
+      "status": "ready",
+      "created": "2026-11-01T00:57:48Z",
+      "sourceModified": "2024-11-07T10:47:56Z",
+      "originalFilename": "Spanish Subtitles.mp4",
+      "originalFormat": "mp4",
+      "public": true,
+      "autoImported": true,
+      "series": "Short Word for Shabbos"
     },
     {
       "id": "series-e3428cc3b0b085a919f4b2c7",
