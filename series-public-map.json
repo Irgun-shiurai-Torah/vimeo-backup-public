@@ -2,7 +2,7 @@
   "version": 1,
   "library": "series",
   "mode": "staging",
-  "generatedAt": "2026-11-01T06:21:57.717899Z",
+  "generatedAt": "2026-11-01T06:32:43.941400Z",
   "items": [
     {
       "id": "series-f15425d6c4a5ccaa29bf98c7",
@@ -13760,6 +13760,36 @@
       "public": true,
       "autoImported": true,
       "series": "Short Word for Shabbos"
+    },
+    {
+      "id": "series-e8d1145ed9e58d874506bc35",
+      "library": "series",
+      "speaker": "Rabbi Meilech Biderman",
+      "title": "ר' מיילך בידרמן דברים - חזון תשפ-ה",
+      "year": 5785,
+      "parsha": "Devarim",
+      "parshas": [
+        "Devarim"
+      ],
+      "holiday": null,
+      "hidden": false,
+      "hasAudio": true,
+      "hasVideo": true,
+      "audioReady": true,
+      "videoReady": true,
+      "hlsReady": true,
+      "previewReady": false,
+      "posterReady": true,
+      "audioFormat": "mp3",
+      "mediaType": "video",
+      "status": "ready",
+      "created": "2026-11-01T06:28:18Z",
+      "sourceModified": "2025-07-31T22:01:38Z",
+      "originalFilename": "ר' מיילך בידרמן דברים - חזון תשפ-ה.MTS",
+      "originalFormat": "mts",
+      "public": true,
+      "autoImported": true,
+      "series": "Leil Shishi"
     },
     {
       "id": "series-2f0ec228b2b134165b7d8d95",
