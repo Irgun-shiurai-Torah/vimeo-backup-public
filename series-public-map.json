@@ -2,7 +2,7 @@
   "version": 1,
   "library": "series",
   "mode": "staging",
-  "generatedAt": "2026-11-02T04:39:38.948527Z",
+  "generatedAt": "2026-11-02T04:54:47.896699Z",
   "items": [
     {
       "id": "series-f15425d6c4a5ccaa29bf98c7",
@@ -29849,6 +29849,37 @@
       "public": true,
       "autoImported": true,
       "series": "Parsha Shiurim"
+    },
+    {
+      "id": "series-94d48a8b58838e79a6603663",
+      "library": "series",
+      "speaker": "Rabbi Meilech Biderman",
+      "title": "ר' מיילך בידרמן ליל שישי, תזריע-מצורע תשפ-ג",
+      "year": 5783,
+      "parsha": "Tazria",
+      "parshas": [
+        "Tazria",
+        "Metzora"
+      ],
+      "holiday": null,
+      "hidden": false,
+      "hasAudio": true,
+      "hasVideo": true,
+      "audioReady": true,
+      "videoReady": true,
+      "hlsReady": true,
+      "previewReady": false,
+      "posterReady": true,
+      "audioFormat": "mp3",
+      "mediaType": "video",
+      "status": "ready",
+      "created": "2026-11-02T04:45:33Z",
+      "sourceModified": "2023-04-20T23:30:32Z",
+      "originalFilename": "ר' מיילך בידרמן ליל שישי, תזריע-מצורע תשפ-ג.MTS",
+      "originalFormat": "mts",
+      "public": true,
+      "autoImported": true,
+      "series": "Leil Shishi"
     },
     {
       "id": "series-ae9b670cfcfde9f663fa3d6f",
