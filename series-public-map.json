@@ -2,7 +2,7 @@
   "version": 1,
   "library": "series",
   "mode": "staging",
-  "generatedAt": "2026-11-02T21:54:10.136435Z",
+  "generatedAt": "2026-11-02T22:14:23.859005Z",
   "items": [
     {
       "id": "series-f15425d6c4a5ccaa29bf98c7",
@@ -20584,6 +20584,36 @@
       "public": true,
       "autoImported": true,
       "series": "Short Word for Shabbos"
+    },
+    {
+      "id": "series-00834aaecc3074cd912e4cb7",
+      "library": "series",
+      "speaker": "Rabbi Meilech Biderman",
+      "title": "ר' מיילך בידרמן, בשלח (שירה) תשפ-ד",
+      "year": 5784,
+      "parsha": "Beshalach",
+      "parshas": [
+        "Beshalach"
+      ],
+      "holiday": null,
+      "hidden": false,
+      "hasAudio": true,
+      "hasVideo": true,
+      "audioReady": true,
+      "videoReady": true,
+      "hlsReady": true,
+      "previewReady": false,
+      "posterReady": true,
+      "audioFormat": "mp3",
+      "mediaType": "video",
+      "status": "ready",
+      "created": "2026-11-02T22:12:27Z",
+      "sourceModified": "2024-01-26T00:13:22Z",
+      "originalFilename": "ר' מיילך בידרמן, בשלח (שירה) תשפ-ד.MTS",
+      "originalFormat": "mts",
+      "public": true,
+      "autoImported": true,
+      "series": "Leil Shishi"
     },
     {
       "id": "series-e2441709132abea1e5d1e5fe",
