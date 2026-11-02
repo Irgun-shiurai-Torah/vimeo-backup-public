@@ -2,7 +2,7 @@
   "version": 1,
   "library": "series",
   "mode": "staging",
-  "generatedAt": "2026-11-02T19:11:30.929383Z",
+  "generatedAt": "2026-11-02T19:24:16.270111Z",
   "items": [
     {
       "id": "series-f15425d6c4a5ccaa29bf98c7",
@@ -27253,6 +27253,34 @@
       "public": true,
       "autoImported": true,
       "series": "Parsha Shiurim"
+    },
+    {
+      "id": "series-93cb281804f088118380c622",
+      "library": "series",
+      "speaker": "Rabbi Meilech Biderman",
+      "title": "יום כיפור תשפ-ג (לשון הקודש)",
+      "year": 5783,
+      "parsha": null,
+      "parshas": [],
+      "holiday": "Yom Kippur",
+      "hidden": false,
+      "hasAudio": true,
+      "hasVideo": true,
+      "audioReady": true,
+      "videoReady": true,
+      "hlsReady": true,
+      "previewReady": false,
+      "posterReady": true,
+      "audioFormat": "mp3",
+      "mediaType": "video",
+      "status": "ready",
+      "created": "2026-11-02T19:18:46Z",
+      "sourceModified": "2022-10-03T12:30:25Z",
+      "originalFilename": "לשון הקודש.mp4",
+      "originalFormat": "mp4",
+      "public": true,
+      "autoImported": true,
+      "series": "Short Word for Shabbos"
     },
     {
       "id": "series-762269f438b9716f2e73c17b",
