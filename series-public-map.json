@@ -2,7 +2,7 @@
   "version": 1,
   "library": "series",
   "mode": "staging",
-  "generatedAt": "2026-11-02T17:39:53.119675Z",
+  "generatedAt": "2026-11-02T17:54:00.647111Z",
   "items": [
     {
       "id": "series-f15425d6c4a5ccaa29bf98c7",
@@ -32102,6 +32102,36 @@
       "public": true,
       "autoImported": true,
       "series": "Short Word for Shabbos"
+    },
+    {
+      "id": "series-7b3df0c791087546c76bf9bc",
+      "library": "series",
+      "speaker": "Rabbi Meilech Biderman",
+      "title": "ר' מיילך בידרמן ליל שישי, במדבר - הכנה לשבועות תשפ-ג",
+      "year": 5783,
+      "parsha": "Bamidbar",
+      "parshas": [
+        "Bamidbar"
+      ],
+      "holiday": "Shavuot",
+      "hidden": false,
+      "hasAudio": true,
+      "hasVideo": true,
+      "audioReady": true,
+      "videoReady": true,
+      "hlsReady": true,
+      "previewReady": false,
+      "posterReady": true,
+      "audioFormat": "mp3",
+      "mediaType": "video",
+      "status": "ready",
+      "created": "2026-11-02T17:53:50Z",
+      "sourceModified": "2023-05-18T23:45:39Z",
+      "originalFilename": "ר' מיילך בידרמן ליל שישי, במדבר - הכנה לשבועות תשפ-ג.MTS",
+      "originalFormat": "mts",
+      "public": true,
+      "autoImported": true,
+      "series": "Leil Shishi"
     },
     {
       "id": "series-c512262bfedba66ab805f106",
