@@ -2,7 +2,7 @@
   "version": 1,
   "library": "series",
   "mode": "staging",
-  "generatedAt": "2026-11-03T07:39:33.768403Z",
+  "generatedAt": "2026-11-03T07:54:23.456390Z",
   "items": [
     {
       "id": "series-f15425d6c4a5ccaa29bf98c7",
@@ -8925,6 +8925,36 @@
       "public": true,
       "autoImported": true,
       "series": "Parsha Shiurim"
+    },
+    {
+      "id": "series-3f50bdcca6423f25885ec7f2",
+      "library": "series",
+      "speaker": "Rabbi Meilech Biderman",
+      "title": "עקב תשפ-ו (לשון הקודש)",
+      "year": 5786,
+      "parsha": "Eikev",
+      "parshas": [
+        "Eikev"
+      ],
+      "holiday": null,
+      "hidden": false,
+      "hasAudio": true,
+      "hasVideo": true,
+      "audioReady": true,
+      "videoReady": true,
+      "hlsReady": true,
+      "previewReady": false,
+      "posterReady": true,
+      "audioFormat": "mp3",
+      "mediaType": "video",
+      "status": "ready",
+      "created": "2026-11-03T07:44:30Z",
+      "sourceModified": "2026-07-30T11:04:33Z",
+      "originalFilename": "לשון הקודש.mp4",
+      "originalFormat": "mp4",
+      "public": true,
+      "autoImported": true,
+      "series": "Short Word for Shabbos"
     },
     {
       "id": "series-f881423fdc182c4e232b5cd4",
@@ -37865,6 +37895,36 @@
       "public": true,
       "autoImported": true,
       "series": "Leil Shishi"
+    },
+    {
+      "id": "series-c6e0553b45b7204fe9d6bf35",
+      "library": "series",
+      "speaker": "Rabbi Meilech Biderman",
+      "title": "עקב תשפ-ב (לשון הקודש)",
+      "year": 5782,
+      "parsha": "Eikev",
+      "parshas": [
+        "Eikev"
+      ],
+      "holiday": null,
+      "hidden": false,
+      "hasAudio": true,
+      "hasVideo": true,
+      "audioReady": true,
+      "videoReady": true,
+      "hlsReady": true,
+      "previewReady": false,
+      "posterReady": true,
+      "audioFormat": "mp3",
+      "mediaType": "video",
+      "status": "ready",
+      "created": "2026-11-03T07:49:43Z",
+      "sourceModified": "2022-08-19T00:33:37Z",
+      "originalFilename": "לשון הקודש.mp4",
+      "originalFormat": "mp4",
+      "public": true,
+      "autoImported": true,
+      "series": "Short Word for Shabbos"
     },
     {
       "id": "series-7be4601c870ebbab87a99692",
