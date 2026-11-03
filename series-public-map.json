@@ -2,7 +2,7 @@
   "version": 1,
   "library": "series",
   "mode": "staging",
-  "generatedAt": "2026-11-03T06:23:24.943404Z",
+  "generatedAt": "2026-11-03T06:37:49.240502Z",
   "items": [
     {
       "id": "series-f15425d6c4a5ccaa29bf98c7",
@@ -24760,6 +24760,36 @@
       "public": true,
       "autoImported": true,
       "series": "Parsha Shiurim"
+    },
+    {
+      "id": "series-454451127d77960ca76120b6",
+      "library": "series",
+      "speaker": "Rabbi Meilech Biderman",
+      "title": "קדושים תשפ-ד (אידיש)",
+      "year": 5784,
+      "parsha": "Kedoshim",
+      "parshas": [
+        "Kedoshim"
+      ],
+      "holiday": null,
+      "hidden": false,
+      "hasAudio": true,
+      "hasVideo": true,
+      "audioReady": true,
+      "videoReady": true,
+      "hlsReady": true,
+      "previewReady": false,
+      "posterReady": true,
+      "audioFormat": "mp3",
+      "mediaType": "video",
+      "status": "ready",
+      "created": "2026-11-03T06:35:25Z",
+      "sourceModified": "2024-05-09T10:01:14Z",
+      "originalFilename": "אידיש.mp4",
+      "originalFormat": "mp4",
+      "public": true,
+      "autoImported": true,
+      "series": "Short Word for Shabbos"
     },
     {
       "id": "series-5628fca303490bc92acf33c1",
