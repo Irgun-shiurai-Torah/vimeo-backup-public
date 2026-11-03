@@ -2,7 +2,7 @@
   "version": 1,
   "library": "series",
   "mode": "staging",
-  "generatedAt": "2026-11-03T14:39:37.484507Z",
+  "generatedAt": "2026-11-03T14:54:45.535751Z",
   "items": [
     {
       "id": "series-f15425d6c4a5ccaa29bf98c7",
@@ -35596,6 +35596,37 @@
       "public": true,
       "autoImported": true,
       "series": "Short Word for Shabbos"
+    },
+    {
+      "id": "series-3de7a2a72657de00639267cd",
+      "library": "series",
+      "speaker": "Rabbi Meilech Biderman",
+      "title": "ר' מיילך בידרמן ליל שישי, חוקת-בלק (חול) - בלק תשפ-ג",
+      "year": 5783,
+      "parsha": "Chukat",
+      "parshas": [
+        "Chukat",
+        "Balak"
+      ],
+      "holiday": null,
+      "hidden": false,
+      "hasAudio": true,
+      "hasVideo": true,
+      "audioReady": true,
+      "videoReady": true,
+      "hlsReady": true,
+      "previewReady": false,
+      "posterReady": true,
+      "audioFormat": "mp3",
+      "mediaType": "video",
+      "status": "ready",
+      "created": "2026-11-03T14:45:35Z",
+      "sourceModified": "2023-06-29T22:48:30Z",
+      "originalFilename": "ר' מיילך בידרמן ליל שישי, חוקת-בלק (חול) - בלק תשפ-ג.MTS",
+      "originalFormat": "mts",
+      "public": true,
+      "autoImported": true,
+      "series": "Leil Shishi"
     },
     {
       "id": "series-ee21082083953198756afb05",
