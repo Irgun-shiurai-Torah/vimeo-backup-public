@@ -2,7 +2,7 @@
   "version": 1,
   "library": "series",
   "mode": "staging",
-  "generatedAt": "2026-11-02T23:54:54.920540Z",
+  "generatedAt": "2026-11-03T00:34:42.343674Z",
   "items": [
     {
       "id": "series-f15425d6c4a5ccaa29bf98c7",
@@ -40785,6 +40785,34 @@
       "public": true,
       "autoImported": true,
       "series": "Parsha Shiurim"
+    },
+    {
+      "id": "series-00aaf1459380672ef777dc86",
+      "library": "series",
+      "speaker": "Rabbi Meilech Biderman",
+      "title": "2-3-2022",
+      "year": null,
+      "parsha": null,
+      "parshas": [],
+      "holiday": null,
+      "hidden": false,
+      "hasAudio": true,
+      "hasVideo": true,
+      "audioReady": true,
+      "videoReady": true,
+      "hlsReady": true,
+      "previewReady": false,
+      "posterReady": true,
+      "audioFormat": "mp3",
+      "mediaType": "video",
+      "status": "ready",
+      "created": "2026-11-03T00:28:13Z",
+      "sourceModified": "2022-04-06T18:22:59Z",
+      "originalFilename": "2-3-2022.MTS",
+      "originalFormat": "mts",
+      "public": true,
+      "autoImported": true,
+      "series": "Leil Shishi"
     },
     {
       "id": "series-02bcf47bb0ca4bd4bf32225f",
