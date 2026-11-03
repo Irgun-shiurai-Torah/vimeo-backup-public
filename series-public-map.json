@@ -2,7 +2,7 @@
   "version": 1,
   "library": "series",
   "mode": "staging",
-  "generatedAt": "2026-11-03T13:39:24.791896Z",
+  "generatedAt": "2026-11-03T13:54:40.727379Z",
   "items": [
     {
       "id": "series-f15425d6c4a5ccaa29bf98c7",
@@ -18182,6 +18182,36 @@
       "series": "Short Word for Shabbos"
     },
     {
+      "id": "series-02be7ed7fce265bbc14cc723",
+      "library": "series",
+      "speaker": "Rabbi Meilech Biderman",
+      "title": "עקב תשפ-ה (אידיש)",
+      "year": 5785,
+      "parsha": "Eikev",
+      "parshas": [
+        "Eikev"
+      ],
+      "holiday": null,
+      "hidden": false,
+      "hasAudio": true,
+      "hasVideo": true,
+      "audioReady": true,
+      "videoReady": true,
+      "hlsReady": true,
+      "previewReady": false,
+      "posterReady": true,
+      "audioFormat": "mp3",
+      "mediaType": "video",
+      "status": "ready",
+      "created": "2026-11-03T13:41:10Z",
+      "sourceModified": "2025-08-13T07:24:19Z",
+      "originalFilename": "אידיש.mp4",
+      "originalFormat": "mp4",
+      "public": true,
+      "autoImported": true,
+      "series": "Short Word for Shabbos"
+    },
+    {
       "id": "series-a7a92292dba76ea350699388",
       "library": "series",
       "speaker": "Reb Gamliel Rabinowitz",
@@ -21128,6 +21158,36 @@
       "public": true,
       "autoImported": true,
       "series": "Short Word for Shabbos"
+    },
+    {
+      "id": "series-fd6e5c625daf89695483eb2e",
+      "library": "series",
+      "speaker": "Rabbi Meilech Biderman",
+      "title": "ר' מיילך בידרמן, ויגש תשפ-ד",
+      "year": 5784,
+      "parsha": "Vayigash",
+      "parshas": [
+        "Vayigash"
+      ],
+      "holiday": null,
+      "hidden": false,
+      "hasAudio": true,
+      "hasVideo": true,
+      "audioReady": true,
+      "videoReady": true,
+      "hlsReady": true,
+      "previewReady": false,
+      "posterReady": true,
+      "audioFormat": "mp3",
+      "mediaType": "video",
+      "status": "ready",
+      "created": "2026-11-03T13:47:19Z",
+      "sourceModified": "2023-12-22T00:51:32Z",
+      "originalFilename": "ר' מיילך בידרמן, ויגש תשפ-ד.MTS",
+      "originalFormat": "mts",
+      "public": true,
+      "autoImported": true,
+      "series": "Leil Shishi"
     },
     {
       "id": "series-dc5e102ed779067bb6444425",
