@@ -2,7 +2,7 @@
   "version": 1,
   "library": "series",
   "mode": "staging",
-  "generatedAt": "2026-11-04T08:39:00.603898Z",
+  "generatedAt": "2026-11-04T08:54:41.980013Z",
   "items": [
     {
       "id": "series-f15425d6c4a5ccaa29bf98c7",
@@ -2653,6 +2653,36 @@
       "public": true,
       "autoImported": true,
       "series": "Short Word for Shabbos"
+    },
+    {
+      "id": "series-344eee411ef481003023d06b",
+      "library": "series",
+      "speaker": "Rabbi Meilech Biderman",
+      "title": "ר' מיילך בידרמן ליל שישי לך לך תשפ-ו",
+      "year": 5786,
+      "parsha": "Lech-Lecha",
+      "parshas": [
+        "Lech-Lecha"
+      ],
+      "holiday": null,
+      "hidden": false,
+      "hasAudio": true,
+      "hasVideo": true,
+      "audioReady": true,
+      "videoReady": true,
+      "hlsReady": true,
+      "previewReady": false,
+      "posterReady": true,
+      "audioFormat": "mp3",
+      "mediaType": "video",
+      "status": "ready",
+      "created": "2026-11-04T08:53:51Z",
+      "sourceModified": "2025-10-30T22:45:44Z",
+      "originalFilename": "ר' מיילך בידרמן ליל שישי לך לך תשפ-ו.MTS",
+      "originalFormat": "mts",
+      "public": true,
+      "autoImported": true,
+      "series": "Leil Shishi"
     },
     {
       "id": "series-1ecc23a6911284820e548571",
