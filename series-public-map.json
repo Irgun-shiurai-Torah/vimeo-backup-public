@@ -2,7 +2,7 @@
   "version": 1,
   "library": "series",
   "mode": "staging",
-  "generatedAt": "2026-11-04T06:38:01.088243Z",
+  "generatedAt": "2026-11-04T06:54:23.275647Z",
   "items": [
     {
       "id": "series-f15425d6c4a5ccaa29bf98c7",
@@ -10731,6 +10731,37 @@
       "series": "Parsha Shiurim"
     },
     {
+      "id": "series-15a1180d83dbf915b155d921",
+      "library": "series",
+      "speaker": "Rabbi Meilech Biderman",
+      "title": "נצבים - וילך (שבת סליחות) תשפ-ו (לשון הקודש)",
+      "year": 5786,
+      "parsha": "Nitzavim",
+      "parshas": [
+        "Nitzavim",
+        "Vayeilech"
+      ],
+      "holiday": null,
+      "hidden": false,
+      "hasAudio": true,
+      "hasVideo": true,
+      "audioReady": true,
+      "videoReady": true,
+      "hlsReady": true,
+      "previewReady": false,
+      "posterReady": true,
+      "audioFormat": "mp3",
+      "mediaType": "video",
+      "status": "ready",
+      "created": "2026-11-04T06:51:29Z",
+      "sourceModified": "2026-09-02T14:18:34Z",
+      "originalFilename": "לשון הקודש.mp4",
+      "originalFormat": "mp4",
+      "public": true,
+      "autoImported": true,
+      "series": "Short Word for Shabbos"
+    },
+    {
       "id": "series-5c591e13c36f61c8d56e787b",
       "library": "series",
       "speaker": "Reb Gamliel Rabinowitz",
@@ -20186,6 +20217,36 @@
       "public": true,
       "autoImported": true,
       "series": "Parsha Shiurim"
+    },
+    {
+      "id": "series-fcbc33843610a1fddac0ffe4",
+      "library": "series",
+      "speaker": "Rabbi Meilech Biderman",
+      "title": "נצבים תשפ-ה (לשון הקודש)",
+      "year": 5785,
+      "parsha": "Nitzavim",
+      "parshas": [
+        "Nitzavim"
+      ],
+      "holiday": null,
+      "hidden": false,
+      "hasAudio": true,
+      "hasVideo": true,
+      "audioReady": true,
+      "videoReady": true,
+      "hlsReady": true,
+      "previewReady": false,
+      "posterReady": true,
+      "audioFormat": "mp3",
+      "mediaType": "video",
+      "status": "ready",
+      "created": "2026-11-04T06:45:11Z",
+      "sourceModified": "2025-09-16T10:48:48Z",
+      "originalFilename": "לשון הקודש.mp4",
+      "originalFormat": "mp4",
+      "public": true,
+      "autoImported": true,
+      "series": "Short Word for Shabbos"
     },
     {
       "id": "series-a4d8e2591e25963719de1b2d",
@@ -30875,6 +30936,37 @@
       "public": true,
       "autoImported": true,
       "series": "Parsha Shiurim"
+    },
+    {
+      "id": "series-543bae233a82d072446eb476",
+      "library": "series",
+      "speaker": "Rabbi Meilech Biderman",
+      "title": "נצבים - וילך (הכנה לסליחות) תשפ-ד (לשון הקודש)",
+      "year": 5784,
+      "parsha": "Nitzavim",
+      "parshas": [
+        "Nitzavim",
+        "Vayeilech"
+      ],
+      "holiday": null,
+      "hidden": false,
+      "hasAudio": true,
+      "hasVideo": true,
+      "audioReady": true,
+      "videoReady": true,
+      "hlsReady": true,
+      "previewReady": false,
+      "posterReady": true,
+      "audioFormat": "mp3",
+      "mediaType": "video",
+      "status": "ready",
+      "created": "2026-11-04T06:39:08Z",
+      "sourceModified": "2024-09-26T13:52:05Z",
+      "originalFilename": "לשון הקודש.mp4",
+      "originalFormat": "mp4",
+      "public": true,
+      "autoImported": true,
+      "series": "Short Word for Shabbos"
     },
     {
       "id": "series-f06875c9aff31e7a01a21030",
