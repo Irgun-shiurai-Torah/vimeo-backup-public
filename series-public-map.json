@@ -2,7 +2,7 @@
   "version": 1,
   "library": "series",
   "mode": "staging",
-  "generatedAt": "2026-11-05T22:54:03.002687Z",
+  "generatedAt": "2026-11-05T23:13:03.264072Z",
   "items": [
     {
       "id": "series-f15425d6c4a5ccaa29bf98c7",
@@ -20406,6 +20406,37 @@
       "public": true,
       "autoImported": true,
       "series": "Short Word for Shabbos"
+    },
+    {
+      "id": "series-76eed524ec583abe79b755a9",
+      "library": "series",
+      "speaker": "Rabbi Meilech Biderman",
+      "title": "ר' מיילך בידרמן מטות מסעי תשפ-ה",
+      "year": 5785,
+      "parsha": "Matot",
+      "parshas": [
+        "Matot",
+        "Masei"
+      ],
+      "holiday": null,
+      "hidden": false,
+      "hasAudio": true,
+      "hasVideo": true,
+      "audioReady": true,
+      "videoReady": true,
+      "hlsReady": true,
+      "previewReady": false,
+      "posterReady": true,
+      "audioFormat": "mp3",
+      "mediaType": "video",
+      "status": "ready",
+      "created": "2026-11-05T22:57:33Z",
+      "sourceModified": "2025-07-24T23:14:01Z",
+      "originalFilename": "ר' מיילך בידרמן מטות מסעי תשפ-ה.MTS",
+      "originalFormat": "mts",
+      "public": true,
+      "autoImported": true,
+      "series": "Leil Shishi"
     },
     {
       "id": "series-de2d3d78fcbc92e6028a2b5c",
