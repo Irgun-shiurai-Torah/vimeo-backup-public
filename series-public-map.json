@@ -2,7 +2,7 @@
   "version": 1,
   "library": "series",
   "mode": "staging",
-  "generatedAt": "2026-11-05T19:24:28.978196Z",
+  "generatedAt": "2026-11-05T19:39:27.299441Z",
   "items": [
     {
       "id": "series-f15425d6c4a5ccaa29bf98c7",
@@ -36867,6 +36867,36 @@
       "public": true,
       "autoImported": true,
       "series": "Short Word for Shabbos"
+    },
+    {
+      "id": "series-d77b36b59172791619414460",
+      "library": "series",
+      "speaker": "Rabbi Meilech Biderman",
+      "title": "ר' מיילך בידרמן ליל שישי, משפטים תשפ-ג",
+      "year": 5783,
+      "parsha": "Mishpatim",
+      "parshas": [
+        "Mishpatim"
+      ],
+      "holiday": null,
+      "hidden": false,
+      "hasAudio": true,
+      "hasVideo": true,
+      "audioReady": true,
+      "videoReady": true,
+      "hlsReady": true,
+      "previewReady": false,
+      "posterReady": true,
+      "audioFormat": "mp3",
+      "mediaType": "video",
+      "status": "ready",
+      "created": "2026-11-05T19:32:46Z",
+      "sourceModified": "2023-02-17T00:24:40Z",
+      "originalFilename": "ר' מיילך בידרמן ליל שישי, משפטים תשפ-ג.MTS",
+      "originalFormat": "mts",
+      "public": true,
+      "autoImported": true,
+      "series": "Leil Shishi"
     },
     {
       "id": "series-cd668de8cc7c4a5b8554fa0a",
