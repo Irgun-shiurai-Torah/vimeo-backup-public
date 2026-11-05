@@ -2,7 +2,7 @@
   "version": 1,
   "library": "series",
   "mode": "staging",
-  "generatedAt": "2026-11-05T10:25:19.432404Z",
+  "generatedAt": "2026-11-05T10:34:19.040503Z",
   "items": [
     {
       "id": "series-f15425d6c4a5ccaa29bf98c7",
@@ -29100,6 +29100,36 @@
       "public": true,
       "autoImported": true,
       "series": "Short Word for Shabbos"
+    },
+    {
+      "id": "series-d5ba805b71b547e6e4c78188",
+      "library": "series",
+      "speaker": "Rabbi Meilech Biderman",
+      "title": "ר' מיילך בידרמן אמור תשפ-ד",
+      "year": 5784,
+      "parsha": "Emor",
+      "parshas": [
+        "Emor"
+      ],
+      "holiday": null,
+      "hidden": false,
+      "hasAudio": true,
+      "hasVideo": true,
+      "audioReady": true,
+      "videoReady": true,
+      "hlsReady": true,
+      "previewReady": false,
+      "posterReady": true,
+      "audioFormat": "mp3",
+      "mediaType": "video",
+      "status": "ready",
+      "created": "2026-11-05T10:34:16Z",
+      "sourceModified": "2024-05-17T01:37:09Z",
+      "originalFilename": "ר' מיילך בידרמן אמור תשפ-ד.MTS",
+      "originalFormat": "mts",
+      "public": true,
+      "autoImported": true,
+      "series": "Leil Shishi"
     },
     {
       "id": "series-67899adc1e90f1e3211b3226",
