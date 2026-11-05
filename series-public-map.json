@@ -2,7 +2,7 @@
   "version": 1,
   "library": "series",
   "mode": "staging",
-  "generatedAt": "2026-11-05T20:25:08.058116Z",
+  "generatedAt": "2026-11-05T20:34:12.629229Z",
   "items": [
     {
       "id": "series-f15425d6c4a5ccaa29bf98c7",
@@ -10659,6 +10659,36 @@
       "public": true,
       "autoImported": true,
       "series": "Short Word for Shabbos"
+    },
+    {
+      "id": "series-9b409e0477467f6dde6ba4df",
+      "library": "series",
+      "speaker": "Rabbi Meilech Biderman",
+      "title": "ר' מיילך בידרמן ליל שישי עקב תשפ-ו",
+      "year": 5786,
+      "parsha": "Eikev",
+      "parshas": [
+        "Eikev"
+      ],
+      "holiday": null,
+      "hidden": false,
+      "hasAudio": true,
+      "hasVideo": true,
+      "audioReady": true,
+      "videoReady": true,
+      "hlsReady": true,
+      "previewReady": false,
+      "posterReady": true,
+      "audioFormat": "mp3",
+      "mediaType": "video",
+      "status": "ready",
+      "created": "2026-11-05T20:33:10Z",
+      "sourceModified": "2026-07-31T00:06:29Z",
+      "originalFilename": "ר' מיילך בידרמן ליל שישי עקב תשפ-ו.MTS",
+      "originalFormat": "mts",
+      "public": true,
+      "autoImported": true,
+      "series": "Leil Shishi"
     },
     {
       "id": "series-e798afce84ab85891b676875",
