@@ -2,7 +2,7 @@
   "version": 1,
   "library": "series",
   "mode": "staging",
-  "generatedAt": "2026-11-05T02:33:47.022964Z",
+  "generatedAt": "2026-11-05T02:39:16.322385Z",
   "items": [
     {
       "id": "series-f15425d6c4a5ccaa29bf98c7",
@@ -34626,6 +34626,36 @@
       "public": true,
       "autoImported": true,
       "series": "Parsha Shiurim"
+    },
+    {
+      "id": "series-a6ca8fa8596e0bb59c7cddc6",
+      "library": "series",
+      "speaker": "Rabbi Meilech Biderman",
+      "title": "ר' מיילך בידרמן, ויצא תשפ-ג",
+      "year": 5783,
+      "parsha": "Vayetzei",
+      "parshas": [
+        "Vayetzei"
+      ],
+      "holiday": null,
+      "hidden": false,
+      "hasAudio": true,
+      "hasVideo": true,
+      "audioReady": true,
+      "videoReady": true,
+      "hlsReady": true,
+      "previewReady": false,
+      "posterReady": true,
+      "audioFormat": "mp3",
+      "mediaType": "video",
+      "status": "ready",
+      "created": "2026-11-05T02:38:07Z",
+      "sourceModified": "2022-12-02T00:28:38Z",
+      "originalFilename": "ר' מיילך בידרמן, ויצא תשפ-ג.MTS",
+      "originalFormat": "mts",
+      "public": true,
+      "autoImported": true,
+      "series": "Leil Shishi"
     },
     {
       "id": "series-5f437bba08d8c0412cf5ce22",
