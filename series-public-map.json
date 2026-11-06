@@ -2,7 +2,7 @@
   "version": 1,
   "library": "series",
   "mode": "staging",
-  "generatedAt": "2026-11-06T01:54:13.325518Z",
+  "generatedAt": "2026-11-06T02:19:17.803227Z",
   "items": [
     {
       "id": "series-f15425d6c4a5ccaa29bf98c7",
@@ -18502,6 +18502,37 @@
       "public": true,
       "autoImported": true,
       "series": "Short Word for Shabbos"
+    },
+    {
+      "id": "series-482c901cffa501c143ca904f",
+      "library": "series",
+      "speaker": "Rabbi Meilech Biderman",
+      "title": "ר' מיילך בידרמן בהר - בחקותי תשפ-ה",
+      "year": 5785,
+      "parsha": "Behar",
+      "parshas": [
+        "Behar",
+        "Bechukotai"
+      ],
+      "holiday": null,
+      "hidden": false,
+      "hasAudio": true,
+      "hasVideo": true,
+      "audioReady": true,
+      "videoReady": true,
+      "hlsReady": true,
+      "previewReady": false,
+      "posterReady": true,
+      "audioFormat": "mp3",
+      "mediaType": "video",
+      "status": "ready",
+      "created": "2026-11-06T02:05:08Z",
+      "sourceModified": "2025-05-22T23:30:48Z",
+      "originalFilename": "ר' מיילך בידרמן בהר - בחקותי תשפ-ה.MTS",
+      "originalFormat": "mts",
+      "public": true,
+      "autoImported": true,
+      "series": "Leil Shishi"
     },
     {
       "id": "series-6d962e624d6a615b94e90997",
