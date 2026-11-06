@@ -2,7 +2,7 @@
   "version": 1,
   "library": "series",
   "mode": "staging",
-  "generatedAt": "2026-11-06T10:54:50.846718Z",
+  "generatedAt": "2026-11-06T11:13:09.503912Z",
   "items": [
     {
       "id": "series-f15425d6c4a5ccaa29bf98c7",
@@ -17366,6 +17366,34 @@
       "public": true,
       "autoImported": true,
       "series": "Parsha Shiurim"
+    },
+    {
+      "id": "series-d1c6a4b07bd29ac6bf352e97",
+      "library": "series",
+      "speaker": "Rabbi Meilech Biderman",
+      "title": "ר' מיילך בידרמן, דרשה מעינינא דיומא פסח תשפה - אידיש",
+      "year": 5785,
+      "parsha": null,
+      "parshas": [],
+      "holiday": "Pesach",
+      "hidden": false,
+      "hasAudio": true,
+      "hasVideo": true,
+      "audioReady": true,
+      "videoReady": true,
+      "hlsReady": true,
+      "previewReady": false,
+      "posterReady": true,
+      "audioFormat": "mp3",
+      "mediaType": "video",
+      "status": "ready",
+      "created": "2026-11-06T10:59:06Z",
+      "sourceModified": "2025-04-15T20:23:18Z",
+      "originalFilename": "ר' מיילך בידרמן, דרשה מעינינא דיומא פסח תשפה - אידיש.MTS",
+      "originalFormat": "mts",
+      "public": true,
+      "autoImported": true,
+      "series": "Leil Shishi"
     },
     {
       "id": "series-ba0dd2fa25008e598f7ca3a6",
