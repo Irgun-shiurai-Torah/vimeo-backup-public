@@ -2,7 +2,7 @@
   "version": 1,
   "library": "series",
   "mode": "staging",
-  "generatedAt": "2026-11-06T04:25:59.227147Z",
+  "generatedAt": "2026-11-06T04:33:35.690688Z",
   "items": [
     {
       "id": "series-f15425d6c4a5ccaa29bf98c7",
@@ -38167,6 +38167,34 @@
       "public": true,
       "autoImported": true,
       "series": "Short Word for Shabbos"
+    },
+    {
+      "id": "series-4232396e08ea8fda216c8cbe",
+      "library": "series",
+      "speaker": "Rabbi Meilech Biderman",
+      "title": "ר' מיילך בידרמן, הכנה לפסח תשפ-ג",
+      "year": 5783,
+      "parsha": null,
+      "parshas": [],
+      "holiday": "Pesach",
+      "hidden": false,
+      "hasAudio": true,
+      "hasVideo": true,
+      "audioReady": true,
+      "videoReady": true,
+      "hlsReady": true,
+      "previewReady": false,
+      "posterReady": true,
+      "audioFormat": "mp3",
+      "mediaType": "video",
+      "status": "ready",
+      "created": "2026-11-06T04:29:03Z",
+      "sourceModified": "2023-03-31T00:42:21Z",
+      "originalFilename": "ר' מיילך בידרמן, הכנה לפסח תשפ-ג.MTS",
+      "originalFormat": "mts",
+      "public": true,
+      "autoImported": true,
+      "series": "Leil Shishi"
     },
     {
       "id": "series-447f9e08a75f89e3afa746c5",
