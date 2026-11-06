@@ -2,7 +2,7 @@
   "version": 1,
   "library": "series",
   "mode": "staging",
-  "generatedAt": "2026-11-05T23:54:28.711228Z",
+  "generatedAt": "2026-11-06T00:34:52.993811Z",
   "items": [
     {
       "id": "series-f15425d6c4a5ccaa29bf98c7",
@@ -43680,6 +43680,36 @@
       "public": true,
       "autoImported": true,
       "series": "Parsha Shiurim"
+    },
+    {
+      "id": "series-5841e1a1909406b0fcdd6786",
+      "library": "series",
+      "speaker": "Rabbi Meilech Biderman",
+      "title": "ואתחנן (נחמו) תשפ-ב",
+      "year": 5782,
+      "parsha": "Vaetchanan",
+      "parshas": [
+        "Vaetchanan"
+      ],
+      "holiday": null,
+      "hidden": false,
+      "hasAudio": true,
+      "hasVideo": true,
+      "audioReady": true,
+      "videoReady": true,
+      "hlsReady": true,
+      "previewReady": false,
+      "posterReady": true,
+      "audioFormat": "mp3",
+      "mediaType": "video",
+      "status": "ready",
+      "created": "2026-11-06T00:06:44Z",
+      "sourceModified": "2022-08-11T23:51:27Z",
+      "originalFilename": "ואתחנן (נחמו) תשפ-ב.MTS",
+      "originalFormat": "mts",
+      "public": true,
+      "autoImported": true,
+      "series": "Leil Shishi"
     },
     {
       "id": "series-ac54e75fb0248595b933fc10",
