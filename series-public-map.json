@@ -2,7 +2,7 @@
   "version": 1,
   "library": "series",
   "mode": "staging",
-  "generatedAt": "2026-11-06T07:39:06.048319Z",
+  "generatedAt": "2026-11-06T07:54:51.227255Z",
   "items": [
     {
       "id": "series-f15425d6c4a5ccaa29bf98c7",
@@ -43922,6 +43922,36 @@
       "public": true,
       "autoImported": true,
       "series": "Leil Shishi"
+    },
+    {
+      "id": "series-747cab1a5aff7b182bedcf05",
+      "library": "series",
+      "speaker": "Rabbi Meilech Biderman",
+      "title": "ואתחנן (נחמו) תשפ-ב (לשון הקודש)",
+      "year": 5782,
+      "parsha": "Vaetchanan",
+      "parshas": [
+        "Vaetchanan"
+      ],
+      "holiday": null,
+      "hidden": false,
+      "hasAudio": true,
+      "hasVideo": false,
+      "audioReady": true,
+      "videoReady": false,
+      "hlsReady": false,
+      "previewReady": false,
+      "posterReady": false,
+      "audioFormat": "mp3",
+      "mediaType": "audio",
+      "status": "ready",
+      "created": "2026-11-06T07:49:18Z",
+      "sourceModified": "2022-08-12T02:15:44Z",
+      "originalFilename": "לשון הקודש.mp3",
+      "originalFormat": "mp3",
+      "public": true,
+      "autoImported": true,
+      "series": "Short Word for Shabbos"
     },
     {
       "id": "series-ac54e75fb0248595b933fc10",
