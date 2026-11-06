@@ -2,7 +2,7 @@
   "version": 1,
   "library": "series",
   "mode": "staging",
-  "generatedAt": "2026-11-06T09:54:21.917153Z",
+  "generatedAt": "2026-11-06T10:14:40.374200Z",
   "items": [
     {
       "id": "series-f15425d6c4a5ccaa29bf98c7",
@@ -35612,6 +35612,36 @@
       "public": true,
       "autoImported": true,
       "series": "Short Word for Shabbos"
+    },
+    {
+      "id": "series-e1236b3a1dfb36ff20d869c2",
+      "library": "series",
+      "speaker": "Rabbi Meilech Biderman",
+      "title": "ר' מיילך בידרמן ליל שישי, וישב - הכנה לחנוכה תשפ-ג",
+      "year": 5783,
+      "parsha": "Vayeshev",
+      "parshas": [
+        "Vayeshev"
+      ],
+      "holiday": "Chanukah",
+      "hidden": false,
+      "hasAudio": true,
+      "hasVideo": true,
+      "audioReady": true,
+      "videoReady": true,
+      "hlsReady": true,
+      "previewReady": false,
+      "posterReady": true,
+      "audioFormat": "mp3",
+      "mediaType": "video",
+      "status": "ready",
+      "created": "2026-11-06T09:56:21Z",
+      "sourceModified": "2022-12-16T01:17:59Z",
+      "originalFilename": "ר' מיילך בידרמן ליל שישי, וישב - הכנה לחנוכה תשפ-ג.MTS",
+      "originalFormat": "mts",
+      "public": true,
+      "autoImported": true,
+      "series": "Leil Shishi"
     },
     {
       "id": "series-83b297d205ec8c3cd32bbb1d",
