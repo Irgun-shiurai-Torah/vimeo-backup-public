@@ -2,7 +2,7 @@
   "version": 1,
   "library": "series",
   "mode": "staging",
-  "generatedAt": "2026-11-07T22:54:34.759007Z",
+  "generatedAt": "2026-11-07T23:11:36.501577Z",
   "items": [
     {
       "id": "series-f15425d6c4a5ccaa29bf98c7",
@@ -37108,6 +37108,36 @@
       "public": true,
       "autoImported": true,
       "series": "Short Word for Shabbos"
+    },
+    {
+      "id": "series-1c298daf0d94268f910df1a9",
+      "library": "series",
+      "speaker": "Rabbi Meilech Biderman",
+      "title": "ר' מיילך בידרמן ליל שישי, בשלח - שבת שירה תשפ-ג",
+      "year": 5783,
+      "parsha": "Beshalach",
+      "parshas": [
+        "Beshalach"
+      ],
+      "holiday": null,
+      "hidden": false,
+      "hasAudio": true,
+      "hasVideo": true,
+      "audioReady": true,
+      "videoReady": true,
+      "hlsReady": true,
+      "previewReady": false,
+      "posterReady": true,
+      "audioFormat": "mp3",
+      "mediaType": "video",
+      "status": "ready",
+      "created": "2026-11-07T22:55:00Z",
+      "sourceModified": "2023-02-03T00:25:17Z",
+      "originalFilename": "ר' מיילך בידרמן ליל שישי, בשלח - שבת שירה תשפ-ג.MTS",
+      "originalFormat": "mts",
+      "public": true,
+      "autoImported": true,
+      "series": "Leil Shishi"
     },
     {
       "id": "series-e5dcc609317421cf52341658",
