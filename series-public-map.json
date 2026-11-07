@@ -2,7 +2,7 @@
   "version": 1,
   "library": "series",
   "mode": "staging",
-  "generatedAt": "2026-11-07T18:33:28.333957Z",
+  "generatedAt": "2026-11-07T18:39:20.352088Z",
   "items": [
     {
       "id": "series-f15425d6c4a5ccaa29bf98c7",
@@ -15256,6 +15256,36 @@
       "public": true,
       "autoImported": true,
       "series": "Parsha Shiurim"
+    },
+    {
+      "id": "series-8054ea0183e68a477f158493",
+      "library": "series",
+      "speaker": "Rabbi Meilech Biderman",
+      "title": "ר' מיילך בידרמן ליל שישי וארא תשפ-ה",
+      "year": 5785,
+      "parsha": "Vaera",
+      "parshas": [
+        "Vaera"
+      ],
+      "holiday": null,
+      "hidden": false,
+      "hasAudio": true,
+      "hasVideo": true,
+      "audioReady": true,
+      "videoReady": true,
+      "hlsReady": true,
+      "previewReady": false,
+      "posterReady": true,
+      "audioFormat": "mp3",
+      "mediaType": "video",
+      "status": "ready",
+      "created": "2026-11-07T18:37:54Z",
+      "sourceModified": "2025-01-24T00:33:26Z",
+      "originalFilename": "ר' מיילך בידרמן ליל שישי וארא תשפ-ה.MTS",
+      "originalFormat": "mts",
+      "public": true,
+      "autoImported": true,
+      "series": "Leil Shishi"
     },
     {
       "id": "series-51debe358f4a2c074d450e4b",
