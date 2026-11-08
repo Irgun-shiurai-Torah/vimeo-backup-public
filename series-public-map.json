@@ -2,7 +2,7 @@
   "version": 1,
   "library": "series",
   "mode": "staging",
-  "generatedAt": "2026-11-08T13:39:18.924213Z",
+  "generatedAt": "2026-11-08T13:54:22.447746Z",
   "items": [
     {
       "id": "series-f15425d6c4a5ccaa29bf98c7",
@@ -26766,6 +26766,36 @@
       "public": true,
       "autoImported": true,
       "series": "Short Word for Shabbos"
+    },
+    {
+      "id": "series-591905d152979137f7f3b037",
+      "library": "series",
+      "speaker": "Rabbi Meilech Biderman",
+      "title": "ר' מיילך בידרמן ליל שישי, תצוה פורים קטן תשפ-ד",
+      "year": 5784,
+      "parsha": "Tetzaveh",
+      "parshas": [
+        "Tetzaveh"
+      ],
+      "holiday": "Purim",
+      "hidden": false,
+      "hasAudio": true,
+      "hasVideo": true,
+      "audioReady": true,
+      "videoReady": true,
+      "hlsReady": true,
+      "previewReady": false,
+      "posterReady": true,
+      "audioFormat": "mp3",
+      "mediaType": "video",
+      "status": "ready",
+      "created": "2026-11-08T13:46:34Z",
+      "sourceModified": "2024-02-23T00:45:55Z",
+      "originalFilename": "ר' מיילך בידרמן ליל שישי, תצוה פורים קטן תשפ-ד.MTS",
+      "originalFormat": "mts",
+      "public": true,
+      "autoImported": true,
+      "series": "Leil Shishi"
     },
     {
       "id": "series-307dd4bbf2d74f7834b93dbb",
