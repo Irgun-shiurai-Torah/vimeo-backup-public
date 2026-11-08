@@ -2,7 +2,7 @@
   "version": 1,
   "library": "series",
   "mode": "staging",
-  "generatedAt": "2026-11-08T01:41:09.341194Z",
+  "generatedAt": "2026-11-08T01:54:42.568828Z",
   "items": [
     {
       "id": "series-f15425d6c4a5ccaa29bf98c7",
@@ -6455,6 +6455,34 @@
       "public": true,
       "autoImported": true,
       "series": "Short Word for Shabbos"
+    },
+    {
+      "id": "series-f5204610ade4d93c5b74ba33",
+      "library": "series",
+      "speaker": "Rabbi Meilech Biderman",
+      "title": "ר' מיילך הכנה לפורים, תשפ-ו",
+      "year": 5786,
+      "parsha": null,
+      "parshas": [],
+      "holiday": "Purim",
+      "hidden": false,
+      "hasAudio": true,
+      "hasVideo": true,
+      "audioReady": true,
+      "videoReady": true,
+      "hlsReady": true,
+      "previewReady": false,
+      "posterReady": true,
+      "audioFormat": "mp3",
+      "mediaType": "video",
+      "status": "ready",
+      "created": "2026-11-08T01:49:43Z",
+      "sourceModified": "2026-02-26T01:19:53Z",
+      "originalFilename": "ר' מיילך הכנה לפורים, תשפ-ו.MTS",
+      "originalFormat": "mts",
+      "public": true,
+      "autoImported": true,
+      "series": "Leil Shishi"
     },
     {
       "id": "series-225452393df21755db845349",
