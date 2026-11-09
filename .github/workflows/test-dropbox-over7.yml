@@ -1,0 +1,29 @@
+name: Test manual Dropbox 7-20 GB importer
+
+on:
+  pull_request:
+    paths:
+      - dropbox_over7.py
+      - tests/test_dropbox_over7.py
+      - .github/workflows/dropbox-over7-manual.yml
+      - .github/workflows/test-dropbox-over7.yml
+
+permissions:
+  contents: read
+
+jobs:
+  offline-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install read-only Python dependencies
+        run: python -m pip install google-api-python-client google-auth google-auth-httplib2
+      - name: Test safety, checkpoint recovery, and existing 7 GB regression
+        run: |
+          python -m py_compile dropbox_over7.py dropbox_import.py dropbox_large.py
+          python -m unittest discover -s tests -p 'test_dropbox_over7.py' -v
+          python -m unittest discover -s tests -p 'test_dropbox_large.py' -v
