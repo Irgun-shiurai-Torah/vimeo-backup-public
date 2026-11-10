@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Manual-only, checkpointed importer for approved Dropbox videos >7-20 GB.
+"""Checkpointed importer for approved Dropbox videos larger than 7 GB.
 
-No scheduled execution. Never alters Dropbox or the regular import workflow.
+Runs manually or from the three-hour incremental workflow. Never alters Dropbox.
 Partial progress is stored beside the private Drive media, *not* in the
 published source map. Only a fully uploaded HLS ladder is committed there.
 """
@@ -24,13 +24,16 @@ from dropbox_large import (
 from dropbox_media_policy import is_excluded_nonlecture
 from series_media import make_hls, make_mp3, make_poster, probe, quality_ladder
 from series_visibility import ALLOWED_DROPBOX_SOURCES
+from dropbox_import_ledger import already_imported, frozen_initial_ids
 
 MIN_BYTES = 7_000_000_000            # Exclusive: regular large importer owns <=7 GB.
-MAX_BYTES = 20_000_000_000           # Inclusive, decimal GB.
+# No arbitrary upper cap: disk, Drive quota and job-time preflights determine
+# whether a given >7 GB recording can fit the current runner.
 RESERVE_DRIVE_GIB = 68
 PROGRESS_FILE = "oversize-progress.json"
 CONFIRM = "IMPORT_OVER_7_GB"
 SOURCE_LABELS = {
+    "gamliel": "Reb Gamliel Rabinowitz",
     "leil-shishi": "Reb Mielech - Leil Shishi",
     "short-word": "Reb Mielech - Short Word for Shabbos",
 }
@@ -43,12 +46,10 @@ def candidates(source, files, completed):
     for item in files:
         size = int(item["size"])
         if (item["kind"] != "video" or size <= MIN_BYTES or
-                size > MAX_BYTES or is_excluded_nonlecture(source, item)):
+                is_excluded_nonlecture(source, item)):
             continue
         mid = file_id(source["id"], item)
-        old = completed.get(mid) or {}
-        if (old.get("rev") == item["rev"] and old.get("originalDriveId")
-                and old.get("hls", {}).get("masterDriveId")):
+        if already_imported(mid, "video", completed.get(mid)):
             continue
         result.append((size, mid, item))
     return [(mid, item) for _, mid, item in sorted(result)]
@@ -242,11 +243,14 @@ def process_one(dbx, store, source, mid, item, mapping, maps, originals,
 def run(source_key, mode="plan", confirm="", budget_minutes=300,
         max_renditions=4, only_id=""):
     if source_key not in SOURCE_LABELS:
-        raise ValueError("Source must be leil-shishi or short-word")
+        raise ValueError("Source must be one of gamliel, leil-shishi, short-word")
     if mode not in ("plan", "import") or (mode == "import" and confirm != CONFIRM):
         raise ValueError("Import requires exact confirmation phrase")
     if not 45 <= budget_minutes <= 310 or not 1 <= max_renditions <= 4:
         raise ValueError("Unsafe job budget or rendition count")
+    if mode == "import":
+        # A deleted Google Drive map must never trigger re-import of old files.
+        frozen_initial_ids()
     label = SOURCE_LABELS[source_key]
     sources = [s for s in sources_from_env() if s["label"] == label]
     if len(sources) != 1 or label not in ALLOWED_DROPBOX_SOURCES:
@@ -255,9 +259,10 @@ def run(source_key, mode="plan", confirm="", budget_minutes=300,
     dbx = DropboxLinks(os.getenv("DROPBOX_APP_KEY"), os.getenv("DROPBOX_APP_SECRET"))
     _, items = dbx.list_tree(source)
     valid = [(file_id(source["id"], item), item) for item in items
-             if item["kind"] == "video" and MIN_BYTES < int(item["size"]) <= MAX_BYTES
+             if item["kind"] == "video" and int(item["size"]) > MIN_BYTES
              and not is_excluded_nonlecture(source, item)]
-    print(f"OVERSIZE INVENTORY | {label} | {len(valid)} source videos between 7 and 20 GB", flush=True)
+    print(f"OVERSIZE INVENTORY | {label} | {len(valid)} source videos above 7 GB; "
+          "runner disk and Drive quota guards apply", flush=True)
     if mode == "plan":
         for mid, item in sorted(valid, key=lambda x: int(x[1]["size"])):
             print(f"OVERSIZE PLAN | {mid} | {int(item['size']) / 1e9:.2f} GB", flush=True)

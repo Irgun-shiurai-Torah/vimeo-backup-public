@@ -1,4 +1,4 @@
-"""Offline safety and resumability tests for manual Dropbox >7 GB imports."""
+"""Offline safety and resumability tests for incremental Dropbox >7 GB imports."""
 import copy
 import json
 import tempfile
@@ -85,11 +85,15 @@ class Over7Test(unittest.TestCase):
                 dict(media(8_000_000_000, 5), kind="audio")]
         mid = over7.file_id(SOURCE["id"], rows[1])
         result = over7.candidates(SOURCE, rows, {})
-        self.assertEqual([r[1]["id"] for r in result], ["id:recording-2", "id:recording-3"])
+        self.assertEqual([r[1]["id"] for r in result], ["id:recording-2", "id:recording-3", "id:recording-4"])
         result = over7.candidates(SOURCE, rows, {mid: {
             "rev": "rev-1", "originalDriveId": "original", "hls": {"masterDriveId": "master"}}})
-        self.assertEqual(len(result), 1)
-        self.assertEqual(result[0][1]["id"], "id:recording-3")
+        self.assertEqual(len(result), 2)
+        self.assertEqual([r[1]["id"] for r in result], ["id:recording-3", "id:recording-4"])
+        # A completed recording is once-only, even after its Dropbox revision changes.
+        earlier = {"rev": "old-revision", "originalDriveId": "original",
+                   "hls": {"masterDriveId": "master"}}
+        self.assertEqual(len(over7.candidates(SOURCE, rows, {mid: earlier})), 2)
 
     def test_denies_import_without_explicit_confirmation_before_network(self):
         with patch.object(over7, "sources_from_env") as sources:

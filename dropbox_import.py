@@ -38,6 +38,7 @@ from dropbox_large import (
 from series_media import make_hls, make_mp3, make_poster, probe, quality_ladder
 from dropbox_media_policy import is_excluded_nonlecture
 from series_visibility import ALLOWED_DROPBOX_SOURCES
+from dropbox_import_ledger import already_imported, frozen_initial_ids
 
 VIDEO_EXT = {".mp4", ".mov", ".m4v", ".mts", ".m2ts", ".mkv", ".avi",
              ".webm", ".wmv", ".mpg", ".mpeg", ".ts"}
@@ -452,6 +453,9 @@ def run(mode="scan", max_files=1, only_id="", source_label="", min_video_bytes=0
             # source links, even if an operator manually starts the workflow.
             raise ValueError("Dropbox import is limited to Gamliel and Biderman. "
                              "Unapproved source(s): " + ", ".join(denied))
+    if mode == "import":
+        # Do not connect to Dropbox or Drive if the permanent skip list is lost.
+        frozen_initial_ids()
     progress = ImportProgress(sources[0]["label"], max_files) if mode == "import" and len(sources) == 1 else None
     if mode == "import" and len(sources) != 1:
         raise ValueError("Import one approved source per worker to protect Drive maps")
@@ -513,9 +517,9 @@ def run(mode="scan", max_files=1, only_id="", source_label="", min_video_bytes=0
     pending = []
     for source, item in scanned:
         mid = file_id(source["id"], item)
-        previous = items_by_id.get(mid) or {}
-        if previous.get("rev") == item["rev"] and previous.get("originalDriveId") and (
-                item["kind"] == "audio" or previous.get("hls", {}).get("masterDriveId")):
+        # A completed Dropbox identity is imported only once, even when the
+        # operator later deletes its media from Drive or Dropbox revises it.
+        if already_imported(mid, item["kind"], items_by_id.get(mid)):
             continue
         pending.append((source, item, mid))
     # Start with smaller videos to test available runner space safely.

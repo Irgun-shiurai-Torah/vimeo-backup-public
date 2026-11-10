@@ -1,9 +1,8 @@
 name: Dropbox shiurim import for test Series
 
 on:
-  schedule:
-    # Three independently checkpointed sources, 7+7+6 recordings per hour.
-    - cron: "17 * * * *"
+  # Retained for manual maintenance. All routine imports now run from the
+  # unified three-hour incremental workflow, avoiding competing schedules.
   workflow_dispatch:
 
 permissions:

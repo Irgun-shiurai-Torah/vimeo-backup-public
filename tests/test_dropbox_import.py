@@ -112,33 +112,25 @@ class SharedLinksTest(unittest.TestCase):
         check_drive_headroom(store, 200_000_000, reserve_gib=0)
         store.api.about.assert_not_called()
 
-    def test_recurring_imports_use_only_gamliel_and_biderman_sources(self):
+    def test_automatic_imports_use_only_gamliel_and_biderman_every_three_hours(self):
         from pathlib import Path
         from series_visibility import ALLOWED_DROPBOX_SOURCES
-        workflow = Path(".github/workflows/dropbox-all-series.yml").read_text()
-        for label in ALLOWED_DROPBOX_SOURCES:
-            self.assertIn("'" + label + "'", workflow)
-        for label in ("Reb Nachum Cohen", "Reb Yitzchok Ahron Goldhirsch"):
-            self.assertNotIn("'" + label + "'", workflow)
-        self.assertEqual(workflow.count("    runs-on:"), 1,
-                         "Only a single matrix job definition should be present")
-        self.assertIn('cron: "17 * * * *"', workflow)
-        self.assertIn("max-parallel: 3", workflow)
-        self.assertIn("fail-fast: false", workflow)
-        self.assertIn("irgun-dropbox-source-${{ matrix.source_key }}", workflow)
-        self.assertIn("source_label: 'Reb Gamliel Rabinowitz'", workflow)
-        self.assertIn("source_label: 'Reb Mielech - Leil Shishi'", workflow)
-        self.assertIn("source_label: 'Reb Mielech - Short Word for Shabbos'", workflow)
-        self.assertEqual(workflow.count("max_files: 7"), 2)
-        self.assertEqual(workflow.count("max_files: 6"), 1)
-        self.assertEqual(7 + 7 + 6, 20)
-        self.assertIn('SOURCE_LABEL: ${{ matrix.source_label }}', workflow)
-        self.assertIn('MAX_FILES: ${{ matrix.max_files }}', workflow)
-        self.assertIn('--max-files "$MAX_FILES"', workflow)
-        self.assertIn("--reserve-gib 68", workflow)
-        self.assertIn("--max-source-bytes 2200000000", workflow)
-        self.assertIn("secrets.DROPBOX_SOURCES_JSON", workflow)
-        self.assertNotIn("secrets.DROPBOX_SHARED_LINK", workflow)
+        from dropbox_over7 import SOURCE_LABELS
+        automatic = Path(".github/workflows/dropbox-incremental-3h.yml").read_text()
+        old = Path(".github/workflows/dropbox-all-series.yml").read_text()
+        self.assertEqual(set(SOURCE_LABELS.values()), set(ALLOWED_DROPBOX_SOURCES))
+        for source_key in ("gamliel", "leil-shishi", "short-word"):
+            self.assertIn("source_key: " + source_key, automatic)
+        self.assertIn("cron: '11 */3 * * *'", automatic)
+        self.assertEqual(automatic.count("    runs-on:"), 1)
+        self.assertIn("max-parallel: 3", automatic)
+        self.assertIn("fail-fast: false", automatic)
+        self.assertIn("irgun-dropbox-source-${{ matrix.source_key }}", automatic)
+        self.assertIn("python -u dropbox_incremental.py", automatic)
+        self.assertIn("secrets.DROPBOX_SOURCES_JSON", automatic)
+        self.assertNotIn("secrets.DROPBOX_SHARED_LINK", automatic)
+        self.assertNotIn("  schedule:", old)
+        self.assertIn("workflow_dispatch:", old)
 
     def test_seven_file_batch_checkpoint_and_limit(self):
         from pathlib import Path
