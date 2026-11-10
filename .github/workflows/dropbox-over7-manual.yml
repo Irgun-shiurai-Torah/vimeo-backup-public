@@ -36,7 +36,7 @@ concurrency:
 
 jobs:
   oversized:
-    name: Checkpointed >7-20 GB import (${{ inputs.source_key }})
+    name: Checkpointed >7 GB import (${{ inputs.source_key }})
     runs-on: ubuntu-latest
     timeout-minutes: 350
     env:
