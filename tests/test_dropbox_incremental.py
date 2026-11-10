@@ -100,6 +100,14 @@ class IncrementalDropboxTest(unittest.TestCase):
         done = {"originalDriveId": "uploaded",
                 "hls": {"masterDriveId": "master"}, "rev": "earlier"}
         self.assertEqual(over7.candidates(OLD_SOURCE, [new], {mid: done}), [])
+        huge = dict(new, id="id:brand-new-very-large", size=35_000_000_000)
+        self.assertEqual(len(over7.candidates(OLD_SOURCE, [huge], {})), 1)
+        # Above 20 GB is no longer ignored, but disk safeguards still block
+        # an import that cannot fit before downloading the original.
+        with patch.object(over7.shutil, "disk_usage",
+                          return_value=SimpleNamespace(free=10 * 1024**3)):
+            with self.assertRaisesRegex(RuntimeError, "Insufficient runner disk"):
+                over7.ensure_disk(huge["size"])
 
     def test_only_one_three_hour_schedule_and_same_per_source_lock(self):
         main = Path(".github/workflows/dropbox-incremental-3h.yml").read_text()
