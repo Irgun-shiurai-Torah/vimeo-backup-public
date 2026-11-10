@@ -2,7 +2,7 @@
   "version": 1,
   "library": "series",
   "mode": "staging",
-  "generatedAt": "2026-11-09T23:54:09.206265Z",
+  "generatedAt": "2026-11-10T00:33:11.976036Z",
   "items": [
     {
       "id": "series-f15425d6c4a5ccaa29bf98c7",
@@ -34817,6 +34817,34 @@
       "public": true,
       "autoImported": true,
       "series": "Parsha Shiurim"
+    },
+    {
+      "id": "series-3134b58379473bdf3ac4718e",
+      "library": "series",
+      "speaker": "Rabbi Meilech Biderman",
+      "title": "ר' מיילך בידרמן, הכנה יום כיפור תשפ-ג",
+      "year": 5783,
+      "parsha": null,
+      "parshas": [],
+      "holiday": "Yom Kippur",
+      "hidden": false,
+      "hasAudio": true,
+      "hasVideo": true,
+      "audioReady": true,
+      "videoReady": true,
+      "hlsReady": true,
+      "previewReady": false,
+      "posterReady": true,
+      "audioFormat": "mp3",
+      "mediaType": "video",
+      "status": "ready",
+      "created": "2026-11-10T00:04:20Z",
+      "sourceModified": "2022-09-30T02:24:25Z",
+      "originalFilename": "ר' מיילך בידרמן, הכנה יום כיפור תשפ-ג.mp4",
+      "originalFormat": "mp4",
+      "public": true,
+      "autoImported": true,
+      "series": "Leil Shishi"
     },
     {
       "id": "series-84a82b75c89a3ca7a65af171",
