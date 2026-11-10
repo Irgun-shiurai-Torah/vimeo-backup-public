@@ -43,7 +43,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Reclaim optional disk space for potential 7-20 GB media
+      - name: Reclaim optional disk space for large media
         run: |
           df -h /tmp
           sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /usr/local/share/powershell
