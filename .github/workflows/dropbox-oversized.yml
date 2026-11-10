@@ -1,13 +1,8 @@
 name: Dropbox LARGE 2.2-7 GB imports and size report (TEST Series)
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - .github/workflows/dropbox-oversized.yml
-  schedule:
-    # Up to 5 recordings for each of the 3 sources, every 2 hours.
-    - cron: '43 */2 * * *'
+  # Manual recovery only: the three-hour incremental workflow owns the
+  # routine check for all three size tiers and uses the same source lock.
   workflow_dispatch:
     inputs:
       max_gb:
