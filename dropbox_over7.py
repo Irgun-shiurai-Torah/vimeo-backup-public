@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Manual-only, checkpointed importer for approved Dropbox videos >7-20 GB.
+"""Checkpointed importer for approved Dropbox videos larger than 7 GB.
 
-No scheduled execution. Never alters Dropbox or the regular import workflow.
+Runs manually or from the three-hour incremental workflow. Never alters Dropbox.
 Partial progress is stored beside the private Drive media, *not* in the
 published source map. Only a fully uploaded HLS ladder is committed there.
 """
@@ -27,7 +27,8 @@ from series_visibility import ALLOWED_DROPBOX_SOURCES
 from dropbox_import_ledger import already_imported, frozen_initial_ids
 
 MIN_BYTES = 7_000_000_000            # Exclusive: regular large importer owns <=7 GB.
-MAX_BYTES = 20_000_000_000           # Inclusive, decimal GB.
+# No arbitrary upper cap: disk, Drive quota and job-time preflights determine
+# whether a given >7 GB recording can fit the current runner.
 RESERVE_DRIVE_GIB = 68
 PROGRESS_FILE = "oversize-progress.json"
 CONFIRM = "IMPORT_OVER_7_GB"
@@ -45,7 +46,7 @@ def candidates(source, files, completed):
     for item in files:
         size = int(item["size"])
         if (item["kind"] != "video" or size <= MIN_BYTES or
-                size > MAX_BYTES or is_excluded_nonlecture(source, item)):
+                is_excluded_nonlecture(source, item)):
             continue
         mid = file_id(source["id"], item)
         if already_imported(mid, "video", completed.get(mid)):
@@ -258,14 +259,10 @@ def run(source_key, mode="plan", confirm="", budget_minutes=300,
     dbx = DropboxLinks(os.getenv("DROPBOX_APP_KEY"), os.getenv("DROPBOX_APP_SECRET"))
     _, items = dbx.list_tree(source)
     valid = [(file_id(source["id"], item), item) for item in items
-             if item["kind"] == "video" and MIN_BYTES < int(item["size"]) <= MAX_BYTES
+             if item["kind"] == "video" and int(item["size"]) > MIN_BYTES
              and not is_excluded_nonlecture(source, item)]
-    print(f"OVERSIZE INVENTORY | {label} | {len(valid)} source videos between 7 and 20 GB", flush=True)
-    too_large = [item for item in items if item["kind"] == "video"
-                 and int(item["size"]) > MAX_BYTES and not is_excluded_nonlecture(source, item)]
-    if too_large:
-        print(f"::warning::{len(too_large)} recordings exceed the 20 GB safe automatic "
-              "limit; use a larger runner rather than silently skipping them", flush=True)
+    print(f"OVERSIZE INVENTORY | {label} | {len(valid)} source videos above 7 GB; "
+          "runner disk and Drive quota guards apply", flush=True)
     if mode == "plan":
         for mid, item in sorted(valid, key=lambda x: int(x[1]["size"])):
             print(f"OVERSIZE PLAN | {mid} | {int(item['size']) / 1e9:.2f} GB", flush=True)
