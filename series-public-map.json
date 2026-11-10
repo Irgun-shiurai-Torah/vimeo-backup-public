@@ -2,7 +2,7 @@
   "version": 1,
   "library": "series",
   "mode": "staging",
-  "generatedAt": "2026-11-10T03:39:11.401402Z",
+  "generatedAt": "2026-11-10T03:54:19.873505Z",
   "items": [
     {
       "id": "series-f15425d6c4a5ccaa29bf98c7",
@@ -28939,6 +28939,36 @@
       "sourceModified": "2024-03-21T23:30:25Z",
       "originalFilename": "00010.mp3",
       "originalFormat": "mp3",
+      "public": true,
+      "autoImported": true,
+      "series": "Leil Shishi"
+    },
+    {
+      "id": "series-32d01d89cd27f5274f000ea5",
+      "library": "series",
+      "speaker": "Rabbi Meilech Biderman",
+      "title": "ר' מיילך בידרמן ליל שישי, ויקרא (זכור) - פורים תשפ-ד — Video (Clip 10)",
+      "year": 5784,
+      "parsha": "Vayikra",
+      "parshas": [
+        "Vayikra"
+      ],
+      "holiday": "Purim",
+      "hidden": false,
+      "hasAudio": true,
+      "hasVideo": true,
+      "audioReady": true,
+      "videoReady": true,
+      "hlsReady": true,
+      "previewReady": false,
+      "posterReady": true,
+      "audioFormat": "mp3",
+      "mediaType": "video",
+      "status": "ready",
+      "created": "2026-11-10T03:53:31Z",
+      "sourceModified": "2024-03-21T23:41:59Z",
+      "originalFilename": "00010.MTS",
+      "originalFormat": "mts",
       "public": true,
       "autoImported": true,
       "series": "Leil Shishi"
