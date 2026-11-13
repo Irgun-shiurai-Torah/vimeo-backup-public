@@ -2,7 +2,7 @@
   "version": 1,
   "library": "series",
   "mode": "staging",
-  "generatedAt": "2026-11-13T09:25:27.869230Z",
+  "generatedAt": "2026-11-13T09:38:47.253011Z",
   "items": [
     {
       "id": "series-f15425d6c4a5ccaa29bf98c7",
@@ -1683,6 +1683,34 @@
       "public": true,
       "autoImported": true,
       "series": "Leil Shishi"
+    },
+    {
+      "id": "series-a7f1d621af0f29ad5ea801e1",
+      "library": "series",
+      "speaker": "Rabbi Meilech Biderman",
+      "title": "English Sutbitles",
+      "year": 5787,
+      "parsha": null,
+      "parshas": [],
+      "holiday": null,
+      "hidden": false,
+      "hasAudio": true,
+      "hasVideo": true,
+      "audioReady": true,
+      "videoReady": true,
+      "hlsReady": true,
+      "previewReady": false,
+      "posterReady": true,
+      "audioFormat": "mp3",
+      "mediaType": "video",
+      "status": "ready",
+      "created": "2026-11-13T09:27:59Z",
+      "sourceModified": "2026-11-13T06:45:27Z",
+      "originalFilename": "English Sutbitles.mp4",
+      "originalFormat": "mp4",
+      "public": true,
+      "autoImported": true,
+      "series": "Short Word for Shabbos"
     },
     {
       "id": "series-eff5667d56e8fd20fa51cf12",
