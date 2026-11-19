@@ -2,7 +2,7 @@
   "version": 1,
   "library": "series",
   "mode": "staging",
-  "generatedAt": "2026-11-19T09:16:03.971858Z",
+  "generatedAt": "2026-11-19T09:26:25.716760Z",
   "items": [
     {
       "id": "series-f15425d6c4a5ccaa29bf98c7",
@@ -1736,6 +1736,36 @@
       "sourceModified": "2026-11-15T11:21:20Z",
       "originalFilename": "spanish subtitles .mp4",
       "originalFormat": "mp4",
+      "public": true,
+      "autoImported": true,
+      "series": "Short Word for Shabbos"
+    },
+    {
+      "id": "series-592c4fdb05bb45db6c2466a3",
+      "library": "series",
+      "speaker": "Rabbi Meilech Biderman",
+      "title": "כי תצא תשפ-ז (לשון הקודש)",
+      "year": 5787,
+      "parsha": "Ki Teitzei",
+      "parshas": [
+        "Ki Teitzei"
+      ],
+      "holiday": null,
+      "hidden": false,
+      "hasAudio": true,
+      "hasVideo": true,
+      "audioReady": true,
+      "videoReady": true,
+      "hlsReady": true,
+      "previewReady": false,
+      "posterReady": true,
+      "audioFormat": "mp3",
+      "mediaType": "video",
+      "status": "ready",
+      "created": "2026-11-19T09:24:58Z",
+      "sourceModified": "2026-11-19T08:32:17Z",
+      "originalFilename": "לשון הקודש.MTS",
+      "originalFormat": "mts",
       "public": true,
       "autoImported": true,
       "series": "Short Word for Shabbos"
